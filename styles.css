@@ -645,7 +645,7 @@ h3 {
 .contact-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 22px;
+  gap: 20px;
 
   margin-top: 32px;
 }
