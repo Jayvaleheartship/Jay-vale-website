@@ -466,6 +466,149 @@ h3 {
 
 
 /* =========================
+   RECOGNIZE SECTION
+========================= */
+
+#recognize {
+  position: relative;
+}
+
+#recognize::before {
+  content: "";
+
+  position: absolute;
+  inset: 40px clamp(12px, 4vw, 50px);
+
+  border-radius: 42px;
+
+  background:
+    radial-gradient(
+      circle at 12% 20%,
+      rgba(239, 68, 68, 0.12),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 82% 66%,
+      rgba(252, 165, 165, 0.07),
+      transparent 32%
+    );
+
+  pointer-events: none;
+  z-index: -1;
+}
+
+.recognize-grid {
+  grid-template-columns: repeat(2, 1fr);
+  margin-top: 44px;
+}
+
+.info-card {
+  position: relative;
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.055),
+      rgba(255, 255, 255, 0.025)
+    );
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.info-card::before {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 3px;
+
+  background: linear-gradient(
+    90deg,
+    var(--red),
+    rgba(252, 165, 165, 0.22),
+    transparent
+  );
+}
+
+.info-card:hover {
+  transform: translateY(-3px);
+
+  border-color: rgba(252, 165, 165, 0.36);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.info-card h3 {
+  margin-bottom: 18px;
+}
+
+.info-card ul {
+  margin: 16px 0 0;
+  padding-left: 0;
+
+  list-style: none;
+}
+
+.info-card li {
+  position: relative;
+
+  margin-bottom: 13px;
+  padding-left: 24px;
+
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.info-card li:last-child {
+  margin-bottom: 0;
+}
+
+.info-card li::before {
+  content: "";
+
+  position: absolute;
+  left: 0;
+  top: 0.72em;
+
+  width: 8px;
+  height: 8px;
+
+  border-radius: 999px;
+  background: var(--red-soft);
+
+  box-shadow: 0 0 16px rgba(252, 165, 165, 0.55);
+}
+
+.info-card strong {
+  color: #fff;
+  font-weight: 900;
+}
+
+.note-text {
+  margin-top: 34px;
+  padding: 22px 24px;
+
+  max-width: 980px;
+
+  border: 1px solid rgba(252, 165, 165, 0.18);
+  border-left: 4px solid var(--red);
+  border-radius: 20px;
+
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--muted);
+
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+
+/* =========================
    MUSIC SECTION
 ========================= */
 
@@ -765,7 +908,8 @@ footer {
   .cards.four,
   .cards.three,
   .cards.two,
-  .timeline {
+  .timeline,
+  .recognize-grid {
     grid-template-columns: 1fr;
   }
 
@@ -836,5 +980,15 @@ footer {
   .contact-links a {
     width: 100%;
     justify-content: center;
+  }
+
+  .tag-box,
+  .card,
+  .song-card {
+    padding: 24px;
+  }
+
+  .note-text {
+    padding: 18px;
   }
 }
