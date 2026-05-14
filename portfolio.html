@@ -1,1 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <title>Song Portfolio | Jay Vale</title>
+
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="apple-touch-icon" href="assets/favicon.png" />
+
+  <meta
+    name="description"
+    content="The complete Jay Vale song portfolio. Lyrics, cover art and background stories behind the music."
+  />
+
+  <meta name="theme-color" content="#09090b" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <nav class="site-nav">
+    <a href="index.html#home" class="brand">Jay Vale</a>
+
+    <button class="menu-button" id="menuButton" aria-label="Open menu">
+      Menu
+    </button>
+
+    <div class="nav-links" id="navLinks">
+      <a href="index.html#about">About</a>
+      <a href="index.html#purpose">Purpose</a>
+      <a href="index.html#recognize">Recognize it</a>
+      <a href="index.html#music">Music</a>
+      <a href="portfolio.html">Portfolio</a>
+      <a href="index.html#contact">Contact</a>
+    </div>
+  </nav>
+
+  <main>
+    <section class="section page-hero reveal">
+      <p class="eyebrow">Complete catalog</p>
+
+      <h1 class="page-title">Song Portfolio</h1>
+
+      <p class="hero-text">
+        A growing index of Jay Vale songs, cover art, lyrics and the background behind each track.
+      </p>
+    </section>
+
+    <section class="section reveal">
+      <div class="portfolio-grid">
+        <a class="portfolio-card" href="songs/chemical-road.html">
+          <img
+            src="assets/chemical-road-cover.png"
+            alt="Chemical Road cover art"
+          />
+
+          <div>
+            <h3>Chemical Road</h3>
+            <p>
+              A dark emotional track about the strange roads inside the mind, where chemistry,
+              memory and survival keep pulling in different directions.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/family.html">
+          <img
+            src="assets/family-cover.png"
+            alt="Family cover art"
+          />
+
+          <div>
+            <h3>Family</h3>
+            <p>
+              A heavy and direct song about blood, damage, memory, survival, and the painful meaning of family.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/my-own-apocalypse.html">
+          <img
+            src="assets/my-own-apocalypse-cover.png"
+            alt="My Own Apocalypse cover art"
+          />
+
+          <div>
+            <h3>My Own Apocalypse</h3>
+            <p>
+              An internal disaster written like a ruined world.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/perfect-cracks.html">
+          <img
+            src="assets/perfect-cracks-cover.png"
+            alt="Perfect Cracks cover art"
+          />
+
+          <div>
+            <h3>Perfect Cracks</h3>
+            <p>
+              Damage, origin stories and the ugly beauty of becoming readable.
+            </p>
+          </div>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      © <span id="year"></span> Jay Vale / Heartship Records. Built for honesty, not decoration.
+    </p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
