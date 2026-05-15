@@ -1,4 +1,7 @@
-// Update footer year automatically
+/* =========================
+   FOOTER YEAR
+========================= */
+
 const year = document.getElementById("year");
 
 if (year) {
@@ -6,7 +9,10 @@ if (year) {
 }
 
 
-// Mobile menu toggle
+/* =========================
+   MOBILE MENU
+========================= */
+
 const menuButton = document.getElementById("menuButton");
 const navLinks = document.getElementById("navLinks");
 
@@ -23,7 +29,10 @@ if (menuButton && navLinks) {
 }
 
 
-// Reveal elements when they scroll into view
+/* =========================
+   SCROLL REVEAL
+========================= */
+
 const observer = new IntersectionObserver(
   (entries) => {
     entries.forEach((entry) => {
@@ -42,7 +51,11 @@ document.querySelectorAll(".reveal").forEach((element) => {
 });
 
 
-// Rotating featured songs on homepage
+/* =========================
+   ROTATING FEATURED SONGS
+   Used on index.html
+========================= */
+
 const featuredSongs = document.getElementById("featuredSongs");
 
 const songs = [
@@ -53,6 +66,14 @@ const songs = [
     alt: "Chemical Road cover art",
     description:
       "A dark emotional track about the strange roads inside the mind, where chemistry, memory and survival keep pulling in different directions.",
+  },
+  {
+    title: "Digital Home",
+    link: "songs/digital-home.html",
+    cover: "assets/digital-home.png",
+    alt: "Digital Home cover art",
+    description:
+      "A cinematic emotional track about finding real connection inside a digital world, disappearing without a goodbye, and coming back to say thank you.",
   },
   {
     title: "Hour by Hour",
@@ -73,10 +94,10 @@ const songs = [
   {
     title: "My Own Apocalypse",
     link: "songs/my-own-apocalypse.html",
-    cover: "assets/my-own-apocalypse-cover.png",
+    cover: "assets/my-own-apocalypse.png",
     alt: "My Own Apocalypse cover art",
     description:
-      "A ruined-world emotional landscape where the disaster is internal. Ash, pressure, broken reflections and the feeling of surviving yourself.",
+      "A ruined-world emotional landscape where the disaster is internal: numbness, anger, masks, and collapse from the inside.",
   },
   {
     title: "Perfect Cracks",
@@ -84,7 +105,7 @@ const songs = [
     cover: "assets/perfect-cracks-cover.png",
     alt: "Perfect Cracks cover art",
     description:
-      "Depression, origin stories and the ugly beauty of damage that explains a person without excusing everything they do.",
+      "The album project behind the Jay Vale sound: damage, masks, survival, reflection, and the cracks that made the truth visible.",
   },
   {
     title: "Answer Me This",
@@ -121,7 +142,7 @@ const songs = [
   {
     title: "Behind the Wall",
     link: "songs/behind-the-wall.html",
-    cover: "assets/behind-the-wall-cover.png",
+    cover: "assets/behind-the-wall.png",
     alt: "Behind the Wall cover art",
     description:
       "A song about the hidden younger self, the protector, and the pain still speaking from behind the wall.",
@@ -132,7 +153,7 @@ const songs = [
     cover: "assets/can-you-relate-cover.png",
     alt: "Can You Relate cover art",
     description:
-      "A track about recognition, loneliness, and the question of whether anyone else understands what this feels like.",
+      "A track about recognition, loneliness, and asking whether anyone else knows how to heal when the damage is you.",
   },
 ];
 
@@ -173,4 +194,67 @@ function renderFeaturedSongs() {
 
 renderFeaturedSongs();
 
-setInterval(renderFeaturedSongs, 7000);
+if (featuredSongs) {
+  setInterval(renderFeaturedSongs, 7000);
+}
+
+
+/* =========================
+   COMING SOON MUSIC
+   Used on portfolio.html
+========================= */
+
+const comingSoonMusic = document.getElementById("comingSoonMusic");
+
+const comingSoonSongs = [
+  {
+    title: "Sparking Match",
+    status: "Coming soon",
+    description:
+      "A track about mistaking attention for love, and how one small spark can light up a place that was already dry inside.",
+  },
+  {
+    title: "Narcissistic Grandiosity",
+    status: "Coming soon",
+    description:
+      "A dark concept about the perfect mask, the cracked real face underneath, and the collapse between image and truth.",
+  },
+  {
+    title: "Everything",
+    status: "Coming soon",
+    description:
+      "A song about wanting everything, needing too much, feeling capable of nothing, and chasing temporary happiness to stay upright.",
+  },
+  {
+    title: "ILIBILITY",
+    status: "Coming soon",
+    description:
+      "A sharp track about labels, fake understanding, and people using intelligent words while failing to actually read the person.",
+  },
+];
+
+let comingSoonIndex = 0;
+
+function renderComingSoonMusic() {
+  if (!comingSoonMusic) {
+    return;
+  }
+
+  const song = comingSoonSongs[comingSoonIndex];
+
+  comingSoonMusic.innerHTML = `
+    <p class="coming-soon-status">${song.status}</p>
+
+    <h3>${song.title}</h3>
+
+    <p>${song.description}</p>
+  `;
+
+  comingSoonIndex = (comingSoonIndex + 1) % comingSoonSongs.length;
+}
+
+renderComingSoonMusic();
+
+if (comingSoonMusic) {
+  setInterval(renderComingSoonMusic, 5000);
+}
