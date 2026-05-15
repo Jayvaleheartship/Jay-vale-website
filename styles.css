@@ -617,6 +617,8 @@ h3 {
 }
 
 .song-card {
+  display: block;
+
   background: rgba(0, 0, 0, 0.28);
 
   transition:
@@ -632,21 +634,51 @@ h3 {
   background: rgba(255, 255, 255, 0.06);
 }
 
-.art-placeholder {
-  height: 190px;
+.song-cover {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+
+  display: block;
 
   margin-bottom: 22px;
 
   border-radius: 22px;
   border: 1px solid var(--line);
 
-  background:
-    radial-gradient(
-      circle at 30% 20%,
-      rgba(239, 68, 68, 0.36),
-      transparent 28%
-    ),
-    linear-gradient(135deg, #27272a, #09090b);
+  background: #18181b;
+}
+
+.portfolio-link-wrap {
+  display: flex;
+  justify-content: center;
+
+  margin-top: 34px;
+}
+
+
+/* =========================
+   ROTATING SONG CARDS
+========================= */
+
+.rotating-song-grid {
+  min-height: 460px;
+}
+
+.rotating-song-card {
+  animation: cardFadeIn 0.55s ease both;
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 
@@ -744,6 +776,157 @@ h3 {
   margin-top: 15px;
 
   color: var(--muted);
+}
+
+
+/* =========================
+   PORTFOLIO PAGE
+========================= */
+
+.page-hero {
+  padding-top: 165px;
+  padding-bottom: 55px;
+}
+
+.page-title {
+  margin-top: 12px;
+
+  font-family: "Playfair Display", serif;
+  font-size: clamp(3.5rem, 9vw, 8rem);
+  line-height: 0.95;
+  letter-spacing: -0.07em;
+  text-transform: uppercase;
+}
+
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 26px;
+}
+
+.portfolio-card {
+  display: block;
+
+  border: 1px solid var(--line);
+  border-radius: 28px;
+
+  background: var(--glass);
+
+  overflow: hidden;
+
+  box-shadow: var(--shadow);
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.portfolio-card:hover {
+  transform: translateY(-4px);
+
+  border-color: rgba(252, 165, 165, 0.38);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.portfolio-card img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+
+  display: block;
+
+  background: #18181b;
+}
+
+.portfolio-card div {
+  padding: 24px;
+}
+
+.portfolio-card p {
+  margin-top: 12px;
+
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+
+/* =========================
+   SONG DETAIL PAGES
+========================= */
+
+.song-detail {
+  padding-top: 165px;
+  padding-bottom: 55px;
+}
+
+.song-detail-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.song-detail-cover {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+
+  border: 1px solid var(--line);
+  border-radius: 32px;
+
+  background: #18181b;
+
+  box-shadow: var(--shadow);
+}
+
+.song-detail .button {
+  margin-top: 34px;
+}
+
+.lyrics-layout {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.lyrics-box,
+.background-box {
+  border: 1px solid var(--line);
+  border-radius: 28px;
+
+  background: var(--glass);
+
+  padding: clamp(26px, 4vw, 42px);
+
+  box-shadow: var(--shadow);
+}
+
+.lyrics-box h2 {
+  margin-top: 0;
+  margin-bottom: 28px;
+
+  font-size: clamp(2rem, 5vw, 3.8rem);
+}
+
+.lyrics-text {
+  margin: 0;
+
+  white-space: pre-wrap;
+
+  color: var(--muted);
+
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.85;
+}
+
+.background-box p {
+  margin-top: 18px;
+
+  color: var(--muted);
+  line-height: 1.75;
 }
 
 
@@ -901,7 +1084,9 @@ footer {
 
   .two-column,
   .statement,
-  .contact {
+  .contact,
+  .song-detail-grid,
+  .lyrics-layout {
     grid-template-columns: 1fr;
   }
 
@@ -909,8 +1094,13 @@ footer {
   .cards.three,
   .cards.two,
   .timeline,
-  .recognize-grid {
+  .recognize-grid,
+  .portfolio-grid {
     grid-template-columns: 1fr;
+  }
+
+  .rotating-song-grid {
+    min-height: auto;
   }
 
   .hero {
@@ -957,6 +1147,10 @@ footer {
     font-size: 2.4rem;
   }
 
+  .page-title {
+    font-size: clamp(3.4rem, 18vw, 5rem);
+  }
+
   .button {
     width: 100%;
   }
@@ -967,6 +1161,11 @@ footer {
   .contact {
     padding-left: 20px;
     padding-right: 20px;
+  }
+
+  .page-hero,
+  .song-detail {
+    padding-top: 135px;
   }
 
   .contact {
@@ -984,7 +1183,8 @@ footer {
 
   .tag-box,
   .card,
-  .song-card {
+  .song-card,
+  .portfolio-card div {
     padding: 24px;
   }
 
