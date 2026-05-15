@@ -208,28 +208,32 @@ const comingSoonMusic = document.getElementById("comingSoonMusic");
 
 const comingSoonSongs = [
   {
+    title: "ILIBILITY",
+    status: "Coming soon",
+    releaseDate: "Release date: 25 May",
+    description:
+      "A sharp track about labels, fake understanding, and people using intelligent words while failing to actually read the person.",
+  },
+  {
     title: "Sparking Match",
     status: "Coming soon",
+    releaseDate: "Release date: 26 May",
     description:
       "A track about mistaking attention for love, and how one small spark can light up a place that was already dry inside.",
   },
   {
-    title: "Narcissistic Grandiosity",
-    status: "Coming soon",
-    description:
-      "A dark concept about the perfect mask, the cracked real face underneath, and the collapse between image and truth.",
-  },
-  {
     title: "Everything",
     status: "Coming soon",
+    releaseDate: "Release date: 26 May",
     description:
       "A song about wanting everything, needing too much, feeling capable of nothing, and chasing temporary happiness to stay upright.",
   },
   {
-    title: "ILIBILITY",
+    title: "Narcissistic Grandiosity",
     status: "Coming soon",
+    releaseDate: "Release date: 27 May",
     description:
-      "A sharp track about labels, fake understanding, and people using intelligent words while failing to actually read the person.",
+      "A dark concept about the perfect mask, the cracked real face underneath, and the collapse between image and truth.",
   },
 ];
 
@@ -246,6 +250,8 @@ function renderComingSoonMusic() {
     <p class="coming-soon-status">${song.status}</p>
 
     <h3>${song.title}</h3>
+
+    <p class="coming-soon-date">${song.releaseDate}</p>
 
     <p>${song.description}</p>
   `;
