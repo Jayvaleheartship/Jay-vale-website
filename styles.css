@@ -979,7 +979,26 @@ h3 {
 /* =========================
    SONG DETAIL PAGES
 ========================= */
+.long-song-title {
+  max-width: 720px;
 
+  font-size: clamp(2.5rem, 6.5vw, 6rem);
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+}
+
+@media (max-width: 980px) {
+  .long-song-title {
+    font-size: clamp(2.8rem, 11vw, 5.4rem);
+  }
+}
+
+@media (max-width: 560px) {
+  .long-song-title {
+    font-size: clamp(2.4rem, 13vw, 4rem);
+    line-height: 0.95;
+  }
+}
 .song-detail {
   padding-top: 165px;
   padding-bottom: 55px;
