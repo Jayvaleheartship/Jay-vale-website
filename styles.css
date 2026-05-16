@@ -1366,3 +1366,66 @@ footer {
     line-height: 0.95;
   }
 }
+/* =========================
+   MOBILE PORTFOLIO FIX
+========================= */
+
+@media (max-width: 560px) {
+  .portfolio-grid {
+    gap: 16px;
+    margin-top: 32px;
+  }
+
+  .portfolio-card {
+    display: grid;
+    grid-template-columns: 92px 1fr;
+    align-items: stretch;
+
+    min-height: 118px;
+
+    border-radius: 22px;
+  }
+
+  .portfolio-card img {
+    width: 92px;
+    height: 100%;
+    min-height: 118px;
+    aspect-ratio: auto;
+
+    object-fit: cover;
+
+    border-right: 1px solid var(--line);
+  }
+
+  .portfolio-card div {
+    padding: 16px;
+  }
+
+  .portfolio-card h3 {
+    font-size: 1.15rem;
+    line-height: 1.05;
+  }
+
+  .portfolio-card p {
+    margin-top: 8px;
+
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  .page-hero {
+    padding-bottom: 30px;
+  }
+
+  .page-hero .hero-text {
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+}
+
+
+
+
+
+
+
