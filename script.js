@@ -262,5 +262,5 @@ function renderComingSoonMusic() {
 renderComingSoonMusic();
 
 if (comingSoonMusic) {
-  setInterval(renderComingSoonMusic, 5000);
+  setInterval(renderComingSoonMusic, 7000);
 }
