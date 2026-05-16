@@ -24,10 +24,24 @@ html {
 
 body {
   margin: 0;
+  min-width: 0;
+  overflow-x: hidden;
+
   background: var(--bg);
   color: var(--text);
+
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.6;
+}
+
+img,
+video,
+iframe {
+  max-width: 100%;
+}
+
+img {
+  height: auto;
 }
 
 a {
@@ -38,7 +52,6 @@ a {
 p {
   margin: 0;
 }
-
 
 /* =========================
    NAVIGATION
@@ -92,6 +105,105 @@ p {
   font-weight: 700;
 }
 
+/* =========================
+   LABELS / HEADINGS
+========================= */
+
+.pill,
+.eyebrow {
+  display: inline-flex;
+
+  color: var(--red-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.pill {
+  border: 1px solid rgba(252, 165, 165, 0.22);
+  background: rgba(239, 68, 68, 0.11);
+
+  border-radius: 999px;
+  padding: 10px 16px;
+  margin-bottom: 26px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 0.98;
+}
+
+h1 {
+  font-family: "Playfair Display", serif;
+  font-size: clamp(4.7rem, 12vw, 10rem);
+  letter-spacing: -0.07em;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+h2 {
+  margin-top: 14px;
+  max-width: 980px;
+
+  font-size: clamp(2.45rem, 6vw, 5rem);
+  letter-spacing: -0.065em;
+  font-weight: 900;
+}
+
+h3 {
+  font-size: 1.55rem;
+  letter-spacing: -0.035em;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 56px;
+  padding: 0 24px;
+
+  border-radius: 18px;
+
+  font-weight: 900;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border 0.2s ease;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+}
+
+.primary {
+  background: var(--red);
+  color: #fff;
+  box-shadow: 0 16px 50px rgba(239, 68, 68, 0.23);
+}
+
+.primary:hover {
+  background: #f87171;
+}
+
+.secondary {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.secondary:hover {
+  border-color: rgba(252, 165, 165, 0.35);
+  background: rgba(255, 255, 255, 0.1);
+}
 
 /* =========================
    HERO
@@ -190,110 +302,6 @@ p {
   margin-top: 38px;
 }
 
-
-/* =========================
-   LABELS / HEADINGS
-========================= */
-
-.pill,
-.eyebrow {
-  display: inline-flex;
-
-  color: var(--red-soft);
-  text-transform: uppercase;
-  letter-spacing: 0.28em;
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
-.pill {
-  border: 1px solid rgba(252, 165, 165, 0.22);
-  background: rgba(239, 68, 68, 0.11);
-
-  border-radius: 999px;
-  padding: 10px 16px;
-  margin-bottom: 26px;
-}
-
-h1,
-h2,
-h3 {
-  margin: 0;
-  line-height: 0.98;
-}
-
-h1 {
-  font-family: "Playfair Display", serif;
-  font-size: clamp(4.7rem, 12vw, 10rem);
-  letter-spacing: -0.07em;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-h2 {
-  margin-top: 14px;
-
-  max-width: 980px;
-
-  font-size: clamp(2.45rem, 6vw, 5rem);
-  letter-spacing: -0.065em;
-  font-weight: 900;
-}
-
-h3 {
-  font-size: 1.55rem;
-  letter-spacing: -0.035em;
-}
-
-
-/* =========================
-   BUTTONS
-========================= */
-
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  min-height: 56px;
-  padding: 0 24px;
-
-  border-radius: 18px;
-
-  font-weight: 900;
-
-  transition:
-    transform 0.2s ease,
-    background 0.2s ease,
-    border 0.2s ease;
-}
-
-.button:hover {
-  transform: translateY(-2px);
-}
-
-.primary {
-  background: var(--red);
-  color: #fff;
-  box-shadow: 0 16px 50px rgba(239, 68, 68, 0.23);
-}
-
-.primary:hover {
-  background: #f87171;
-}
-
-.secondary {
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
-}
-
-.secondary:hover {
-  border-color: rgba(252, 165, 165, 0.35);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-
 /* =========================
    GENERAL SECTIONS
 ========================= */
@@ -341,20 +349,26 @@ h3 {
   margin-top: 42px;
 }
 
-
 /* =========================
-   PANELS
+   PANELS / CARDS
 ========================= */
 
-.panel {
+.panel,
+.card,
+.song-card,
+.lyrics-box,
+.background-box,
+.tag-box {
   border: 1px solid var(--line);
   border-radius: 28px;
 
   background: var(--glass);
 
-  padding: clamp(26px, 4vw, 42px);
-
   box-shadow: var(--shadow);
+}
+
+.panel {
+  padding: clamp(26px, 4vw, 42px);
 }
 
 .panel h3 {
@@ -364,11 +378,6 @@ h3 {
 
   font-size: 2rem;
 }
-
-
-/* =========================
-   CARDS
-========================= */
 
 .cards {
   display: grid;
@@ -390,14 +399,7 @@ h3 {
 
 .card,
 .song-card {
-  border: 1px solid var(--line);
-  border-radius: 28px;
-
-  background: var(--glass);
-
   padding: 28px;
-
-  box-shadow: var(--shadow);
 }
 
 .card p,
@@ -426,7 +428,6 @@ h3 {
 
   font-size: 1.35rem;
 }
-
 
 /* =========================
    STATEMENT SECTION
@@ -463,7 +464,6 @@ h3 {
 
   font-size: clamp(1.25rem, 2vw, 1.55rem);
 }
-
 
 /* =========================
    RECOGNIZE SECTION
@@ -607,7 +607,6 @@ h3 {
   line-height: 1.8;
 }
 
-
 /* =========================
    MUSIC SECTION
 ========================= */
@@ -618,7 +617,6 @@ h3 {
 
 .song-card {
   display: block;
-
   background: rgba(0, 0, 0, 0.28);
 
   transition:
@@ -658,11 +656,6 @@ h3 {
   margin-top: 34px;
 }
 
-
-/* =========================
-   ROTATING SONG CARDS
-========================= */
-
 .rotating-song-grid {
   min-height: 460px;
 }
@@ -682,7 +675,6 @@ h3 {
     transform: translateY(0);
   }
 }
-
 
 /* =========================
    COMING SOON MUSIC
@@ -833,12 +825,6 @@ h3 {
 
 .tag-box {
   margin-top: 46px;
-
-  border: 1px solid var(--line);
-  border-radius: 28px;
-
-  background: var(--glass);
-
   padding: 32px;
 }
 
@@ -866,7 +852,6 @@ h3 {
   font-size: 0.75rem;
   font-weight: 800;
 }
-
 
 /* =========================
    TIMELINE
@@ -923,7 +908,6 @@ h3 {
   color: var(--muted);
 }
 
-
 /* =========================
    PORTFOLIO PAGE
 ========================= */
@@ -941,6 +925,14 @@ h3 {
   line-height: 0.95;
   letter-spacing: -0.07em;
   text-transform: uppercase;
+}
+
+.page-title.long-song-title {
+  max-width: 720px;
+
+  font-size: clamp(2.5rem, 6.5vw, 6rem);
+  line-height: 0.9;
+  letter-spacing: -0.06em;
 }
 
 .portfolio-grid {
@@ -997,7 +989,6 @@ h3 {
   line-height: 1.7;
 }
 
-
 /* =========================
    SONG DETAIL PAGES
 ========================= */
@@ -1015,6 +1006,8 @@ h3 {
 }
 
 .song-detail-cover {
+  display: block;
+
   width: 100%;
   aspect-ratio: 1 / 1;
   object-fit: cover;
@@ -1040,14 +1033,16 @@ h3 {
 
 .lyrics-box,
 .background-box {
-  border: 1px solid var(--line);
-  border-radius: 28px;
+  position: relative;
+  display: block;
 
-  background: var(--glass);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 
   padding: clamp(26px, 4vw, 42px);
 
-  box-shadow: var(--shadow);
+  overflow: visible;
 }
 
 .lyrics-box h2 {
@@ -1058,9 +1053,11 @@ h3 {
 }
 
 .lyrics-text {
+  display: block;
   margin: 0;
 
   white-space: pre-wrap;
+  overflow-wrap: break-word;
 
   color: var(--muted);
 
@@ -1075,7 +1072,6 @@ h3 {
   color: var(--muted);
   line-height: 1.75;
 }
-
 
 /* =========================
    CONTACT SECTION
@@ -1109,11 +1105,6 @@ h3 {
   color: var(--dim) !important;
   font-size: 1rem !important;
 }
-
-
-/* =========================
-   SOCIAL LINKS
-========================= */
 
 .contact-links {
   display: flex;
@@ -1158,7 +1149,6 @@ h3 {
   font-size: 1.1rem;
 }
 
-
 /* =========================
    FOOTER
 ========================= */
@@ -1173,7 +1163,6 @@ footer {
 
   font-size: 0.9rem;
 }
-
 
 /* =========================
    SCROLL REVEAL ANIMATION
@@ -1192,7 +1181,6 @@ footer {
   opacity: 1;
   transform: translateY(0);
 }
-
 
 /* =========================
    TABLET / SMALL LAPTOP
@@ -1273,17 +1261,28 @@ footer {
         transparent 36%
       );
   }
-}
 
+  .page-title.long-song-title {
+    font-size: clamp(2.8rem, 10vw, 5rem);
+  }
+}
 
 /* =========================
    MOBILE
 ========================= */
 
 @media (max-width: 560px) {
+  .site-nav {
+    padding: 15px 18px;
+  }
+
+  .brand {
+    font-size: 1rem;
+  }
+
   .hero {
-    padding-left: 20px;
-    padding-right: 20px;
+    min-height: 92vh;
+    padding: 125px 20px 90px;
   }
 
   h1 {
@@ -1298,6 +1297,21 @@ footer {
     font-size: clamp(3.4rem, 18vw, 5rem);
   }
 
+  .page-title.long-song-title {
+    font-size: clamp(2.15rem, 11vw, 3.6rem);
+    line-height: 0.95;
+  }
+
+  .hero-subtitle {
+    font-size: 1.28rem;
+  }
+
+  .hero-text,
+  .page-hero .hero-text {
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+
   .button {
     width: 100%;
   }
@@ -1310,12 +1324,84 @@ footer {
     padding-right: 20px;
   }
 
-  .page-hero,
-  .song-detail {
+  .page-hero {
     padding-top: 135px;
+    padding-bottom: 30px;
+  }
+
+  .song-detail {
+    padding-top: 125px;
+    padding-bottom: 36px;
+  }
+
+  .song-detail-grid {
+    gap: 28px;
+  }
+
+  .song-detail-cover {
+    width: 100%;
+    max-width: 360px;
+    margin: 0 auto;
+
+    border-radius: 24px;
+  }
+
+  .song-detail .button {
+    width: 100%;
+    margin-top: 28px;
+  }
+
+  .lyrics-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .lyrics-box,
+  .background-box {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+
+    width: 100%;
+    max-width: 100%;
+
+    height: auto;
+    min-height: 0;
+    max-height: none;
+
+    overflow: visible;
+
+    padding: 24px;
+    border-radius: 24px;
+  }
+
+  .lyrics-box h2 {
+    font-size: 2.15rem;
+    line-height: 1;
+    margin-bottom: 22px;
+  }
+
+  .lyrics-text {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+
+    font-size: 0.98rem;
+    line-height: 1.75;
+  }
+
+  .background-box p {
+    font-size: 0.98rem;
+    line-height: 1.7;
   }
 
   .contact {
+    grid-template-columns: 1fr;
     border-radius: 28px;
   }
 
@@ -1339,38 +1425,7 @@ footer {
   .note-text {
     padding: 18px;
   }
-}
 
-
-/* =========================
-   SPECIAL TITLE FIXES
-========================= */
-
-.page-title.long-song-title {
-  max-width: 720px;
-
-  font-size: clamp(2.5rem, 6.5vw, 6rem);
-  line-height: 0.9;
-  letter-spacing: -0.06em;
-}
-
-@media (max-width: 980px) {
-  .page-title.long-song-title {
-    font-size: clamp(2.8rem, 10vw, 5rem);
-  }
-}
-
-@media (max-width: 560px) {
-  .page-title.long-song-title {
-    font-size: clamp(2.15rem, 11vw, 3.6rem);
-    line-height: 0.95;
-  }
-}
-/* =========================
-   MOBILE PORTFOLIO FIX
-========================= */
-
-@media (max-width: 560px) {
   .portfolio-grid {
     gap: 16px;
     margin-top: 32px;
@@ -1413,19 +1468,12 @@ footer {
     line-height: 1.45;
   }
 
-  .page-hero {
-    padding-bottom: 30px;
-  }
-
-  .page-hero .hero-text {
-    font-size: 1rem;
-    line-height: 1.65;
+  /* Prevent song content from vanishing if reveal JavaScript fails on mobile. */
+  .song-detail .reveal,
+  .lyrics-layout.reveal,
+  .lyrics-box.reveal,
+  .background-box.reveal {
+    opacity: 1 !important;
+    transform: none !important;
   }
 }
-
-
-
-
-
-
-
