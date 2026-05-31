@@ -1689,3 +1689,141 @@ footer {
   }
 }
 ```
+```css
+/* =========================
+   EMERGENCY SONG PAGE VISIBILITY FIX
+   Forces lyrics and background to show on mobile
+========================= */
+
+.song-detail,
+.lyrics-layout,
+.lyrics-box,
+.background-box,
+.lyrics-text {
+  visibility: visible !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.lyrics-layout {
+  display: grid !important;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.lyrics-box,
+.background-box {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.lyrics-text {
+  display: block !important;
+  width: 100% !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: break-word !important;
+  word-break: normal !important;
+  color: var(--muted) !important;
+  font-family: Inter, system-ui, sans-serif !important;
+  font-size: 1.05rem !important;
+  line-height: 1.85 !important;
+  margin: 0 !important;
+}
+
+/* =========================
+   MOBILE SONG PAGE HARD FIX
+========================= */
+
+@media (max-width: 980px) {
+  .lyrics-layout {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .song-detail {
+    padding-top: 125px !important;
+    padding-bottom: 36px !important;
+  }
+
+  .lyrics-layout {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 22px !important;
+  }
+
+  .lyrics-box,
+  .background-box {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: none !important;
+
+    width: 100% !important;
+    max-width: 100% !important;
+
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+
+    overflow: visible !important;
+
+    padding: 24px !important;
+    border-radius: 24px !important;
+  }
+
+  .lyrics-box h2,
+  .background-box h2 {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    font-size: 2.15rem !important;
+    line-height: 1 !important;
+    margin-top: 0 !important;
+    margin-bottom: 22px !important;
+  }
+
+  .lyrics-text {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    width: 100% !important;
+    max-width: 100% !important;
+
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+
+    overflow: visible !important;
+    white-space: pre-wrap !important;
+    overflow-wrap: break-word !important;
+
+    color: var(--muted) !important;
+
+    font-size: 0.98rem !important;
+    line-height: 1.75 !important;
+  }
+
+  .background-box p {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    color: var(--muted) !important;
+
+    font-size: 0.98rem !important;
+    line-height: 1.7 !important;
+  }
+}
+```
