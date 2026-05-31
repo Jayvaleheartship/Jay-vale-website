@@ -1,6 +1,10 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- =========================
+       META / PAGE SETUP
+  ========================== -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -16,6 +20,9 @@
 
   <meta name="theme-color" content="#09090b" />
 
+  <!-- =========================
+       OPEN GRAPH / SOCIAL PREVIEW
+  ========================== -->
   <meta property="og:title" content="Jay Vale | Heartship Records" />
   <meta
     property="og:description"
@@ -24,6 +31,9 @@
   <meta property="og:image" content="https://jayvalemusic.com/assets/jay-vale-hero-art.png" />
   <meta property="og:type" content="website" />
 
+  <!-- =========================
+       FONTS / ICONS / STYLES
+  ========================== -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
@@ -41,6 +51,9 @@
 </head>
 
 <body>
+  <!-- =========================
+       NAVIGATION
+  ========================== -->
   <nav class="site-nav">
     <a href="#home" class="brand">Jay Vale</a>
 
@@ -60,6 +73,9 @@
     </div>
   </nav>
 
+  <!-- =========================
+       HERO / HOME
+  ========================== -->
   <header id="home" class="hero">
     <div class="hero-bg"></div>
     <div class="hero-overlay"></div>
@@ -88,6 +104,9 @@
   </header>
 
   <main>
+    <!-- =========================
+         ABOUT / BIOGRAPHY
+    ========================== -->
     <section id="about" class="section reveal">
       <p class="eyebrow">Biography</p>
 
@@ -138,6 +157,9 @@
       </div>
     </section>
 
+    <!-- =========================
+         ARTIST ROLES / QUICK CARDS
+    ========================== -->
     <section class="cards-section reveal">
       <div class="cards four">
         <article class="card">
@@ -174,6 +196,9 @@
       </div>
     </section>
 
+    <!-- =========================
+         PURPOSE / WHY I DO THIS
+    ========================== -->
     <section id="purpose" class="section reveal">
       <p class="eyebrow">Why I do this</p>
 
@@ -207,6 +232,9 @@
       </div>
     </section>
 
+    <!-- =========================
+         ARTIST STATEMENT
+    ========================== -->
     <section class="statement-wrap reveal">
       <div class="statement">
         <div>
@@ -230,6 +258,9 @@
       </div>
     </section>
 
+    <!-- =========================
+         RECOGNIZE IT / MENTAL HEALTH SIGNS
+    ========================== -->
     <section id="recognize" class="section reveal">
       <p class="eyebrow">For anyone who recognizes this</p>
 
@@ -311,13 +342,108 @@
       </p>
     </section>
 
+    <!-- =========================
+         MUSIC / LATEST RELEASES
+    ========================== -->
     <section id="music" class="section reveal">
-      <p class="eyebrow">Music identity</p>
+      <p class="eyebrow">Latest releases</p>
 
-      <h2>Dark songs for people who think too much and feel too little until it breaks open.</h2>
+      <h2>Four new songs pulled out of the dark.</h2>
 
-      <div class="cards three song-grid rotating-song-grid" id="featuredSongs">
-        <!-- Rotating song cards are loaded from script.js -->
+      <p class="hero-text">
+        These songs were released this month and are now part of the Jay Vale catalog:
+        attention mistaken for love, ego as armor, clinical language turned into satire,
+        and the brutal gap between ambition and collapse.
+      </p>
+
+      <div class="cards four song-grid">
+        <!-- =========================
+             MUSIC CARD: SPARKING MATCH
+        ========================== -->
+        <a class="song-card" href="songs/sparking-match.html">
+          <img
+            src="assets/sparking_match.jpg"
+            alt="Sparking Match cover art"
+            class="song-cover"
+            loading="lazy"
+            decoding="async"
+          />
+
+          <p class="song-status">Released</p>
+
+          <h3>Sparking Match</h3>
+
+          <p>
+            A dark emotional track about mistaking attention for love, living for the spark,
+            and going cold when the glow fades.
+          </p>
+        </a>
+
+        <!-- =========================
+             MUSIC CARD: NARCISSISTIC GRANDIOSITY
+        ========================== -->
+        <a class="song-card" href="songs/narcissistic-grandiosity.html">
+          <img
+            src="assets/narcissistic_grandiosity.jpg"
+            alt="Narcissistic Grandiosity cover art"
+            class="song-cover"
+            loading="lazy"
+            decoding="async"
+          />
+
+          <p class="song-status">Released</p>
+
+          <h3>Narcissistic Grandiosity</h3>
+
+          <p>
+            A sharp, swaggering track about ego as armor, confidence as performance,
+            and turning pain into charisma before anyone can use it against you.
+          </p>
+        </a>
+
+        <!-- =========================
+             MUSIC CARD: ILIBILITY
+        ========================== -->
+        <a class="song-card" href="songs/ilibility.html">
+          <img
+            src="assets/ilibility.jpg"
+            alt="Ilibility cover art"
+            class="song-cover"
+            loading="lazy"
+            decoding="async"
+          />
+
+          <p class="song-status">Released</p>
+
+          <h3>Ilibility</h3>
+
+          <p>
+            A sarcastic, confrontational track about clinical jargon, fake authority,
+            and the difference between analyzing someone and actually understanding them.
+          </p>
+        </a>
+
+        <!-- =========================
+             MUSIC CARD: EVERYTHING
+        ========================== -->
+        <a class="song-card" href="songs/everything.html">
+          <img
+            src="assets/everything.jpg"
+            alt="Everything cover art"
+            class="song-cover"
+            loading="lazy"
+            decoding="async"
+          />
+
+          <p class="song-status">Released</p>
+
+          <h3>Everything</h3>
+
+          <p>
+            A heavy emotional track about wanting everything, feeling unable to do anything,
+            and trying to accept that survival can still be progress.
+          </p>
+        </a>
       </div>
 
       <div class="portfolio-link-wrap">
@@ -325,8 +451,8 @@
           View full song portfolio
         </a>
 
-        <a class="button secondary" href="portfolio.html#coming-soon">
-          Coming soon music
+        <a class="button secondary" href="portfolio.html#released-this-month">
+          Released this month
         </a>
       </div>
 
@@ -350,6 +476,9 @@
       </div>
     </section>
 
+    <!-- =========================
+         HEARTSHIP RECORDS
+    ========================== -->
     <section id="heartship" class="section reveal">
       <p class="eyebrow">Heartship Records</p>
 
@@ -384,6 +513,9 @@
       </div>
     </section>
 
+    <!-- =========================
+         JOURNEY / TIMELINE
+    ========================== -->
     <section id="journey" class="section reveal">
       <p class="eyebrow">The journey</p>
 
@@ -428,6 +560,9 @@
       </div>
     </section>
 
+    <!-- =========================
+         PRESS / COLLABORATION INFO
+    ========================== -->
     <section id="press" class="section reveal">
       <p class="eyebrow">For listeners, press and collaborators</p>
 
@@ -473,6 +608,9 @@
       </div>
     </section>
 
+    <!-- =========================
+         CONTACT / SOCIAL LINKS
+    ========================== -->
     <section id="contact" class="contact reveal">
       <div>
         <p class="eyebrow">Contact</p>
@@ -560,12 +698,19 @@
     </section>
   </main>
 
+  <!-- =========================
+       FOOTER
+  ========================== -->
   <footer>
     <p>
       © <span id="year"></span> Jay Vale / Heartship Records. Built for honesty, not decoration.
     </p>
   </footer>
 
+  <!-- =========================
+       JAVASCRIPT
+  ========================== -->
   <script src="script.js"></script>
 </body>
 </html>
+```
