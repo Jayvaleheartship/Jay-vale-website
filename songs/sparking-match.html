@@ -1,49 +1,85 @@
+```html id="iuoedn"
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Sparking Match | Jay Vale</title>
+
+  <link rel="icon" type="image/png" href="../assets/favicon.png" />
+  <link rel="apple-touch-icon" href="../assets/favicon.png" />
+
+  <meta
+    name="description"
+    content="Sparking Match by Jay Vale. Lyrics, cover art and background story behind the song."
+  />
+
+  <meta name="theme-color" content="#09090b" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap"
+    rel="stylesheet"
+  />
+
   <link rel="stylesheet" href="../styles.css" />
 </head>
 
 <body>
-  <header class="site-header">
-    <nav class="navbar">
-      <a href="../index.html" class="logo">Jay Vale</a>
+  <nav class="site-nav">
+    <a href="../index.html#home" class="brand">Jay Vale</a>
 
-      <div class="nav-links">
-        <a href="../index.html#music">Music</a>
-        <a href="../index.html#about">About</a>
-        <a href="../index.html#contact">Contact</a>
-      </div>
-    </nav>
-  </header>
+    <button class="menu-button" id="menuButton" aria-label="Open menu">
+      Menu
+    </button>
 
-  <main class="song-page">
-    <section class="song-hero">
-      <div class="song-cover-wrap">
+    <div class="nav-links" id="navLinks">
+      <a href="../index.html#about">About</a>
+      <a href="../index.html#purpose">Purpose</a>
+      <a href="../index.html#recognize">Recognize it</a>
+      <a href="../index.html#music">Music</a>
+      <a href="../portfolio.html">Portfolio</a>
+      <a href="../index.html#contact">Contact</a>
+    </div>
+  </nav>
+
+  <main>
+    <section class="section song-detail reveal">
+      <div class="song-detail-grid">
+        <div>
+          <p class="eyebrow">Song</p>
+
+          <h1 class="page-title">Sparking Match</h1>
+
+          <p class="hero-text">
+            A song about the high of being noticed, mistaking the spark for love,
+            and going cold when the glow fades.
+          </p>
+
+          <a href="../portfolio.html" class="button secondary">
+            ← Back to portfolio
+          </a>
+        </div>
+
         <img
           src="../assets/sparking_match.jpg"
           alt="Sparking Match cover art"
-          class="song-cover-large"
+          class="song-detail-cover"
+          loading="eager"
+          decoding="async"
         />
-      </div>
-
-      <div class="song-hero-text">
-        <p class="eyebrow">Song</p>
-        <h1>Sparking Match</h1>
-        <p class="song-tagline">
-          A song about the high of being noticed, mistaking the spark for love,
-          and going cold when the glow fades.
-        </p>
       </div>
     </section>
 
-    <section class="song-section">
-      <h2>Lyrics</h2>
+    <section class="section reveal">
+      <div class="lyrics-layout">
+        <div class="lyrics-box">
+          <h2>Lyrics</h2>
 
-      <pre class="lyrics">She walked in, whole room went sharp,
+          <pre class="lyrics-text">She walked in, whole room went sharp,
 Like somebody lit a match in the dark.
 I was posted up, acting numb,
 Then she looked my way and I came undone.
@@ -155,70 +191,71 @@ She didn’t break me.
 She just met me
 between the spark
 and the shutdown.</pre>
-    </section>
+        </div>
 
-    <section class="song-section">
-      <h2>Background</h2>
+        <aside class="background-box">
+          <h2>Background</h2>
 
-      <p>
-        <strong>Sparking Match</strong> was made from the high of being noticed
-        at the exact moment you feel emotionally dead.
-      </p>
+          <p>
+            <strong>Sparking Match</strong> was made from the high of being noticed
+            at the exact moment you feel emotionally dead.
+          </p>
 
-      <p>
-        The song is about that first spark: eye contact, a smile, a conversation,
-        a touch on the arm — the kind of moment that suddenly makes everything
-        inside feel awake again. For a little while, the numbness lifts. The room
-        feels alive. The jokes come easier. The charm works again. It feels like
-        maybe this time something real can happen.
-      </p>
+          <p>
+            The song is about that first spark: eye contact, a smile, a conversation,
+            a touch on the arm — the kind of moment that suddenly makes everything
+            inside feel awake again. For a little while, the numbness lifts. The room
+            feels alive. The jokes come easier. The charm works again. It feels like
+            maybe this time something real can happen.
+          </p>
 
-      <p>
-        But the track is not just about falling for someone. It is about falling
-        for the feeling of being seen.
-      </p>
+          <p>
+            But the track is not just about falling for someone. It is about falling
+            for the feeling of being seen.
+          </p>
 
-      <p>
-        That is where the pain sits. The beginning feels electric, almost
-        addictive, because it brings life back into places that felt shut down.
-        But once the mystery fades and the connection becomes normal, something
-        inside starts pulling away. No big fight. No betrayal. No clear reason.
-        Just distance creeping in, the glow wearing off, and the same old numbness
-        taking over again.
-      </p>
+          <p>
+            That is where the pain sits. The beginning feels electric, almost
+            addictive, because it brings life back into places that felt shut down.
+            But once the mystery fades and the connection becomes normal, something
+            inside starts pulling away. No big fight. No betrayal. No clear reason.
+            Just distance creeping in, the glow wearing off, and the same old numbness
+            taking over again.
+          </p>
 
-      <p>
-        <strong>Sparking Match</strong> is about wanting love, but only knowing how
-        to feel it when it is still new, intense, and unfinished. It is about
-        mistaking the spark for the whole fire, then feeling guilty when the
-        warmth disappears. The other person did nothing wrong — they simply met
-        someone caught between craving connection and shutting down when it gets
-        too close.
-      </p>
+          <p>
+            <strong>Sparking Match</strong> is about wanting love, but only knowing how
+            to feel it when it is still new, intense, and unfinished. It is about
+            mistaking the spark for the whole fire, then feeling guilty when the
+            warmth disappears. The other person did nothing wrong — they simply met
+            someone caught between craving connection and shutting down when it gets
+            too close.
+          </p>
 
-      <p>
-        The instrumental was built to carry that contrast: smooth, emotional, and
-        glowing at first, with enough movement to feel like attraction pulling
-        everything forward. But underneath the beauty, there is a quiet sadness,
-        because the song already knows where the pattern leads. It sounds like a
-        rush that slowly turns into a confession.
-      </p>
+          <p>
+            The instrumental was built to carry that contrast: smooth, emotional, and
+            glowing at first, with enough movement to feel like attraction pulling
+            everything forward. But underneath the beauty, there is a quiet sadness,
+            because the song already knows where the pattern leads. It sounds like a
+            rush that slowly turns into a confession.
+          </p>
 
-      <p>
-        At its core, <strong>Sparking Match</strong> is about the moment between
-        coming alive and going cold.
-      </p>
-    </section>
-
-    <section class="song-navigation">
-      <a href="../index.html#music" class="back-link">← Back to music</a>
+          <p>
+            At its core, <strong>Sparking Match</strong> is about the moment between
+            coming alive and going cold.
+          </p>
+        </aside>
+      </div>
     </section>
   </main>
 
-  <footer class="site-footer">
-    <p>© <span id="year"></span> Jay Vale. All rights reserved.</p>
+  <footer>
+    <p>
+      © <span id="year"></span> Jay Vale / Heartship Records. Built for honesty, not decoration.
+    </p>
   </footer>
 
   <script src="../script.js"></script>
 </body>
 </html>
+```
