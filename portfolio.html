@@ -1,90 +1,329 @@
-```html id="portfolio-four-released-songs"
-<section id="music" class="music-section reveal">
-  <div class="section-heading">
-    <p class="eyebrow">Music</p>
-    <h2>Released Songs</h2>
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Song Portfolio | Jay Vale</title>
+
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="apple-touch-icon" href="assets/favicon.png" />
+
+  <meta
+    name="description"
+    content="The complete Jay Vale song portfolio. Lyrics, cover art and background stories behind the music."
+  />
+
+  <meta name="theme-color" content="#09090b" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <nav class="site-nav">
+    <a href="index.html#home" class="brand">Jay Vale</a>
+
+    <button class="menu-button" id="menuButton" aria-label="Open menu">
+      Menu
+    </button>
+
+    <div class="nav-links" id="navLinks">
+      <a href="index.html#about">About</a>
+      <a href="index.html#purpose">Purpose</a>
+      <a href="index.html#recognize">Recognize it</a>
+      <a href="index.html#music">Music</a>
+      <a href="portfolio.html">Portfolio</a>
+      <a href="index.html#contact">Contact</a>
+    </div>
+  </nav>
+
+  <main>
+    <section class="section page-hero reveal">
+      <p class="eyebrow">Complete catalog</p>
+
+      <h1 class="page-title">Song Portfolio</h1>
+
+      <p class="hero-text">
+        A growing index of Jay Vale songs, cover art, lyrics and the background behind each track.
+      </p>
+    </section>
+
+    <section class="section reveal">
+      <p class="eyebrow">Available music</p>
+
+      <h2>Released stories, lyrics and background.</h2>
+
+      <div class="portfolio-grid">
+        <a class="portfolio-card" href="songs/sparking-match.html">
+          <img src="images/sparking_match.jpg" alt="Sparking Match cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>Sparking Match</h3>
+            <p>
+              A dark emotional track about mistaking attention for love, living for the spark,
+              and going cold when the glow fades.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/narcissistic-grandiosity.html">
+          <img src="images/narcissistic_grandiosity.jpg" alt="Narcissistic Grandiosity cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>Narcissistic Grandiosity</h3>
+            <p>
+              A sharp, swaggering track about ego as armor, confidence as performance,
+              and turning pain into charisma before anyone can use it against you.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/ilibility.html">
+          <img src="images/ilibility.jpg" alt="Ilibility cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>Ilibility</h3>
+            <p>
+              A sarcastic, confrontational track about clinical jargon, fake authority,
+              and the difference between analyzing someone and actually understanding them.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/everything.html">
+          <img src="images/everything.jpg" alt="Everything cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>Everything</h3>
+            <p>
+              A heavy emotional track about wanting everything, feeling unable to do anything,
+              and trying to accept that survival can still be progress.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/chemical-road.html">
+          <img src="assets/chemical.png" alt="Chemical Road cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>Chemical Road</h3>
+            <p>
+              A dark emotional track about the strange roads inside the mind, where chemistry,
+              memory and survival keep pulling in different directions.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/digital-home.html">
+          <img src="assets/digital-home.png" alt="Digital Home cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>Digital Home</h3>
+            <p>
+              A cinematic emotional track about finding real connection inside a digital world,
+              disappearing without a goodbye, and coming back to say thank you.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/hour-by-hour.html">
+          <img src="assets/hour-by-hour-cover.png" alt="Hour by Hour cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>Hour by Hour</h3>
+            <p>
+              A song about surviving time in fragments, running out of fuel, and making it through
+              one hour at a time.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/family.html">
+          <img src="assets/family-cover.png" alt="Family cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>Family</h3>
+            <p>
+              A heavy and direct song about blood, damage, memory, survival, and the painful meaning
+              of family.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/my-own-apocalypse.html">
+          <img src="assets/my-own-apocalypse.png" alt="My Own Apocalypse cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>My Own Apocalypse</h3>
+            <p>
+              An internal disaster written like a ruined world.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/perfect-cracks.html">
+          <img src="assets/perfect-cracks-cover.png" alt="Perfect Cracks cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>Perfect Cracks</h3>
+            <p>
+              The album project behind the Jay Vale sound: damage, masks, survival, reflection,
+              and the cracks that finally made the truth visible.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/answer-me-this.html">
+          <img src="assets/answer-me-this-cover.png" alt="Answer Me This cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>Answer Me This</h3>
+            <p>
+              A direct confrontation with absence, silence, unanswered questions, and the need to
+              know what was left behind.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/self-diagnosed-schyzophrenic.html">
+          <img src="assets/self-diagnosed-schyzophrenic-cover.png" alt="Self-Diagnosed Schyzophrenic cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>Self-Diagnosed Schyzophrenic</h3>
+            <p>
+              A chaotic, sharp-edged track about identity, labels, confusion, and the danger of being
+              reduced to symptoms.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/selfhate.html">
+          <img src="assets/selfhate-cover.png" alt="Selfhate cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>Selfhate</h3>
+            <p>
+              A heavy inner-conflict track about turning anger inward and fighting the voice that keeps
+              attacking from inside.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/fought-not-to-be.html">
+          <img src="assets/fought-not-to-be-cover.png" alt="Fought Not To Be cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>Fought Not To Be</h3>
+            <p>
+              A symbolic escape from becoming the past and refusing to become inherited damage.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/behind-the-wall.html">
+          <img src="assets/behind-the-wall.png" alt="Behind the Wall cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>Behind the Wall</h3>
+            <p>
+              A song about the hidden younger self, the protector, and the pain still speaking from
+              behind the wall.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/can-you-relate.html">
+          <img src="assets/can-you-relate-cover.png" alt="Can You Relate cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>Can You Relate</h3>
+            <p>
+              A track about recognition, loneliness, and asking whether anyone else knows how to heal
+              when the damage is you.
+            </p>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <section class="section reveal" id="released-this-month">
+      <p class="eyebrow">Released this month</p>
+
+      <h2>No longer coming soon.</h2>
+
+      <p class="hero-text">
+        Sparking Match, Narcissistic Grandiosity, Ilibility and Everything have now been released
+        and added to the full Jay Vale song portfolio.
+      </p>
+
+      <div class="portfolio-grid">
+        <a class="portfolio-card" href="songs/sparking-match.html">
+          <img src="images/sparking_match.jpg" alt="Sparking Match cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>Sparking Match</h3>
+            <p>
+              The rush of being noticed, the spark of attention, and the shutdown that follows
+              when the glow becomes normal.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/narcissistic-grandiosity.html">
+          <img src="images/narcissistic_grandiosity.jpg" alt="Narcissistic Grandiosity cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>Narcissistic Grandiosity</h3>
+            <p>
+              Confidence turned into armor, ego turned into performance, and pain dressed up
+              as self-respect.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/ilibility.html">
+          <img src="images/ilibility.jpg" alt="Ilibility cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>Ilibility</h3>
+            <p>
+              A sharp protest against clinical language, fake superiority, and being reduced
+              to labels instead of being heard.
+            </p>
+          </div>
+        </a>
+
+        <a class="portfolio-card" href="songs/everything.html">
+          <img src="images/everything.jpg" alt="Everything cover art" loading="lazy" decoding="async" />
+
+          <div>
+            <h3>Everything</h3>
+            <p>
+              Wanting everything while feeling unable to do anything, and trying to believe
+              that small progress still counts.
+            </p>
+          </div>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
     <p>
-      Songs written from pressure, reflection, anger, survival, and the strange
-      places where honesty starts sounding like music.
+      © <span id="year"></span> Jay Vale / Heartship Records. Built for honesty, not decoration.
     </p>
-  </div>
+  </footer>
 
-  <div class="song-grid">
-    <article class="song-card">
-      <img
-        src="images/sparking_match.jpg"
-        alt="Sparking Match cover art"
-        class="song-cover"
-      />
-
-      <div class="song-info">
-        <span class="song-status released">Released</span>
-        <h3>Sparking Match</h3>
-        <p>
-          A dark emotional track about mistaking attention for love,
-          living for the spark, and going cold when the glow fades.
-        </p>
-
-        <a href="songs/sparking-match.html" class="song-link">View song</a>
-      </div>
-    </article>
-
-    <article class="song-card">
-      <img
-        src="images/narcissistic_grandiosity.jpg"
-        alt="Narcissistic Grandiosity cover art"
-        class="song-cover"
-      />
-
-      <div class="song-info">
-        <span class="song-status released">Released</span>
-        <h3>Narcissistic Grandiosity</h3>
-        <p>
-          A sharp, swaggering track about ego as armor, confidence as performance,
-          and turning pain into charisma before anyone can use it against you.
-        </p>
-
-        <a href="songs/narcissistic-grandiosity.html" class="song-link">View song</a>
-      </div>
-    </article>
-
-    <article class="song-card">
-      <img
-        src="images/ilibility.jpg"
-        alt="Ilibility cover art"
-        class="song-cover"
-      />
-
-      <div class="song-info">
-        <span class="song-status released">Released</span>
-        <h3>Ilibility</h3>
-        <p>
-          A sarcastic, confrontational track about clinical jargon, fake authority,
-          and the difference between analyzing someone and actually understanding them.
-        </p>
-
-        <a href="songs/ilibility.html" class="song-link">View song</a>
-      </div>
-    </article>
-
-    <article class="song-card">
-      <img
-        src="images/everything.jpg"
-        alt="Everything cover art"
-        class="song-cover"
-      />
-
-      <div class="song-info">
-        <span class="song-status released">Released</span>
-        <h3>Everything</h3>
-        <p>
-          A heavy emotional track about wanting everything, feeling unable to do
-          anything, and trying to accept that survival can still be progress.
-        </p>
-
-        <a href="songs/everything.html" class="song-link">View song</a>
-      </div>
-    </article>
-  </div>
-</section>
+  <script src="script.js"></script>
+</body>
+</html>
 ```
