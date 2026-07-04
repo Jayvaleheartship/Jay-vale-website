@@ -13,7 +13,6 @@ document.addEventListener("DOMContentLoaded", () => {
     year.textContent = new Date().getFullYear();
   }
 
-
   /* =========================
      MOBILE MENU
   ========================= */
@@ -31,8 +30,16 @@ document.addEventListener("DOMContentLoaded", () => {
         navLinks.classList.remove("open");
       });
     });
-  }
 
+    document.addEventListener("click", (event) => {
+      const clickedInsideMenu = navLinks.contains(event.target);
+      const clickedMenuButton = menuButton.contains(event.target);
+
+      if (!clickedInsideMenu && !clickedMenuButton) {
+        navLinks.classList.remove("open");
+      }
+    });
+  }
 
   /* =========================
      SCROLL REVEAL
@@ -63,10 +70,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-
   /* =========================
      ROTATING FEATURED SONGS
-     Used on index.html
+     Used on index.html if #featuredSongs exists
   ========================= */
 
   const featuredSongs = document.getElementById("featuredSongs");
@@ -173,7 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let songStartIndex = 0;
 
   function renderFeaturedSongs() {
-    if (!featuredSongs) {
+    if (!featuredSongs || songs.length === 0) {
       return;
     }
 
@@ -213,49 +219,28 @@ document.addEventListener("DOMContentLoaded", () => {
     setInterval(renderFeaturedSongs, 7000);
   }
 
-
   /* =========================
      COMING SOON MUSIC
-     Used on portfolio.html
+     Used on portfolio.html if #comingSoonMusic exists
   ========================= */
 
   const comingSoonMusic = document.getElementById("comingSoonMusic");
 
   const comingSoonSongs = [
     {
-      title: "ILIBILITY",
-      status: "Coming soon",
-      releaseDate: "Release date: 25 May",
+      title: "Still Tearing, Still Here",
+      status: "Upcoming album",
+      releaseDate: "Release date to be announced",
       description:
-        "A sharp track about labels, fake understanding, and people using intelligent words while failing to actually read the person.",
-    },
-    {
-      title: "Sparking Match",
-      status: "Coming soon",
-      releaseDate: "Release date: 26 May",
-      description:
-        "A track about mistaking attention for love, and how one small spark can light up a place that was already dry inside.",
-    },
-    {
-      title: "Everything",
-      status: "Coming soon",
-      releaseDate: "Release date: 26 May",
-      description:
-        "A song about wanting everything, needing too much, feeling capable of nothing, and chasing temporary happiness to stay upright.",
-    },
-    {
-      title: "Narcissistic Grandiosity",
-      status: "Coming soon",
-      releaseDate: "Release date: 27 May",
-      description:
-        "A dark concept about the perfect mask, the cracked real face underneath, and the collapse between image and truth.",
+        "A dark cinematic album about survival, self-conflict, trauma, reflection, collapse, and choosing to stay one more time.",
+      link: "coming-soon.html",
     },
   ];
 
   let comingSoonIndex = 0;
 
   function renderComingSoonMusic() {
-    if (!comingSoonMusic) {
+    if (!comingSoonMusic || comingSoonSongs.length === 0) {
       return;
     }
 
@@ -269,6 +254,10 @@ document.addEventListener("DOMContentLoaded", () => {
       <p class="coming-soon-date">${song.releaseDate}</p>
 
       <p>${song.description}</p>
+
+      <div class="hero-actions">
+        <a class="button primary" href="${song.link}">Open album page</a>
+      </div>
     `;
 
     comingSoonIndex = (comingSoonIndex + 1) % comingSoonSongs.length;
@@ -276,7 +265,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderComingSoonMusic();
 
-  if (comingSoonMusic) {
+  if (comingSoonMusic && comingSoonSongs.length > 1) {
     setInterval(renderComingSoonMusic, 5000);
   }
 });
