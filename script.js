@@ -1,4 +1,33 @@
 /* =========================
+   METRICOOL ANALYTICS
+========================= */
+
+(() => {
+  // Guard against duplicate loads of the shared site script.
+  if (window.jayValeMetricoolLoading || window.jayValeMetricoolInitialized) {
+    return;
+  }
+
+  window.jayValeMetricoolLoading = true;
+
+  const trackerScript = document.createElement("script");
+  trackerScript.src = "https://tracker.metricool.com/resources/be.js";
+  trackerScript.async = true;
+  trackerScript.onload = () => {
+    if (
+      !window.jayValeMetricoolInitialized &&
+      window.beTracker &&
+      typeof window.beTracker.t === "function"
+    ) {
+      window.jayValeMetricoolInitialized = true;
+      window.beTracker.t({ hash: "403baa07882e5c744b52ca0f62fa405a" });
+    }
+  };
+
+  document.head.appendChild(trackerScript);
+})();
+
+/* =========================
    MAIN SITE SCRIPT
 ========================= */
 
