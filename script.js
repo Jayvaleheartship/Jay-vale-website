@@ -258,8 +258,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const comingSoonSongs = [
     {
       title: "Still Tearing, Still Here",
-      status: "Upcoming album",
-      releaseDate: "Release date to be announced",
+      status: "Released album",
+      releaseDate: "Released 6 July 2026 · 18 tracks",
       description:
         "A dark cinematic album about survival, self-conflict, trauma, reflection, collapse, and choosing to stay one more time.",
       link: "coming-soon.html",
