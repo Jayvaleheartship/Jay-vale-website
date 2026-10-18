@@ -108,6 +108,133 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const songs = [
     {
+        "title": "Intro",
+        "link": "songs/intro.html",
+        "cover": "assets/still_tearing_still_here.jpg",
+        "alt": "Still Tearing, Still Here album cover",
+        "description": "Track 01 from Still Tearing, Still Here. Jay Vale · 2:24."
+    },
+    {
+        "title": "Let me introduce Myself",
+        "link": "songs/let-me-introduce-myself.html",
+        "cover": "assets/still_tearing_still_here.jpg",
+        "alt": "Still Tearing, Still Here album cover",
+        "description": "Track 02 from Still Tearing, Still Here. Jay Vale · 5:44."
+    },
+    {
+        "title": "Trigger to the End",
+        "link": "songs/trigger-to-the-end.html",
+        "cover": "assets/still_tearing_still_here.jpg",
+        "alt": "Still Tearing, Still Here album cover",
+        "description": "Track 03 from Still Tearing, Still Here. Jay Vale · 6:19."
+    },
+    {
+        "title": "Three Months",
+        "link": "songs/three-months.html",
+        "cover": "assets/still_tearing_still_here.jpg",
+        "alt": "Still Tearing, Still Here album cover",
+        "description": "Track 04 from Still Tearing, Still Here. Jay Vale · 3:51."
+    },
+    {
+        "title": "Letters are Written",
+        "link": "songs/letters-are-written.html",
+        "cover": "assets/still_tearing_still_here.jpg",
+        "alt": "Still Tearing, Still Here album cover",
+        "description": "Track 05 from Still Tearing, Still Here. Jay Vale · 5:18."
+    },
+    {
+        "title": "Missing Thing",
+        "link": "songs/missing-thing.html",
+        "cover": "assets/still_tearing_still_here.jpg",
+        "alt": "Still Tearing, Still Here album cover",
+        "description": "Track 06 from Still Tearing, Still Here. Jay Vale · 5:09."
+    },
+    {
+        "title": "Clean Little Lie",
+        "link": "songs/clean-little-lie.html",
+        "cover": "assets/still_tearing_still_here.jpg",
+        "alt": "Still Tearing, Still Here album cover",
+        "description": "Track 07 from Still Tearing, Still Here. Jay Vale · 5:02."
+    },
+    {
+        "title": "Careless Hands",
+        "link": "songs/careless-hands.html",
+        "cover": "assets/still_tearing_still_here.jpg",
+        "alt": "Still Tearing, Still Here album cover",
+        "description": "Track 08 from Still Tearing, Still Here. Jay Vale · 5:59."
+    },
+    {
+        "title": "Monster",
+        "link": "songs/monster.html",
+        "cover": "assets/still_tearing_still_here.jpg",
+        "alt": "Still Tearing, Still Here album cover",
+        "description": "Track 09 from Still Tearing, Still Here. Jay Vale · 5:37."
+    },
+    {
+        "title": "Everything - Radio Edit",
+        "link": "songs/everything-radio-edit.html",
+        "cover": "assets/still_tearing_still_here.jpg",
+        "alt": "Still Tearing, Still Here album cover",
+        "description": "Track 10 from Still Tearing, Still Here. Jay Vale · 5:24."
+    },
+    {
+        "title": "Trauma Bond",
+        "link": "songs/trauma-bond.html",
+        "cover": "assets/still_tearing_still_here.jpg",
+        "alt": "Still Tearing, Still Here album cover",
+        "description": "Track 11 from Still Tearing, Still Here. Jay Vale · 5:01."
+    },
+    {
+        "title": "Don't pull me out of this High",
+        "link": "songs/don-t-pull-me-out-of-this-high.html",
+        "cover": "assets/still_tearing_still_here.jpg",
+        "alt": "Still Tearing, Still Here album cover",
+        "description": "Track 12 from Still Tearing, Still Here. Jay Vale · 4:51."
+    },
+    {
+        "title": "Back and Forth",
+        "link": "songs/back-and-forth.html",
+        "cover": "assets/still_tearing_still_here.jpg",
+        "alt": "Still Tearing, Still Here album cover",
+        "description": "Track 13 from Still Tearing, Still Here. Jay Vale · 5:28."
+    },
+    {
+        "title": "Almost Human",
+        "link": "songs/almost-human.html",
+        "cover": "assets/still_tearing_still_here.jpg",
+        "alt": "Still Tearing, Still Here album cover",
+        "description": "Track 14 from Still Tearing, Still Here. Jay Vale, Yvonn · 5:42."
+    },
+    {
+        "title": "Talking to Myself",
+        "link": "songs/talking-to-myself.html",
+        "cover": "assets/still_tearing_still_here.jpg",
+        "alt": "Still Tearing, Still Here album cover",
+        "description": "Track 15 from Still Tearing, Still Here. Jay Vale · 5:44."
+    },
+    {
+        "title": "Mirror",
+        "link": "songs/mirror.html",
+        "cover": "assets/still_tearing_still_here.jpg",
+        "alt": "Still Tearing, Still Here album cover",
+        "description": "Track 16 from Still Tearing, Still Here. Jay Vale · 4:09."
+    },
+    {
+        "title": "Renegotiate",
+        "link": "songs/renegotiate.html",
+        "cover": "assets/still_tearing_still_here.jpg",
+        "alt": "Still Tearing, Still Here album cover",
+        "description": "Track 17 from Still Tearing, Still Here. Jay Vale · 4:33."
+    },
+    {
+        "title": "Outro",
+        "link": "songs/outro.html",
+        "cover": "assets/still_tearing_still_here.jpg",
+        "alt": "Still Tearing, Still Here album cover",
+        "description": "Track 18 from Still Tearing, Still Here. Jay Vale · 3:52."
+    }
+,
+    {
       title: "Chemical Road",
       link: "songs/chemical-road.html",
       cover: "assets/chemical.png",
