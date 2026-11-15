@@ -1833,3 +1833,142 @@ footer {
   visibility: visible;
   transform: none;
 }
+
+
+/* =========================
+   EVERYTHING I THOUGHT I KNEW
+   Uses the existing dark cinematic design.
+========================= */
+.new-album-hero {
+  min-height: min(850px, 100vh);
+}
+.new-album-hero .coming-soon-text h1 {
+  max-width: 830px;
+  font-size: clamp(2.9rem, 6vw, 6rem);
+  line-height: .96;
+  letter-spacing: -.065em;
+}
+.new-album-hero .hero-subtitle {
+  max-width: 660px;
+}
+.new-album-hero .album-cover-large {
+  border-radius: 18px;
+}
+.new-album-hero .coming-soon-content {
+  align-items: center;
+}
+.new-album-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+.new-album-facts span {
+  color: #f4f4f5;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--line);
+  padding: 9px 14px;
+  border-radius: 50px;
+  font-size: .82rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+}
+.album-announcement .two-column,
+.new-album-portfolio-teaser .two-column {
+  grid-template-columns: 1.15fr .85fr;
+  align-items: center;
+}
+.album-announcement-art {
+  display: block;
+  width: 100%;
+  max-width: 440px;
+  margin-inline: auto;
+  border: 1px solid rgba(252,165,165,.22);
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: transform .2s ease, border-color .2s ease;
+}
+.album-announcement-art:hover {
+  transform: translateY(-4px);
+  border-color: rgba(252,165,165,.48);
+}
+.album-announcement-art img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1/1;
+  height: auto;
+  object-fit: cover;
+}
+.album-letter-section {
+  max-width: 1000px;
+}
+.album-letter-section > h2 {
+  max-width: 780px;
+}
+.album-letter {
+  max-width: 900px;
+  margin: 42px auto 0;
+  padding: clamp(28px, 5.5vw, 70px);
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  background: var(--glass);
+  box-shadow: var(--shadow);
+}
+.album-letter p {
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(1.04rem, 1.55vw, 1.2rem);
+  line-height: 1.93;
+}
+.album-letter p + p {
+  margin-top: 23px;
+}
+.album-letter p strong,
+.album-letter .letter-greeting,
+.album-letter .letter-signature {
+  color: #fafafa;
+}
+.album-letter .letter-greeting {
+  font-size: 1.28rem;
+  font-weight: 700;
+  margin-bottom: 35px;
+}
+.album-letter .letter-signature {
+  margin-top: 42px;
+  font-weight: 700;
+}
+.album-letter .letter-signature strong {
+  display: inline-block;
+  font-family: "Playfair Display", serif;
+  font-size: 2.1rem;
+  margin-top: 5px;
+}
+.album-letter-ending {
+  margin-top: 38px;
+}
+@media (max-width: 900px) {
+  .album-announcement .two-column,
+  .new-album-portfolio-teaser .two-column {
+    grid-template-columns: 1fr;
+  }
+  .album-announcement-art {
+    max-width: 470px;
+  }
+  .new-album-hero {
+    min-height: auto;
+  }
+  .new-album-hero .coming-soon-text h1 {
+    font-size: clamp(2.6rem, 10vw, 5.2rem);
+  }
+}
+@media (max-width: 560px) {
+  .album-letter {
+    padding: 27px 22px;
+    border-radius: 20px;
+  }
+  .album-letter p {
+    font-size: 1.02rem;
+    line-height: 1.8;
+  }
+}
