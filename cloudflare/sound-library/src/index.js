@@ -1,3 +1,4 @@
+import {seedCC0} from './cc0-seeder.js';
 /**
  * Jay Vale Sound Library — private R2 + D1 API
  * A 9.5 GB software budget is NOT a Cloudflare billing cap.
@@ -115,13 +116,14 @@ async function sample(req,env,id){
  return new Response(object.body,{headers});
 }
 export default {
+ scheduled(_event,env,ctx){ctx.waitUntil(seedCC0(env));},
  async fetch(req,env){
   const origin=req.headers.get('origin');
   if(origin&&origin!==env.ALLOWED_ORIGIN)return wrap(error('Origin not allowed',403),req,env);
   if(req.method==='OPTIONS')return new Response(null,{status:204,headers:corsHeaders(req,env)});
   const url=new URL(req.url),path=url.pathname;
   try{
-   if(path==='/health'&&req.method==='GET')return wrap(json({service:'Jay Vale Sound Library',version:'0.2.0',online:true,configured:configured(env)}),req,env);
+   if(path==='/health'&&req.method==='GET')return wrap(json({service:'Jay Vale Sound Library',version:'0.3.0',online:true,configured:configured(env),sample_count:env.DB?(await env.DB.prepare('SELECT COUNT(*) AS n FROM samples').first())?.n||0:0,cc0_manifest_items:57}),req,env);
    if(!configured(env))return wrap(error('Library secrets not configured',503),req,env);
    if(path==='/v1/status'&&req.method==='GET')return wrap(readable(req,env)?json(await totals(env)):error('Unauthorized',401),req,env);
    if(path==='/v1/match'&&req.method==='GET')return wrap(await matches(req,env),req,env);
