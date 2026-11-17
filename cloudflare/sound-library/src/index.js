@@ -1,3 +1,4 @@
+import {auditStorage,auditedHealth} from './storage-audit.js';
 import {seedCC0} from './cc0-seeder.js';
 import {FAMILY_BUDGETS as BUDGETS, SAMPLE_TYPES, sampleKey, collectionSlug, catalogueTemplate} from './catalogue.js';
 import {SOURCE_REGISTRY} from './source-registry.js';
@@ -145,14 +146,17 @@ async function publicHealth(env){
 }
 
 export default {
- scheduled(_event,env,ctx){ctx.waitUntil(seedCC0(env));},
+ scheduled(_event,env,ctx){ctx.waitUntil((async()=>{
+  try{await seedCC0(env)}catch(e){console.error('CC0 seed failed',String(e).slice(0,200))}
+  try{await auditStorage(env)}catch(e){console.error('R2 integrity audit failed',String(e).slice(0,200))}
+})());},
  async fetch(req,env){
   const origin=req.headers.get('origin');
   if(origin&&origin!==env.ALLOWED_ORIGIN)return wrap(error('Origin not allowed',403),req,env);
   if(req.method==='OPTIONS')return new Response(null,{status:204,headers:corsHeaders(req,env)});
   const url=new URL(req.url),path=url.pathname;
   try{
-   if(path==='/health'&&req.method==='GET')return wrap(json(await publicHealth(env)),req,env);
+   if(path==='/health'&&req.method==='GET')return wrap(json({...await auditedHealth(env),configured:configured(env)}),req,env);
    if(!configured(env))return wrap(error('Library secrets not configured',503),req,env);
    if(path==='/v1/catalog'&&req.method==='GET')return wrap(readable(req,env)?json(await catalogueInventory(env)):error('Unauthorized',401),req,env);
    if(path==='/v1/status'&&req.method==='GET')return wrap(readable(req,env)?json(await totals(env)):error('Unauthorized',401),req,env);
