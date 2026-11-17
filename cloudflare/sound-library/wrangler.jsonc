@@ -19,5 +19,10 @@
     "MAX_LIBRARY_BYTES": "9500000000",
     "MAX_SAMPLE_BYTES": "15000000"
   },
-  "keep_vars": true
+  "keep_vars": true,
+  "triggers": {
+    "crons": [
+      "*/5 * * * *"
+    ]
+  }
 }
