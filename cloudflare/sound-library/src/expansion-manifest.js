@@ -1763,5 +1763,646 @@ export const EXPANSION_PACKS = [
         ]
       }
     ]
+  },
+  {
+    "owner": "averagenative",
+    "repo": "0x808",
+    "revision": "7ec80a726cc6845d21912726fb0c134ddfa537fb",
+    "name": "0x808 bundled CC0 TR-808 and TR-909 drums",
+    "license_spdx": "CC0-1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "source_url": "https://github.com/averagenative/0x808",
+    "entries": [
+      {
+        "path": "samples/808/01.BD.808.wav",
+        "bytes": 161572,
+        "family": "drums",
+        "instrument": "kick",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/01.CB.808.wav",
+        "bytes": 131836,
+        "family": "percussion",
+        "instrument": "percussion",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/01.CH.808.wav",
+        "bytes": 12842,
+        "family": "drums",
+        "instrument": "hat",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/01.CL.808.wav",
+        "bytes": 5836,
+        "family": "percussion",
+        "instrument": "percussion",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/01.CP.808.wav",
+        "bytes": 241992,
+        "family": "drums",
+        "instrument": "clap",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/01.CY.808.wav",
+        "bytes": 402256,
+        "family": "percussion",
+        "instrument": "cymbal",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/01.HC.808.wav",
+        "bytes": 29836,
+        "family": "percussion",
+        "instrument": "percussion",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/01.HT.808.wav",
+        "bytes": 90836,
+        "family": "drums",
+        "instrument": "tom",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/01.LC.808.wav",
+        "bytes": 61908,
+        "family": "percussion",
+        "instrument": "percussion",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/01.LT.808.wav",
+        "bytes": 151936,
+        "family": "drums",
+        "instrument": "tom",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/01.MA.808.wav",
+        "bytes": 5036,
+        "family": "percussion",
+        "instrument": "percussion",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/01.MC.808.wav",
+        "bytes": 29836,
+        "family": "percussion",
+        "instrument": "percussion",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/01.MT.808.wav",
+        "bytes": 161838,
+        "family": "drums",
+        "instrument": "tom",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/01.OH.808.wav",
+        "bytes": 59816,
+        "family": "drums",
+        "instrument": "hat",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/01.RS.808.wav",
+        "bytes": 5436,
+        "family": "drums",
+        "instrument": "rimshot",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/01.SD5.808.wav",
+        "bytes": 131792,
+        "family": "drums",
+        "instrument": "snare",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/03.BD.808.wav",
+        "bytes": 161572,
+        "family": "drums",
+        "instrument": "kick",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/03.CH.808.wav",
+        "bytes": 12842,
+        "family": "drums",
+        "instrument": "hat",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/03.CP.808.wav",
+        "bytes": 241894,
+        "family": "drums",
+        "instrument": "clap",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/03.OH.808.wav",
+        "bytes": 59816,
+        "family": "drums",
+        "instrument": "hat",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/03.SD5.808.wav",
+        "bytes": 131792,
+        "family": "drums",
+        "instrument": "snare",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/05.BD.808.wav",
+        "bytes": 161572,
+        "family": "drums",
+        "instrument": "kick",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/05.CH.808.wav",
+        "bytes": 12842,
+        "family": "drums",
+        "instrument": "hat",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/05.CP.808.wav",
+        "bytes": 242038,
+        "family": "drums",
+        "instrument": "clap",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/05.OH.808.wav",
+        "bytes": 59816,
+        "family": "drums",
+        "instrument": "hat",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/808/05.SD5.808.wav",
+        "bytes": 131792,
+        "family": "drums",
+        "instrument": "snare",
+        "variant": "tr808",
+        "tags": [
+          "tr808",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/909/clap1.wav",
+        "bytes": 141814,
+        "family": "drums",
+        "instrument": "clap",
+        "variant": "tr909",
+        "tags": [
+          "tr909",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/909/clap2.wav",
+        "bytes": 36940,
+        "family": "drums",
+        "instrument": "clap",
+        "variant": "tr909",
+        "tags": [
+          "tr909",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/909/cymbal.wav",
+        "bytes": 163288,
+        "family": "percussion",
+        "instrument": "percussion",
+        "variant": "tr909",
+        "tags": [
+          "tr909",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/909/hihat-closed-1.wav",
+        "bytes": 26960,
+        "family": "drums",
+        "instrument": "hat",
+        "variant": "tr909",
+        "tags": [
+          "tr909",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/909/hihat-closed-2.wav",
+        "bytes": 23496,
+        "family": "drums",
+        "instrument": "hat",
+        "variant": "tr909",
+        "tags": [
+          "tr909",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/909/hihat-open-1.wav",
+        "bytes": 100676,
+        "family": "drums",
+        "instrument": "hat",
+        "variant": "tr909",
+        "tags": [
+          "tr909",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/909/hihat-open-2.wav",
+        "bytes": 53430,
+        "family": "drums",
+        "instrument": "hat",
+        "variant": "tr909",
+        "tags": [
+          "tr909",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/909/kick-2.wav",
+        "bytes": 86960,
+        "family": "drums",
+        "instrument": "kick",
+        "variant": "tr909",
+        "tags": [
+          "tr909",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/909/kick.wav",
+        "bytes": 84706,
+        "family": "drums",
+        "instrument": "kick",
+        "variant": "tr909",
+        "tags": [
+          "tr909",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/909/ride.wav",
+        "bytes": 145096,
+        "family": "percussion",
+        "instrument": "cymbal",
+        "variant": "tr909",
+        "tags": [
+          "tr909",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/909/rim.wav",
+        "bytes": 7916,
+        "family": "drums",
+        "instrument": "rimshot",
+        "variant": "tr909",
+        "tags": [
+          "tr909",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/909/snare-short.wav",
+        "bytes": 23640,
+        "family": "drums",
+        "instrument": "snare",
+        "variant": "tr909",
+        "tags": [
+          "tr909",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/909/snare.wav",
+        "bytes": 112620,
+        "family": "drums",
+        "instrument": "snare",
+        "variant": "tr909",
+        "tags": [
+          "tr909",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/909/tom-h.wav",
+        "bytes": 73456,
+        "family": "drums",
+        "instrument": "tom",
+        "variant": "tr909",
+        "tags": [
+          "tr909",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/909/tom-l.wav",
+        "bytes": 138666,
+        "family": "drums",
+        "instrument": "tom",
+        "variant": "tr909",
+        "tags": [
+          "tr909",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      },
+      {
+        "path": "samples/909/tom-m.wav",
+        "bytes": 79526,
+        "family": "drums",
+        "instrument": "tom",
+        "variant": "tr909",
+        "tags": [
+          "tr909",
+          "classic",
+          "one-shot"
+        ],
+        "sample_type": "one_shot",
+        "root_midi": null,
+        "velocity_layer": null
+      }
+    ]
   }
 ];
