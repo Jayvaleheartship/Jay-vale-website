@@ -1,0 +1,1952 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Jay Vale Audio Lab — Mobile Auto Drum Library v0.4</title>
+<style>
+:root{color-scheme:dark;--bg:#101316;--panel:#191e23;--ink:#eef1f2;--muted:#b4bec7;--line:#37434c;--a:#70d8d1;--b:#ffc482}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Instrument Sans",system-ui,sans-serif}
+header,main{width:min(1220px,100% - 36px);margin:auto}header{padding:30px 0 18px;border-bottom:1px solid var(--line)}main{padding:22px 0 50px}
+h1,h2,h3,p{margin:0 0 10px}h1{font-size:clamp(27px,4vw,43px);letter-spacing:-.045em}h2{font-size:19px}h3{font-size:16px}.muted,small{color:var(--muted)}.brand{color:var(--a);letter-spacing:.12em;font-size:12px;text-transform:uppercase}
+.panel,details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}.pair,.fields{display:grid;gap:14px;grid-template-columns:repeat(2,minmax(0,1fr))}.fields{margin:10px 0}.bar{display:flex;flex-wrap:wrap;align-items:end;gap:10px;margin:10px 0}
+label{display:block;color:var(--muted);font-size:13px}input,textarea,select,button{font:inherit;color:var(--ink);border:1px solid var(--line);border-radius:7px;background:#101519;padding:7px 9px}label input:not([type=checkbox]),label select,label textarea{display:block;width:100%;margin-top:4px}textarea{resize:vertical}button,summary,select{cursor:pointer}button.primary{color:#102022;background:var(--a);border-color:var(--a);font-weight:650}button[aria-pressed=true]{border-color:var(--a);color:var(--a)}button:disabled{opacity:.48;cursor:default}:focus-visible{outline:2px solid var(--b);outline-offset:3px}
+.num{width:112px}.chart{width:100%;height:95px;display:block;background:#101519;border-radius:6px;cursor:crosshair}.spectrum{height:128px}output{display:block;overflow-wrap:anywhere}.side-a{color:var(--a)}.side-b{color:var(--b)}.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px;margin:10px 0}.stats div{overflow-wrap:anywhere}.stats dt,figcaption{color:var(--muted);font-size:12px}.stats dd,figure{margin:0}figure{margin:10px 0}.digest{font:11px ui-monospace,monospace}.status{min-height:24px;margin-top:8px}li{overflow-wrap:anywhere;margin:5px 0}.check{align-self:center}.time{font-variant-numeric:tabular-nums}
+@media(max-width:730px){.pair{grid-template-columns:1fr}}@media(max-width:420px){.fields{grid-template-columns:1fr}}
+
+nav.bar {margin:0 0 18px}
+#drum-workspace input[type=file] {max-width:100%}
+#drum-workspace audio {display:block;width:100%;margin-top:6px}
+#kit-fields output {margin-top:5px}
+.hit-scroll {overflow:auto;max-height:320px;margin-top:12px}
+.hit-table {width:100%;border-collapse:collapse;text-align:left}
+.hit-table th,.hit-table td {padding:5px 8px;border-bottom:1px solid var(--line)}
+.hit-table input {width:85px}
+#stem-workspace audio{display:block;width:100%;margin-top:6px}
+#stem-workspace input[type=file]{max-width:100%}
+#stem-workspace td:first-child{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><p class="brand">Heartship Records / Jay Vale</p><h1>Audio Lab</h1><p class="muted">One stem in, automatically match real recorded drums, export reconstructed audio.</p></header>
+<main>
+<nav class="bar" aria-label="Workspace">
+  <button id="stems-tab" aria-pressed="false">Prepare a stem ZIP</button>
+  <button id="compare-tab" aria-pressed="true">Compare or check audio</button>
+  <button id="drum-tab" aria-pressed="false">Rebuild drums</button>
+</nav>
+<section id="stem-workspace" hidden>
+  <section class="panel">
+    <h2>1. Add your stem ZIP</h2>
+    <p class="muted">Use WAV or FLAC tracks. Already aligned stems can go straight to export. Audio stays in this browser session.</p>
+    <div class="bar">
+      <label>Song ZIP<input id="stem-input" type="file" accept=".zip,application/zip"></label>
+      <button id="stem-demo">Try demo ZIP</button>
+    </div>
+    <output id="stem-status" class="status" role="status">Choose a ZIP up to 150 MB.</output>
+    <details id="stem-warnings" hidden><summary>Import warnings</summary><ul id="stem-warning-list"></ul></details>
+  </section>
+  <section id="stem-results" class="panel" hidden>
+    <h2>2. Check tracks and timing</h2>
+    <p class="muted">Use Mix for audio you want in the preview and export. Choose Reference for a supplied master. Move an early stem later with a positive offset.</p>
+    <div class="hit-scroll"><table class="hit-table"><thead><tr><th>Track</th><th>Source</th><th>Use</th><th>Start offset (ms)</th></tr></thead><tbody id="stem-rows"></tbody></table></div>
+    <div class="bar">
+      <label class="num">BPM (optional)<input id="stem-bpm" type="number" min="20" max="400" step=".01" placeholder="Unknown"></label>
+      <button id="stem-preview">Build preview</button>
+    </div>
+    <div class="pair">
+      <label>Selected stem mix<audio id="stem-player" controls preload="metadata"></audio></label>
+      <label id="stem-reference-label" hidden>Supplied reference<audio id="stem-reference" controls preload="metadata"></audio></label>
+    </div>
+    <h2>3. Download aligned stems</h2>
+    <p class="muted">Import everything in the Stems folder at the same timeline start in ACE Studio or Bitwig. This pilot exports source-retained tracks, with an optional common gain reduction for headroom.</p>
+    <button class="primary" id="stem-export">Download aligned ZIP</button>
+    <output id="stem-action" class="status" role="status"></output>
+  </section>
+</section>
+<section id="drum-workspace" hidden>
+  <section class="panel">
+    <h2>1. Upload one drum stem — automatic matching</h2>
+    <p class="muted">Drop a WAV, MP3, FLAC or single-stem ZIP, up to 240 seconds. The app locates hits and matches their spectral envelope against a locally indexed library of <strong>real recorded one-shots</strong>. No manual drum selection per song.</p>
+    <div class="bar">
+      <label>Drum stem or ZIP<input type="file" id="drum-input" accept=".zip,application/zip,audio/*,.wav,.mp3,.m4a,.flac"></label>
+      <button id="drum-demo">Load synthesized test demo</button>
+    </div>
+    <output id="source-name" role="status">No drum stem selected.</output>
+    <details id="real-bank-setup" open>
+      <summary>Real recorded drum libraries — automatic setup (free)</summary>
+      <p class="muted"><strong>Works on Android and desktop browsers.</strong> Install a lightweight browser-ready selection of real recorded samples from both <strong>Virtuosity Drums</strong> (CC0) and <strong>Salamander Drumkit</strong> (CC BY-SA 3.0) once. Upload a drum stem and the Audio Lab chooses recorded sounds automatically. The browser selection is <strong>not</strong> the complete 1.5 GB archives; those require the optional desktop installer.</p>
+      <div class="bar"><button id="official-install" class="primary">Install free recorded samples (mobile / browser)</button></div>
+      <output id="official-status" class="status" role="status">Checking automatic sample library setup…</output>
+      <p class="muted" id="official-help">Use the <strong>HTTPS website</strong> on Android: opening index.html from Downloads (<code>content://</code>) is not supported for secure caching. This installs a smaller matching bank directly from openly licensed GitHub audio files; nothing is uploaded. On Windows/macOS the included Python server can alternatively download the complete official archives and build its own browser bank.</p>
+      <details><summary>Alternative: import an already prepared sample bank ZIP</summary>
+        <label>Recorded sample bank ZIP<input type="file" id="bank-input" accept=".zip,application/zip"></label>
+        <p class="muted">Supports up to 128 usable samples per bank. WAV, MP3 or FLAC, up to two seconds each. The matching bank stays private in browser storage.</p>
+      </details>
+      <output class="status" id="bank-status" role="status">Checking private library index…</output>
+    </details>
+    <details id="kit"><summary>Optional manual sample overrides (advanced)</summary><p class="muted">The default is automatic real-library matching. These four overrides remain only for technical comparison. The demo kit is synthesized and not a replacement for real recordings.</p><div class="fields" id="kit-fields"></div></details>
+    <h2>2. Detect, match and reconstruct</h2>
+    <div class="bar"><button class="primary" id="drum-run" disabled>Run automatic matching again</button></div>
+    <output class="status" id="drum-status" role="status"></output>
+  </section>
+  <section class="panel" id="drum-result" hidden>
+    <h2>3. Listen, adjust and export</h2>
+    <div class="pair">
+      <label>Original<audio id="drum-original" controls preload="metadata"></audio></label>
+      <label>Rebuild<audio id="drum-render" controls preload="metadata"></audio></label>
+    </div>
+    <div class="bar"><button id="send-to-compare">Open synchronized A/B</button><button id="drum-export" class="primary">Download Bitwig ZIP</button></div>
+    <p class="muted">The ZIP includes aligned kicks, snares, claps, hats, retained source audio, the preview mix and a hit-by-hit manifest with sample sources and matching scores. This pilot does not guarantee exact drum recovery, human provenance, or AI-detector classifications. Long songs can require significant browser memory.</p>
+    <details><summary>Edit detected hits</summary>
+      <p class="muted">Choose the replacement per hit, move it by a few milliseconds or change its gain. Keep Source preserves that hit.</p>
+      <div class="hit-scroll"><table class="hit-table"><thead><tr><th>Time</th><th>Estimate</th><th>Use</th><th>Move (ms)</th><th>Gain (dB)</th></tr></thead><tbody id="hits"></tbody></table></div>
+      <div class="bar"><button id="apply-hits">Apply changes</button><button id="reset-hits">Reset hit edits</button></div>
+    </details>
+  </section>
+</section>
+<div id="compare-workspace">
+<section class="panel" aria-labelledby="detect-heading">
+<h2 id="detect-heading">1. Add audio</h2>
+<ol>
+<li>Choose any recording to compare, or a clean spoken recording for the AI check.</li>
+<li>Click <strong>Run AI check</strong>. The first run may download about 380 MB of model data. The model runs in your browser using local recordings.</li>
+<li>Read the result for each recording. Open the comparison tools below to listen or save a report.</li>
+</ol>
+<div class="bar">
+<button id="upload-a">Choose recording A</button><span id="upload-name-a" class="muted"></span>
+<button id="upload-b">Choose recording B</button><span id="upload-name-b" class="muted"></span>
+</div>
+<h2>2. Check spoken voice (optional)</h2>
+<div class="bar">
+<label>Audio type<select id="detector-type"><option value="speech">Spoken voice without music</option><option value="music">Singing, music or mixed audio</option></select></label>
+<button id="run-detector" class="primary" disabled>Run AI check</button>
+</div>
+<output id="detector-status" class="status" role="status"></output>
+<div aria-live="polite"><output id="result-a"></output><output id="result-b"></output></div>
+<p class="muted">Experimental speech model. It checks up to three short passages. Use clean speech and interpret the result as a screening signal.</p>
+</section>
+<details id="comparison-tools"><summary>3. Compare audio and export a report</summary>
+<section class="panel" aria-labelledby="case-heading">
+<h2 id="case-heading">Test case</h2>
+<div class="fields">
+<label>Case name<input id="case-name" value="Vocal comparison"></label>
+<label>Case notes<textarea id="case-notes" rows="1"></textarea></label>
+</div>
+<div class="bar"><button id="export-json" class="primary">Export JSON</button><button id="export-md">Export Markdown</button><button id="clear">Clear case</button></div>
+</section>
+<section class="panel" aria-labelledby="transport">
+<h2 id="transport">A/B playback</h2>
+<div class="bar">
+<button id="play" class="primary">Play</button><button id="listen-a" aria-pressed="true">Listen A</button><button id="listen-b" aria-pressed="false">Listen B</button>
+<label class="num">Seek (seconds)<input id="seek" type="number" step=".01" value="0"></label>
+<label class="num">B offset (s)<input id="offset" type="number" step=".01" value="0"></label>
+<label class="num">View start (s)<input id="start" type="number" step=".01" value="0"></label>
+<label class="num">View end (s)<input id="end" type="number" step=".01" placeholder="Full length"></label>
+<label class="check"><input type="checkbox" id="loop"> Loop view</label>
+<label class="check"><input type="checkbox" id="match"> Match RMS</label>
+</div>
+<p class="muted">Positive offset moves B later on the shared timeline. Click a plot to seek. Clear the view end to show the full range.</p>
+<output id="transport-status" class="status" role="status"></output>
+</section>
+<div class="pair" id="variants"></div>
+<section class="panel">
+<h2>Listening notes</h2>
+<label>Observation at the current cursor<textarea id="annotation" rows="2"></textarea></label>
+<div class="bar"><button id="add-note">Add timestamped note</button></div>
+<ul id="notes"></ul>
+</section>
+<section class="panel">
+<h2>Provider reference</h2>
+<p class="muted">Record the original result and its scale as reported. Blank fields are exported as unknown.</p>
+<form id="reference-form">
+<div class="fields">
+<label>Variant<select name="variant"><option>A</option><option>B</option></select></label>
+<label>Provider<input name="provider" value="ACRCloud" required></label>
+<label>Capability<select name="capability"><option value="">Unknown</option><option>AI Music Detection</option><option>Music Recognition</option><option>Other</option></select></label>
+<label>File match<select name="fileMatch"><option>Unverified</option><option>User-confirmed</option><option>Exact bytes (verified by SHA-256)</option></select></label>
+<label>Original label<input name="label"></label>
+<label>Original score and scale<input name="score" placeholder="Enter as reported"></label>
+<label>Test date<input name="date" type="date"></label>
+<label>Model/version<input name="model"></label>
+<label>Submitted input type<input name="inputType"></label>
+<label>Submitted time range<input name="timeRange"></label>
+<label>Evidence or transcription<textarea name="evidence" rows="2"></textarea></label>
+<label>Original JSON report (optional)<input id="provider-json" type="file" accept=".json,application/json"></label>
+</div>
+<button type="submit">Attach reference</button>
+</form>
+<output id="reference-status" class="status" role="status"></output>
+<ul id="references"></ul>
+</section>
+<details><summary>Analysis settings</summary><p class="muted">Browser Web Audio decode at the source rate reported by the WAV or MP3 header, when available. Spectrogram uses a 1,024-sample Hann window with up to 500 evenly spaced centers per view, a shared linear frequency axis up to 10 kHz or the lowest Nyquist frequency, and a −90 to 0 dBFS display. RMS envelopes use 50 ms blocks. Clipping indicators count samples at or above 0.999 full scale. Plots and metrics describe the signal. Origin assessment comes from the recorded provenance and any attached reference.</p></details>
+</details>
+</div>
+</main>
+<template id="variant-template">
+<section class="panel">
+<h2></h2>
+<label>Load WAV, MP3 or M4A<input class="file" type="file" accept=".wav,.mp3,.m4a,audio/wav,audio/mpeg,audio/mp4"></label>
+<output class="status file-status" role="status">Choose a recording.</output>
+<div class="fields">
+<label>Role<select class="role"><option>Unspecified</option><option>Full mix</option><option>Vocal stem</option><option>Instrumental</option><option>Excerpt</option></select></label>
+<label>Provenance<select class="provenance"><option>Unknown</option><option>Human</option><option>Generated</option><option>Assisted</option></select></label>
+</div>
+<label>Basis for provenance<input class="basis"></label>
+<dl class="stats"></dl>
+<output class="digest"></output>
+<figure><figcaption>Waveform by channel · cyan lanes, gray RMS envelope</figcaption><canvas class="chart wave" aria-label="Waveform and RMS envelope"></canvas></figure>
+<figure><figcaption class="freq">Spectrogram</figcaption><canvas class="chart spectrum" aria-label="Spectrogram"></canvas></figure>
+</section>
+</template>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const maxBytes = 250_000_000, maxSeconds = 900, fftSize = 1024;
+const settings = {
+  pipeline: '0.1.0', decoder: 'Web Audio decodeAudioData', preferredRate: 'header sample rate',
+  rmsBlockSeconds: 0.05, clipThreshold: 0.999, waveformPeakBinSamplesTarget: 256,
+  fftSize, fftWindow: 'Hann', spectrumMaxColumns: 500, spectrumMaxHz: 10000,
+  spectrumRangeDb: [-90, 0]
+};
+const variants = {}, notes = [], references = [];
+let active = 'A', position = 0, audio, voice, startedAt, startedFrom, playbackEnd;
+let frame, drawFrame, transportRequest = 0, caseVersion = 0;
+const number = id => Number($(id).value);
+const db = x => x > 0 ? 20 * Math.log10(x) : null;
+const fmt = (x, digits=2) => x == null ? 'Unavailable' : x.toFixed(digits);
+const dbText = x => x == null ? '−∞ dBFS' : fmt(x, 1) + ' dBFS';
+const constrain = (x, a, b) => Math.min(b, Math.max(a,x));
+const offset = key => key === 'B' ? number('offset') : 0;
+const data = key => variants[key].asset;
+const escapeMd = s => String(s ?? 'Unknown').replace(/[\\`*_{}\[\]<>|!#~+=.\-]/g, '\\$&').replace(/\r\n?|\n/g, ' ');
+function header(bytes) {
+  const v = new DataView(bytes), size = v.byteLength;
+  if (size >= 12 && v.getUint32(0) === 0x52494646 && v.getUint32(8) === 0x57415645) {
+    for (let i=12;i+8<=size;) {
+      const length=v.getUint32(i+4,true);
+      if (v.getUint32(i)===0x666d7420 && length>=16 && i+24<=size) {
+        return {format:'WAV', rate:v.getUint32(i+12,true)};
+      }
+      i+=8+length+(length%2);
+    }
+    return {format:'WAV', rate:null};
+  }
+  let start=0;
+  if (size>=10 && v.getUint8(0)===73 && v.getUint8(1)===68 && v.getUint8(2)===51) {
+    start=10;
+    for(let i=6;i<10;i++) start+=(v.getUint8(i)&127)*2**(7*(9-i));
+    if(v.getUint8(5)&16 && v.getUint8(3)===4) start+=10;
+  }
+  for(let i=start;i+4<=Math.min(size,start+65536);i++){
+    const b=v.getUint8(i+1), c=v.getUint8(i+2), version=(b>>3)&3, rateCode=(c>>2)&3;
+    if(v.getUint8(i)===255 && (b&224)===224 && version!==1 && ((b>>1)&3)===1
+      && rateCode!==3 && (c>>4)!==15 && (c>>4)!==0){
+      return {format:'MP3',rate:[44100,48000,32000][rateCode]/(version===3?1:version===2?2:4)};
+    }
+  }
+  if(size>=12 && v.getUint32(4)===0x66747970)return {format:'M4A/MP4',rate:null};
+  throw Error('Choose a valid WAV, MP3 or M4A recording.');
+}
+function analyze(buffer) {
+  const channels=Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i));
+  const n=buffer.length, block=Math.round(buffer.sampleRate*settings.rmsBlockSeconds);
+  const envelope=new Float32Array(Math.ceil(n/block));
+  const peakBin=Math.max(1,Math.floor(n/512));
+  const peakStep=Math.min(settings.waveformPeakBinSamplesTarget,peakBin);
+  const peaks=channels.map(()=>new Float32Array(Math.ceil(n/peakStep)*2));
+  let peak=0, nearClip=0, sumSq=0, leftSq=0,rightSq=0,cross=0,leftSum=0,rightSum=0;
+  channels.forEach((samples,ch)=>{
+    for(let i=0;i<n;i++){
+      const s=samples[i], abs=Math.abs(s), q=s*s, bin=Math.floor(i/peakStep)*2;
+      peaks[ch][bin]=Math.min(peaks[ch][bin],s);
+      peaks[ch][bin+1]=Math.max(peaks[ch][bin+1],s);
+      peak=Math.max(peak,abs); nearClip+=abs>=settings.clipThreshold?1:0; sumSq+=q;
+      envelope[Math.floor(i/block)]+=q;
+      if(ch===0){leftSq+=q;leftSum+=s;}
+      if(ch===1){rightSq+=q;rightSum+=s;cross+=s*channels[0][i];}
+    }
+  });
+  for(let i=0;i<envelope.length;i++) envelope[i]=Math.sqrt(envelope[i]/(channels.length*Math.min(block,n-i*block)));
+  const rms=Math.sqrt(sumSq/(n*channels.length));
+  const denom=Math.sqrt(Math.max(0,leftSq-leftSum**2/n)*Math.max(0,rightSq-rightSum**2/n));
+  return {channels, peaks, peakStep, envelope, block, rms, peakDb:db(peak), rmsDb:db(rms), nearClip,
+    correlation:channels.length>=2 && denom>0 ? constrain((cross-leftSum*rightSum/n)/denom,-1,1):null};
+}
+async function load(key,file) {
+  const v=variants[key], token=++v.token;
+  const status=v.node.querySelector('.file-status');
+  if(active===key) pause();
+  v.asset=null;v.detection=null;v.loading=true;
+  $('detector-status').textContent='';
+  status.textContent='Analyzing '+file.name+'…';
+  render();
+  try {
+    if(!file.size || file.size>maxBytes) throw Error('Choose a nonempty file up to 250 MB.');
+    if(!globalThis.crypto?.subtle) throw Error('SHA-256 requires a secure browser context. Open the downloaded file in a desktop browser or serve it from localhost.');
+    const bytes=await file.arrayBuffer();
+    if(token!==v.token)return;
+    const h=header(bytes);
+    const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
+    if(token!==v.token)return;
+    const previous=Object.values(variants).find(item=>item.asset?.digest===digest)?.asset;
+    if(previous){
+      v.asset={...previous, name:file.name};
+    } else {
+      const decoder=new OfflineAudioContext(1,1,h.rate||48000);
+      let buffer;
+      try {buffer=await decoder.decodeAudioData(bytes);} catch {throw Error('The browser could not decode this recording. Try a PCM WAV or MP3 export.');}
+      if(token!==v.token)return;
+      if(buffer.duration>maxSeconds)throw Error('Recording exceeds the 15-minute limit.');
+      v.asset={name:file.name,bytes:file.size,digest,format:h.format,sourceRate:h.rate,buffer,
+        metrics:analyze(buffer), spectra:new Map()};
+    }
+    status.textContent='Ready · '+file.name+(previous?' · identical bytes to the other recording':'');
+    if(!data(active)){active=key;position=offset(key);}
+  } catch(e) {
+    if(token===v.token)status.textContent=e.message;
+  } finally {
+    if(token===v.token){v.loading=false;render();}
+  }
+}
+function bounds(){
+  const keys=['A','B'].filter(data);
+  if(!keys.length)return [0,1];
+  return [Math.min(0,...keys.map(offset)), Math.max(...keys.map(k=>offset(k)+data(k).buffer.duration))];
+}
+function view(){
+  const [min,max]=bounds();
+  const start=$('start').value===''?min:constrain(number('start'),min,Math.max(min,max-.001));
+  const end=$('end').value===''?max:constrain(number('end'),Math.min(max,start+.001),max);
+  return [start,end];
+}
+function frequencyMax(){return Math.min(settings.spectrumMaxHz,...Object.values(variants).filter(v=>v.asset).map(v=>v.asset.buffer.sampleRate/2));}
+const windowWeights=Float64Array.from({length:fftSize},(_,i)=>0.5-0.5*Math.cos(2*Math.PI*i/(fftSize-1)));
+const windowSum=windowWeights.reduce((a,b)=>a+b,0);
+const bitReverse=Uint16Array.from({length:fftSize},(_,i)=>{
+  let result=0;for(let bit=1;bit<fftSize;bit*=2){result=result*2+(i&1);i>>=1;}return result;
+});
+const cosines=Float64Array.from({length:fftSize/2},(_,i)=>Math.cos(-2*Math.PI*i/fftSize));
+const sines=Float64Array.from({length:fftSize/2},(_,i)=>Math.sin(-2*Math.PI*i/fftSize));
+function spectrumAt(asset,time,real,imag){
+  const {channels}=asset.metrics, center=Math.round(time*asset.buffer.sampleRate);
+  for(let i=0;i<fftSize;i++){
+    const index=center+i-fftSize/2;
+    let sample=0;
+    for(const channel of channels) sample+=channel[index]??0;
+    real[bitReverse[i]]=sample/channels.length*windowWeights[i];
+    imag[bitReverse[i]]=0;
+  }
+  for(let len=2;len<=fftSize;len*=2){
+    const half=len/2;
+    for(let i=0;i<fftSize;i+=len){
+      for(let j=0;j<half;j++){
+        const p=i+j,q=p+half,k=j*fftSize/len;
+        const r=real[q]*cosines[k]-imag[q]*sines[k], im=real[q]*sines[k]+imag[q]*cosines[k];
+        real[q]=real[p]-r;imag[q]=imag[p]-im;real[p]+=r;imag[p]+=im;
+      }
+    }
+  }
+}
+function compositeSpectrum(asset, start, end, hz, width, height){
+  const cacheKey=JSON.stringify([start,end,hz,width,height]);
+  if(asset.spectra.has(cacheKey))return asset.spectra.get(cacheKey);
+  const img=new ImageData(width,height), pixels=img.data;
+  const real=new Float64Array(fftSize), imag=new Float64Array(fftSize);
+  for(let x=0;x<width;x++){
+    const time=start+(x+.5)*(end-start)/width;
+    if(time<0||time>=asset.buffer.duration)continue;
+    spectrumAt(asset,time,real,imag);
+    for(let y=0;y<height;y++){
+      const bin=Math.round((height-1-y)/(height-1)*hz*fftSize/asset.buffer.sampleRate);
+      const amplitude=(bin===0||bin===fftSize/2?1:2)*Math.hypot(real[bin],imag[bin])/windowSum;
+      const t=constrain(((db(amplitude)??-90)+90)/90,0,1);
+      const p=(y*width+x)*4;
+      pixels[p]=12+243*t*t; pixels[p+1]=20+190*t; pixels[p+2]=29+115*Math.sin(Math.PI*t/2);pixels[p+3]=255;
+    }
+  }
+  const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+  canvas.getContext('2d').putImageData(img,0,0);
+  if(asset.spectra.size>=4)asset.spectra.delete(asset.spectra.keys().next().value);
+  asset.spectra.set(cacheKey,canvas);return canvas;
+}
+function canvasContext(canvas) {
+  const {width,height}=canvas.getBoundingClientRect();
+  const w=Math.max(1,Math.round(width)),h=Math.max(1,Math.round(height));
+  if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
+  const ctx=canvas.getContext('2d');ctx.clearRect(0,0,w,h);
+  return [ctx,w,h];
+}
+function plotWave(ctx,w,h,asset,start,end){
+  const {channels,peaks,peakStep,envelope,block}=asset.metrics, rate=asset.buffer.sampleRate;
+  const lane=h/channels.length;
+  channels.forEach((samples,ch)=>{
+    const mid=lane*(ch+.5);
+    ctx.strokeStyle='#34454d';ctx.beginPath();ctx.moveTo(0,mid);ctx.lineTo(w,mid);ctx.stroke();
+    ctx.strokeStyle='#70d8d1';ctx.beginPath();
+    for(let x=0;x<w;x++){
+      const a=Math.max(0,Math.floor((start+x*(end-start)/w)*rate));
+      const b=Math.min(samples.length,Math.ceil((start+(x+1)*(end-start)/w)*rate));
+      if(b<=a)continue;
+      let lo=0,hi=0;
+      for(let i=a;i<b;){
+        if(i%peakStep===0 && i+peakStep<=b){
+          const j=2*i/peakStep;lo=Math.min(lo,peaks[ch][j]);hi=Math.max(hi,peaks[ch][j+1]);i+=peakStep;
+        }else{lo=Math.min(lo,samples[i]);hi=Math.max(hi,samples[i]);i++;}
+      }
+      ctx.moveTo(x+.5,mid-constrain(hi,0,1)*(lane/2-2));ctx.lineTo(x+.5,mid-constrain(lo,-1,0)*(lane/2-2));
+    }
+    ctx.stroke();
+  });
+  ctx.strokeStyle='#d2dce5';ctx.beginPath();
+  let pen=false;
+  for(let x=0;x<w;x++){
+    const rms=envelope[Math.floor((start+x*(end-start)/w)*rate/block)];
+    if(rms===undefined){pen=false;continue;}
+    const y=h-2-constrain(rms,0,1)*(h-4);
+    if(pen)ctx.lineTo(x,y);else ctx.moveTo(x,y);
+    pen=true;
+  }
+  ctx.stroke();
+}
+function draw(){
+  drawFrame=undefined;
+  const [start,end]=view(), hz=frequencyMax();
+  for(const key of ['A','B']){
+    const {node,asset}=variants[key];
+    node.querySelector('.freq').textContent='Spectrogram · 0–'+fmt(hz/1000,1)+' kHz · −90 to 0 dBFS';
+    for(const canvas of node.querySelectorAll('canvas')){
+      const [ctx,w,h]=canvasContext(canvas);
+      if(!asset)continue;
+      const shift=offset(key);
+      if(canvas.classList.contains('wave'))plotWave(ctx,w,h,asset,start-shift,end-shift);
+      else ctx.drawImage(compositeSpectrum(asset,start-shift,end-shift,hz,Math.min(w,settings.spectrumMaxColumns),128),0,0,w,h);
+      if(position>=start&&position<=end){
+        const x=constrain((position-start)/(end-start)*w,.5,w-.5);
+        ctx.strokeStyle='#ffc482';ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();
+      }
+    }
+  }
+}
+function queueDraw(){if(drawFrame===undefined)drawFrame=requestAnimationFrame(draw);}
+function render(){
+  for(const key of ['A','B']){
+    const {node,asset}=variants[key];
+    const stats=node.querySelector('.stats');stats.replaceChildren();
+    if(asset){
+      const {buffer,metrics}=asset;
+      const rows={
+        Duration:fmt(buffer.duration)+' s', Format:asset.format, Bytes:asset.bytes.toLocaleString(),
+        Channels:buffer.numberOfChannels, 'Analysis rate':buffer.sampleRate+' Hz',
+        'Source rate':asset.sourceRate?asset.sourceRate+' Hz':'Unknown',
+        Peak:dbText(metrics.peakDb), RMS:dbText(metrics.rmsDb),
+        'Near-clipping samples':metrics.nearClip,'First two channels · correlation':fmt(metrics.correlation,3)
+      };
+      for(const [name,value] of Object.entries(rows)){
+        const div=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');
+        dt.textContent=name;dd.textContent=value;div.append(dt,dd);stats.append(div);
+      }
+    }
+    node.querySelector('.digest').textContent=asset?'SHA-256 '+asset.digest:'';
+    const listen=$('listen-'+key.toLowerCase());
+    listen.disabled=!asset;listen.setAttribute('aria-pressed',String(active===key));
+  }
+  $('play').disabled=!data(active);
+  $('play').textContent=voice?'Pause':'Play';
+  updateCursor();queueDraw();updateDetectorUI();
+}
+function updateCursor(){
+  if(document.activeElement!==$('seek'))$('seek').value=position.toFixed(2);
+}
+function current(){
+  if(!voice)return position;
+  const elapsed=audio.currentTime-startedAt;
+  if(voice.loop){
+    const [start,end]=voice.timelineLoop;
+    const first=end-startedFrom;
+    return elapsed<first?startedFrom+elapsed:start+(elapsed-first)%(end-start);
+  }
+  return Math.min(playbackEnd,startedFrom+elapsed);
+}
+function pause(){
+  transportRequest++;
+  if(voice){
+    position=current();
+    const previous=voice;voice=null;
+    previous.stop();previous.disconnect();previous.playbackGain.disconnect();cancelAnimationFrame(frame);
+  }
+  $('play').textContent='Play';updateCursor();queueDraw();
+}
+function playbackRange(){
+  const asset=data(active);
+  if(!asset)return null;
+  const shift=offset(active), [start,end]=view();
+  const lo=$('loop').checked?Math.max(start,shift):shift;
+  const hi=$('loop').checked?Math.min(end,shift+asset.buffer.duration):shift+asset.buffer.duration;
+  return hi-lo>=.001?[lo,hi]:null;
+}
+function animate(){
+  if(!voice)return;
+  position=current();updateCursor();
+  if(!animate.last||performance.now()-animate.last>90){queueDraw();animate.last=performance.now();}
+  frame=requestAnimationFrame(animate);
+}
+async function startPlayback(switching=false){
+  const request=++transportRequest;
+  const asset=data(active), range=playbackRange(), status=$('transport-status');
+  if(!asset)return;
+  if(!range || (switching&&(position<range[0]||position>=range[1]))){
+    status.textContent='The cursor or loop is outside recording '+active+'. Seek to a shared passage first.';return;
+  }
+  try{
+    audio??=new AudioContext();
+    await audio.resume();
+    if(request!==transportRequest)return;
+    const [lo,hi]=range, shift=offset(active);
+    if(position<lo||position>=hi)position=lo;
+    const source=audio.createBufferSource(),gain=audio.createGain();
+    source.buffer=asset.buffer;source.loop=$('loop').checked;
+    source.loopStart=lo-shift;source.loopEnd=hi-shift;source.timelineLoop=range;
+    const rmsA=data('A')?.metrics.rms,rmsB=data('B')?.metrics.rms;
+    gain.gain.value=$('match').checked&&rmsA>0&&rmsB>0?Math.min(rmsA,rmsB)/asset.metrics.rms:1;
+    source.connect(gain);gain.connect(audio.destination);source.playbackGain=gain;
+    startedAt=audio.currentTime;startedFrom=position;playbackEnd=hi;
+    if(source.loop)source.start(startedAt,position-shift);
+    else source.start(startedAt,position-shift,hi-position);
+    voice=source;
+    source.onended=()=>{
+      if(voice!==source)return;
+      position=playbackEnd;pause();
+    };
+    status.textContent='Listening to '+active+(source.loop?' · looping '+fmt(lo)+'–'+fmt(hi)+' s':'')+
+      ($('match').checked?(rmsA>0&&rmsB>0?' · RMS gain '+dbText(db(gain.gain.value)).replace('dBFS','dB'):' · RMS match requires two non-silent recordings'):'');
+    $('play').textContent='Pause';animate();
+  }catch(e){status.textContent='Playback failed. '+e.message;}
+}
+function seek(value){
+  const resume=Boolean(voice);
+  pause();position=constrain(value,...bounds());updateCursor();queueDraw();
+  if(resume)startPlayback();
+}
+function select(key){
+  if(!data(key)||active===key)return;
+  const resume=Boolean(voice);
+  pause();active=key;render();
+  if(resume)startPlayback(true);
+  else $('transport-status').textContent='Selected '+key;
+}
+function appendItem(id,value){
+  const li=document.createElement('li');li.textContent=value;$(id).append(li);
+}
+function replayRecord(key){
+  const {node,asset}=variants[key];
+  if(!asset)return null;
+  const {buffer,metrics}=asset;
+  const field=name=>node.querySelector('.'+name).value.trim();
+  return {
+    variant:key, filename:asset.name, format:asset.format, bytes:asset.bytes, sha256:asset.digest,
+    role:field('role'), provenance:field('provenance'), provenanceBasis:field('basis')||null,
+    sourceSampleRate:asset.sourceRate, analysisSampleRate:buffer.sampleRate,
+    channels:buffer.numberOfChannels,durationSeconds:buffer.duration,
+    analyzedRangeSeconds:[0,buffer.duration],
+    settings:{...settings,rmsBlockSamples:metrics.block,waveformPeakBinSamples:metrics.peakStep,
+      spectrogramChannelHandling:'arithmetic mean of decoded channels'},
+    metrics:{peakDbfs:metrics.peakDb,rmsDbfs:metrics.rmsDb,linearRms:metrics.rms,nearClipSamples:metrics.nearClip,
+      stereoCorrelation:metrics.correlation,rmsEnvelope:Array.from(metrics.envelope)}
+  };
+}
+function report(){
+  return {schemaVersion:1, name:$('case-name').value.trim()||'Untitled case',caseNotes:$('case-notes').value,
+    exportedAt:new Date().toISOString(), browser:navigator.userAgent,
+    variants:['A','B'].map(replayRecord).filter(Boolean),
+    comparison:{bOffsetSeconds:offset('B'),timelineViewSeconds:view(),frequencyMaxHz:frequencyMax(),
+      rmsMatchedPlayback:$('match').checked,loop:$('loop').checked},
+    notes,references,detectorResults:Object.entries(variants).filter(([,v])=>v.detection).map(([variant,v])=>({variant,sha256:v.asset.digest,...v.detection}))};
+}
+function markdown(r){
+  const lines=['# '+escapeMd(r.name),'','Exported '+r.exportedAt,'',escapeMd(r.caseNotes),'',
+    '## Comparison','','B offset: '+r.comparison.bOffsetSeconds+' s',
+    'View: '+r.comparison.timelineViewSeconds.map(v=>fmt(v)).join(' to ')+' s',
+    'RMS playback matching: '+(r.comparison.rmsMatchedPlayback?'On':'Off'),
+    'Loop: '+(r.comparison.loop?'On':'Off'),'',
+    '## Recordings',''];
+  for(const {metrics,settings:analysis,...variant} of r.variants){
+    lines.push('### '+variant.variant+' · '+escapeMd(variant.filename),'',
+      ...Object.entries(variant).filter(([key])=>key!=='variant'&&key!=='filename').map(([key,value])=>'- '+key+': '+escapeMd(value)),
+      '- Peak: '+dbText(metrics.peakDbfs),'- RMS: '+dbText(metrics.rmsDbfs),
+      '- Near-clipping samples: '+metrics.nearClipSamples,
+      '- Stereo correlation: '+fmt(metrics.stereoCorrelation,3),'',
+      ...Object.entries(analysis).map(([key,value])=>'- '+key+': '+escapeMd(value)),'');
+  }
+  if(r.detectorResults?.length){
+    lines.push('## Experimental speech detector','',...r.detectorResults.map(v=>'- Recording '+v.variant+' · '+v.label+' · AI model score '+(v.syntheticScore===null?'Unavailable':escapeMd(detectorScoreText(v.syntheticScore)))+' · '+v.settings.model+' @ '+v.settings.revision),'');
+  }
+  lines.push('## Listening notes','',...r.notes.map(n=>'- '+fmt(n.timelineSeconds)+' s · '+n.variant+' · '+escapeMd(n.text)),'',
+    '## Provider references','',
+    ...r.references.map(ref=>Object.entries(ref).filter(([key])=>key!=='originalReportText').map(([key,value])=>'- '+key+': '+escapeMd(
+      key==='originalReport'&&value!==null?JSON.stringify(value):value)).join('\n')+'\n'),
+    '', 'The JSON export includes the RMS envelope. Audio is excluded from both exports.','');
+  return lines.join('\n');
+}
+function download(extension){
+  const r=report(), url=URL.createObjectURL(new Blob([
+    extension==='json'?JSON.stringify(r,null,2):markdown(r)
+  ],{type:extension==='json'?'application/json':'text/markdown;charset=utf-8'}));
+  const a=document.createElement('a');
+  a.href=url;a.download=(r.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'audio-case')+'.'+extension;
+  a.click();setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
+const detector = {
+  version:'speech-pilot-0.1',
+  model:'as1605/Deepfake-audio-detection-V2',
+  revision:'3aeb18add053e945dc69025147afab0d70fa0188',
+  runtime:'onnxruntime-web@1.22.0', rate:16000,
+  clipSeconds:4, maxClips:3, minimumSeconds:2, minimumRms:0.001,
+  humanThreshold:0.2, syntheticThreshold:0.8
+};
+const ortBase='https://cdn.jsdelivr.net/npm/'+detector.runtime+'/dist/';
+let modelPromise, detectorBusy=false;
+function loadDetector(){
+  if(!modelPromise)modelPromise=(async()=>{
+    const ort=await import(ortBase+'ort.wasm.min.mjs');
+    ort.env.wasm.numThreads=1;
+    ort.env.wasm.wasmPaths=ortBase;
+    const modelURL='https://huggingface.co/'+detector.model+'/resolve/'+detector.revision+'/onnx/model.onnx';
+    const response=await fetch(modelURL,{credentials:'omit'});
+    if(!response.ok)throw Error('Model download failed ('+response.status+').');
+    const model=await response.arrayBuffer();
+    return {ort, session:await ort.InferenceSession.create(model,{executionProviders:['wasm']})};
+  })().catch(error=>{modelPromise=null;throw error;});
+  return modelPromise;
+}
+function clipRanges(duration){
+  if(duration<detector.minimumSeconds)return [];
+  const length=Math.min(duration,detector.clipSeconds);
+  const count=Math.min(detector.maxClips,Math.max(1,Math.floor(duration/length)));
+  return Array.from({length:count},(_,i)=>{
+    const start=count===1?(duration-length)/2:i*(duration-length)/(count-1);
+    return [start,start+length];
+  });
+}
+async function prepareClip(asset,[start,end]){
+  const input=asset.buffer, rate=input.sampleRate;
+  const from=Math.round(start*rate), to=Math.min(input.length,Math.round(end*rate));
+  const ctx=new OfflineAudioContext(1,Math.round((to-from)*detector.rate/rate),detector.rate);
+  const mono=ctx.createBuffer(1,to-from,rate), samples=mono.getChannelData(0);
+  for(const channel of asset.metrics.channels){
+    for(let i=0;i<samples.length;i++)samples[i]+=channel[from+i]/input.numberOfChannels;
+  }
+  const source=ctx.createBufferSource();source.buffer=mono;source.connect(ctx.destination);source.start();
+  return (await ctx.startRendering()).getChannelData(0);
+}
+function normalizeSpeech(samples){
+  let sum=0, sumSquares=0;
+  for(const sample of samples){sum+=sample;sumSquares+=sample*sample;}
+  const mean=sum/samples.length;
+  const variance=Math.max(0,sumSquares/samples.length-mean*mean);
+  if(Math.sqrt(variance)<detector.minimumRms)return null;
+  const std=Math.sqrt(variance+1e-7);
+  return Float32Array.from(samples,sample=>(sample-mean)/std);
+}
+function syntheticScore(logits){
+  if(logits.length!==2||!Number.isFinite(logits[0])||!Number.isFinite(logits[1]))throw Error('The model returned an invalid score.');
+  return 1/(1+Math.exp(logits[1]-logits[0]));
+}
+async function inspectSpeech(asset,onProgress){
+  const ranges=clipRanges(asset.buffer.duration), clips=[];
+  for(const range of ranges){
+    const normalized=normalizeSpeech(await prepareClip(asset,range));
+    if(!normalized){clips.push({range,score:null,reason:'Low signal'});continue;}
+    onProgress(clips.length+1,ranges.length);
+    const {ort,session}=await loadDetector();
+    const input=new ort.Tensor('float32',normalized,[1,normalized.length]);
+    const output=await session.run({input_values:input});
+    clips.push({range,score:syntheticScore(output.logits.data)});
+  }
+  const scores=clips.map(clip=>clip.score).filter(score=>score!==null);
+  const score=scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:null;
+  let label='Inconclusive';
+  if(scores.length===ranges.length&&scores.length){
+    if(scores.every(value=>value>=detector.syntheticThreshold))label='Leans AI-generated or altered';
+    if(scores.every(value=>value<=detector.humanThreshold))label='Leans human';
+  }
+  return {label,syntheticScore:score,clips,settings:detector,
+    reason:ranges.length===0?'At least 2 seconds of speech required.':!scores.length?'Sampled passages had too little signal.':null};
+}
+function detectorScoreText(score){
+  const percent=score*100;
+  if(percent<0.1)return '<0.1 / 100';
+  if(percent>99.9)return '>99.9 / 100';
+  return percent.toFixed(1)+' / 100';
+}
+function updateDetectorUI(){
+  $('run-detector').disabled=detectorBusy||Object.values(variants).some(v=>v.loading)||!Object.values(variants).some(v=>v.asset);
+  $('clear').disabled=detectorBusy;
+  for(const key of ['A','B']){
+    const v=variants[key], result=v.detection;
+    $('upload-'+key.toLowerCase()).disabled=detectorBusy;
+    $('upload-name-'+key.toLowerCase()).textContent=v.asset?.name||v.node.querySelector('.file-status').textContent;
+    const status=$('result-'+key.toLowerCase());
+    status.textContent=result?'Recording '+key+' · '+result.label+
+      (result.syntheticScore===null?'':' · AI model score '+detectorScoreText(result.syntheticScore))+
+      (result.reason?' · '+result.reason:''):'';
+  }
+}
+async function runDetector(){
+  if(detectorBusy||Object.values(variants).some(v=>v.loading))return;
+  const entries=Object.entries(variants).filter(([,v])=>v.asset),status=$('detector-status');
+  if(!entries.length)return;
+  if($('detector-type').value!=='speech'){
+    status.textContent='This detector is for clean spoken voice. For singing or a full song, use the comparison tools and attach an ACRCloud result.';
+    return;
+  }
+  detectorBusy=true;updateDetectorUI();
+  const failures=[];
+  try{
+    for(const [key,v] of entries){
+      try{
+        v.detection=await inspectSpeech(v.asset,(current,total)=>{
+          status.textContent='Recording '+key+' · checking clip '+current+' of '+total+
+            (current===1?' · first run may download model files':'');
+        });
+        updateDetectorUI();
+      }catch(error){
+        failures.push('Recording '+key+': '+error.message);
+      }
+    }
+    status.textContent=failures.length?failures.join(' ')+' Check your connection and try again.':
+      'Check complete. Lower scores lean human and higher scores lean synthetic. Scores are model outputs.';
+  }finally{detectorBusy=false;updateDetectorUI();}
+}
+
+for(const key of ['A','B']){
+  const node=$('variant-template').content.firstElementChild.cloneNode(true);
+  const title=node.querySelector('h2');title.textContent='Recording '+key;title.className='side-'+key.toLowerCase();
+  $('variants').append(node);variants[key]={node,token:0,asset:null};
+  const input=node.querySelector('.file');
+  $('upload-'+key.toLowerCase()).onclick=()=>input.click();
+  input.addEventListener('change',()=>{if(input.files[0]&&!detectorBusy){load(key,input.files[0]);input.value='';}});
+  $('listen-'+key.toLowerCase()).onclick=()=>select(key);
+  for(const canvas of node.querySelectorAll('canvas')){
+    canvas.onclick=e=>{
+      const rect=canvas.getBoundingClientRect(),[start,end]=view();
+      seek(start+(end-start)*constrain((e.clientX-rect.left)/rect.width,0,1));
+    };
+  }
+}
+$('run-detector').onclick=runDetector;
+$('play').onclick=()=>voice?pause():startPlayback();
+$('seek').onchange=()=>seek(number('seek'));
+for(const id of ['offset','start','end','loop','match']){
+  $(id).onchange=()=>{
+    const resume=Boolean(voice);
+    pause();position=constrain(position,...bounds());updateCursor();queueDraw();
+    if(resume)startPlayback();
+  };
+}
+$('add-note').onclick=()=>{
+  const text=$('annotation').value.trim(),asset=data(active);
+  if(!text||!asset)return;
+  const timelineSeconds=current();
+  const sourceSeconds=timelineSeconds-offset(active);
+  notes.push({variant:active,sha256:asset.digest,timelineSeconds,
+    sourceSeconds:sourceSeconds>=0&&sourceSeconds<=asset.buffer.duration?sourceSeconds:null,text});
+  appendItem('notes',fmt(timelineSeconds)+' s · '+active+' · '+text);
+  $('annotation').value='';
+};
+$('reference-form').onsubmit=async e=>{
+  e.preventDefault();
+  const form=e.currentTarget, status=$('reference-status'), submit=form.querySelector('button');
+  const ref=Object.fromEntries(Array.from(new FormData(form),([key,value])=>[key,value.trim()||null]));
+  const asset=data(ref.variant), file=$('provider-json').files[0], version=caseVersion;
+  if(!asset){status.textContent='Load recording '+ref.variant+' first.';return;}
+  if(file?.size>2_000_000){status.textContent='Choose a JSON report up to 2 MB.';return;}
+  if(ref.fileMatch.startsWith('Exact')&&!ref.evidence?.toLowerCase().includes(asset.digest)){
+    status.textContent='Paste the original submission SHA-256 into the evidence field to verify exact bytes.';return;
+  }
+  submit.disabled=true;
+  try{
+    const originalReportText=file?await file.text():null;
+    const originalReport=originalReportText===null?null:JSON.parse(originalReportText);
+    if(version!==caseVersion)return;
+    if(asset!==data(ref.variant)){status.textContent='The selected recording changed. Attach the reference again.';return;}
+    references.push({...ref,sha256:asset.digest,filename:asset.name,reportFilename:file?.name??null,originalReport,originalReportText});
+    appendItem('references',ref.variant+' · '+ref.provider+' · '+(ref.capability||'Unknown capability')+
+      ' · '+ref.fileMatch+(ref.label?' · '+ref.label:'')+(ref.score?' · '+ref.score:''));
+    status.textContent='Reference attached to '+asset.name+'.';
+    $('provider-json').value='';
+  }catch{if(version===caseVersion)status.textContent='The attached report is not valid JSON.';}
+  finally{submit.disabled=false;}
+};
+$('export-json').onclick=()=>download('json');
+$('export-md').onclick=()=>download('md');
+function clearCase(){
+  caseVersion++;pause();
+  for(const v of Object.values(variants)){
+    const {node}=v;
+    v.token++;v.asset=null;v.detection=null;v.loading=false;
+    node.querySelector('.file-status').textContent='Choose a recording.';
+    node.querySelectorAll('select').forEach(select=>select.selectedIndex=0);
+    node.querySelector('.basis').value='';
+  }
+  active='A';position=0;notes.length=0;references.length=0;
+  $('case-name').value='Vocal comparison';
+  for(const id of ['case-notes','annotation','end'])$(id).value='';
+  for(const id of ['offset','start'])$(id).value='0';
+  for(const id of ['loop','match'])$(id).checked=false;
+  for(const id of ['transport-status','reference-status','detector-status','notes','references'])$(id).replaceChildren();
+  $('reference-form').reset();$('detector-type').selectedIndex=0;render();
+}
+$('clear').onclick=()=>{
+  if(confirm('Clear loaded recordings, notes and references from this session?')) clearCase();
+};
+$('comparison-tools').addEventListener('toggle',queueDraw);
+window.addEventListener('resize',queueDraw);
+render();
+const DRUM_RATE = 48000;
+const CORE_DRUMS = ['Kick', 'Snare', 'Clap', 'Hat'];
+const DRUMS = [...CORE_DRUMS,'Tom','Ride','Crash','Percussion'];
+const EXPORT_DRUM_GROUPS = [...CORE_DRUMS,'Other'];
+const kit = {};
+let bankSamples = [], drumBankReady = Promise.resolve();
+let drumSource, drumEvents, initialEvents, drumOutput, fixture = false;
+let currentMode = 'compare', working = false;
+
+function showWorkspace(mode) {
+  pause();
+  $('drum-original').pause();
+  $('drum-render').pause();
+  $('stem-player').pause();
+  $('stem-reference').pause();
+  $('stem-workspace').hidden = mode !== 'stem';
+  $('stems-tab').setAttribute('aria-pressed', mode === 'stem');
+  currentMode = mode;
+  $('compare-workspace').hidden = mode !== 'compare';
+  $('drum-workspace').hidden = mode !== 'drum';
+  $('compare-tab').setAttribute('aria-pressed', mode === 'compare');
+  $('drum-tab').setAttribute('aria-pressed', mode === 'drum');
+  if (mode === 'compare') queueDraw();
+}
+
+function updateDrumControls() {
+  $('drum-run').disabled = working || !drumSource || (!bankSamples.length && !Object.keys(kit).length);
+  $('drum-result').hidden = !drumOutput;
+  for (const id of ['drum-input', 'bank-input', 'drum-demo', 'apply-hits', 'drum-export', 'reset-hits']) $(id).disabled = working;
+  $('send-to-compare').disabled = working || detectorBusy;
+  for (const field of $('kit-fields').querySelectorAll('input')) field.disabled = working;
+}
+
+async function drumTask(task) {
+  if (working) return;
+  working = true;
+  updateDrumControls();
+  try {
+    await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
+    await task();
+  } catch (error) {
+    $('drum-status').textContent = error.message;
+  } finally {
+    working = false;
+    updateDrumControls();
+  }
+}
+
+function wavBytes(channels) {
+  const length = channels[0].length;
+  const block = channels.length * 2;
+  const bytes = new Uint8Array(44 + length * block);
+  const view = new DataView(bytes.buffer);
+  const tag = (offset, label) => bytes.set(new TextEncoder().encode(label), offset);
+  tag(0, 'RIFF'); tag(8, 'WAVE'); tag(12, 'fmt '); tag(36, 'data');
+  view.setUint32(4, bytes.length - 8, true);
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, channels.length, true);
+  view.setUint32(24, DRUM_RATE, true);
+  view.setUint32(28, DRUM_RATE * block, true);
+  view.setUint16(32, block, true);
+  view.setUint16(34, 16, true);
+  view.setUint32(40, length * block, true);
+  for (let i = 0; i < length; i++) {
+    for (let ch = 0; ch < channels.length; ch++) {
+      view.setInt16(44 + i * block + ch * 2, Math.round(constrain(channels[ch][i], -1, 1) * 32767), true);
+    }
+  }
+  return bytes;
+}
+
+const drumURLs = {};
+function setDrumAudio(id, bytes) {
+  const player = $(id);
+  player.pause();
+  if (drumURLs[id]) URL.revokeObjectURL(drumURLs[id]);
+  if (bytes) {
+    player.src = drumURLs[id] = URL.createObjectURL(new Blob([bytes], {type:'audio/wav'}));
+  } else {
+    player.removeAttribute('src');
+    player.load();
+    delete drumURLs[id];
+  }
+}
+
+function invalidateRebuild() {
+  drumEvents = initialEvents = drumOutput = null;
+  setDrumAudio('drum-render', null);
+  $('drum-status').textContent = '';
+}
+
+async function decodeDrum(file, seconds) {
+  const byteLimit = seconds === 2 ? 20_000_000 : 125_000_000;
+  if (!file.size || file.size > byteLimit) throw Error('Choose a nonempty audio file under '+byteLimit/1e6+' MB.');
+  if (!globalThis.crypto?.subtle) throw Error('Open this file directly in a desktop browser or serve it from localhost.');
+  const bytes = await file.arrayBuffer();
+  const digest = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), n => n.toString(16).padStart(2,'0')).join('');
+  const decoder = new OfflineAudioContext(1, 1, DRUM_RATE);
+  let decoded;
+  try { decoded = await decoder.decodeAudioData(bytes); }
+  catch { throw Error('This browser could not decode the file. Try exporting a PCM WAV.'); }
+  if (decoded.duration > seconds || decoded.numberOfChannels > 2) throw Error('Choose mono or stereo audio no longer than '+seconds+' seconds.');
+  return {name:file.name, digest, channels:Array.from({length:decoded.numberOfChannels}, (_, ch) => decoded.getChannelData(ch)), original:file};
+}
+
+function soloChannel(channels) {
+  if (channels.length === 1) return channels[0];
+  const right = channels[1];
+  return Float32Array.from(channels[0], (value, i) => (value + right[i]) * .5);
+}
+
+function demoSound(kind, take) {
+  const lengths = {Kick:.19, Snare:.15, Clap:.13, Hat:.07};
+  let seed = take + 1;
+  let filtered = 0;
+  return Float32Array.from({length:Math.round(lengths[kind]*DRUM_RATE)}, (_, i) => {
+    const t = i / DRUM_RATE;
+    seed = (Math.imul(1664525, seed) + 1013904223) >>> 0;
+    const noise = seed / 2147483648 - 1;
+    filtered += .12 * (noise - filtered);
+    let tone;
+    if (kind === 'Kick') tone = Math.sin(2*Math.PI*((49+take*2)*t + 1.9*(1-Math.exp(-35*t)))) * Math.exp(-19*t);
+    if (kind === 'Snare') tone = (.7*Math.sin(2*Math.PI*182*t)*Math.exp(-35*t) + .7*filtered) * Math.exp(-23*t);
+    if (kind === 'Clap') tone = (noise - filtered*.65) * (.65*Math.exp(-100*t)+.65*Math.exp(-Math.abs(t-.013)*190)+.65*Math.exp(-Math.abs(t-.026)*180)) * Math.exp(-11*t);
+    if (kind === 'Hat') tone = (noise-filtered*3) * Math.exp(-66*t);
+    return .67 * tone * Math.min(1, t/.001, (lengths[kind]-t)/.008);
+  });
+}
+
+function onset(audio, start, length) {
+  const frame = 240;
+  const energies = [];
+  for (let i = start; i < Math.min(audio.length, start+length); i += frame) {
+    let sum = 0;
+    for (let n = i; n < Math.min(i+frame, audio.length); n++) sum += audio[n] ** 2;
+    energies.push(Math.sqrt(sum/frame));
+  }
+  const floor = Math.max(.003, energies.reduce((a,b) => Math.max(a,b), 0)*.085);
+  const hits = [];
+  for (let i = 0; i < energies.length; i++) {
+    const previous = energies[i-1] || 0;
+    if (energies[i] >= floor && energies[i] > previous*1.75 && (i === 0 || previous < floor || energies[i] > (energies[i-2] || 0)*2.7) && (!hits.length || i*frame + start - hits.at(-1) >= 2880)) {
+      hits.push(i*frame + start);
+    }
+  }
+  return hits;
+}
+
+function drumShape(samples, start = 0) {
+  let total = 1e-12, lowEnergy = 0, difference = 0, tail = 0, low = 0, previous = 0;
+  for (let i = 0; i < 3840; i++) {
+    const sample = samples[start+i] || 0;
+    low += .035*(sample-low);
+    lowEnergy += low*low;
+    total += sample*sample;
+    difference += (sample-previous)**2;
+    if (i >= 1680) tail += sample*sample;
+    previous = sample;
+  }
+  return [lowEnergy/total, difference/(4*total), tail/total];
+}
+
+// Normalized acoustic fingerprint: low/mid/high energy, envelope and crest/attack.
+// This is an approximate matcher, not an exact source-identification system.
+function drumFingerprint(samples, start=0) {
+  const frame=Math.min(10560,Math.max(1,samples.length-start));
+  let low=0,smooth=0,previous=0,energy=1e-12,peak=0,zcr=0;
+  let lows=0,mids=0,highs=0;
+  const env=[0,0,0,0];
+  for(let i=0;i<frame;i++) {
+    const x=samples[start+i]||0;
+    low+=.02*(x-low); smooth+=.19*(x-smooth);
+    const mid=smooth-low,high=x-smooth;
+    lows+=low*low; mids+=mid*mid; highs+=high*high;
+    const e=x*x; energy+=e;peak=Math.max(peak,Math.abs(x));
+    const bucket=i<480?0:i<1440?1:i<3840?2:3;
+    env[bucket]+=e;
+    if(i>0 && Math.sign(x)!==Math.sign(previous))zcr++;
+    previous=x;
+  }
+  const total=lows+mids+highs+1e-12;
+  const bands=[lows/total,mids/total,highs/total];
+  const sum=env.reduce((a,b)=>a+b,1e-12);
+  const envelope=env.map(x=>Math.sqrt(x/sum));
+  return [...bands,...envelope,Math.min(1,peak/Math.sqrt(energy/frame)/12),zcr/frame];
+}
+function fingerprintDistance(a,b) {
+  const weights=[1.5,1.4,1.5,.65,.7,.8,.8,.65,.55];
+  return Math.sqrt(a.reduce((sum,value,i)=>sum+weights[i]*(value-b[i])**2,0));
+}
+function classifyHits(channels) {
+  const mono = soloChannel(channels);
+  const starts = onset(mono,0,mono.length);
+  if (starts.length > 5000) throw Error('More than 5,000 candidate hits. Use a shorter or cleaner drum stem.');
+  const legacy = fixture || !bankSamples.length;
+  const candidates = legacy ? Object.entries(kit).map(([kind,item])=>({id:kind,kind,fp:drumFingerprint(item.mono)})) : bankSamples;
+  if(!candidates.length) throw Error('First import a licensed real drum sample ZIP into the private library.');
+  return starts.map((at,index)=>{
+    const fp=drumFingerprint(mono,at);
+    const ranked=candidates.map(sample=>({sample,distance:fingerprintDistance(sample.fp,fp)}))
+      .sort((a,b)=>a.distance-b.distance);
+    const winner=ranked[0], second=ranked.find(x=>x.sample.kind!==winner.sample.kind);
+    const gap=(second?.distance??1.5)-winner.distance;
+    const confidence=Math.max(0,Math.min(1,1-winner.distance/1.25));
+    // Require acoustic resemblance. With bleeding or stacked hits we retain source.
+    // A small category margin is acceptable because similar acoustic snares can cluster.
+    const accepted=legacy ? (candidates.length===CORE_DRUMS.length && winner.distance<.5 && gap>.04) : winner.distance<.85;
+    const kind=winner.sample.kind;
+    const window=Math.max(1,Math.min(Math.round(DRUM_RATE*.18),(starts[index+1]??mono.length)-at));
+    return {at,length:window,estimate:kind,distance:winner.distance,margin:gap,
+      confidence,choice:accepted?winner.sample.id:'Source',
+      sampleName:winner.sample.name||winner.sample.id,
+      alternatives:ranked.slice(0,5).map(x=>x.sample.id),move:0,gain:0};
+  });
+}
+
+function peakBetween(samples, start, end) {
+  let peak = 0;
+  for (let n = start; n < end; n++) peak = Math.max(peak, Math.abs(samples[n] || 0));
+  return peak;
+}
+
+function resolveDrumSample(id){
+  const real=bankSamples.find(item=>item.id===id);
+  if(real)return real;
+  if(kit[id])return {kind:id,id,mono:kit[id].mono,name:kit[id].name};
+  return null;
+}
+function renderDrums() {
+  const {channels}=drumSource;
+  const length=channels[0].length,mono=soloChannel(channels);
+  const source=channels.map(ch=>ch.slice());
+  const stems=Object.fromEntries(EXPORT_DRUM_GROUPS.map(kind=>[kind,channels.map(()=>new Float32Array(length))]));
+  for(const event of drumEvents){
+    if(event.choice==='Source')continue;
+    const item=resolveDrumSample(event.choice);
+    if(!item)continue;
+    const group=EXPORT_DRUM_GROUPS.includes(item.kind)?item.kind:'Other';
+    if(!stems[group])continue;
+    const sample=item.mono,replacements=stems[group];
+    const target=event.at+Math.round(event.move*DRUM_RATE/1000);
+    const referencePeak=peakBetween(mono,event.at,event.at+event.length);
+    const samplePeak=peakBetween(sample,0,sample.length);
+    const gain=Math.min(3,referencePeak/Math.max(.00001,samplePeak))*10**(event.gain/20);
+    for(let i=0;i<event.length;i++){
+      const edge=Math.min(1,(i+1)/96,(event.length-i)/192);
+      for(const channel of source)channel[event.at+i]*=1-edge;
+    }
+    // Allow natural sample decay after the onset-replacement window.
+    for(let i=0;i<sample.length;i++){
+      const frame=target+i;
+      if(frame<0||frame>=length)continue;
+      const attack=Math.min(1,(i+1)/96);
+      for(const channel of replacements)channel[frame]+=sample[i]*attack*gain;
+    }
+  }
+  let peak=0;
+  const stemTracks=Object.values(stems);
+  const mix=source.map((channel,ch)=>Float32Array.from(channel,(value,i)=>{
+    for(const stem of stemTracks)value+=stem[ch][i];
+    peak=Math.max(peak,Math.abs(value));return value;
+  }));
+  const exportGain=peak>.98?.98/peak:1;
+  if(exportGain<1)for(const channel of [...mix,...source,...Object.values(stems).flat()]){
+    for(let i=0;i<channel.length;i++)channel[i]*=exportGain;
+  }
+  return {mix,source,stems,exportGain};
+}
+
+function refreshRender() {
+  drumOutput = renderDrums();
+  setDrumAudio('drum-render', wavBytes(drumOutput.mix));
+  const replaced = drumEvents.filter(event => event.choice !== 'Source').length;
+  $('drum-status').textContent = drumEvents.length
+    ? replaced+' of '+drumEvents.length+' detected hits rebuilt. '+(drumEvents.length-replaced)+' kept as source.'
+    : 'No distinct hits detected. The render retains the source audio.';
+}
+
+function showHits() {
+  $('hits').replaceChildren(...drumEvents.map(event => {
+    const row = document.createElement('tr');
+    row.insertCell().textContent = (event.at/DRUM_RATE).toFixed(3)+' s';
+    row.insertCell().textContent = event.estimate;
+    const select = document.createElement('select');
+    select.setAttribute('aria-label','Replacement at '+event.at/DRUM_RATE+' seconds');
+    for (const value of ['Source',...(event.alternatives||Object.keys(kit))]) {
+      const item=resolveDrumSample(value);
+      select.add(new Option(value==='Source'?'Keep original':(item?item.kind+' · '+item.name:value),value));
+    }
+    select.value = event.choice;
+    row.insertCell().append(select);
+    for (const [key,min,max] of [['move',-100,100],['gain',-18,12]]) {
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.setAttribute('aria-label', (key === 'move' ? 'Timing in milliseconds' : 'Gain in decibels')+' at '+event.at/DRUM_RATE+' seconds');
+      input.min = min;
+      input.max = max;
+      input.step = '.1';
+      input.value = event[key];
+      row.insertCell().append(input);
+    }
+    return row;
+  }));
+}
+
+function loadDemo() {
+  invalidateRebuild();
+  fixture = true;
+  for (const field of $('kit-fields').querySelectorAll('input')) field.value = '';
+  for (const kind of CORE_DRUMS) {
+    kit[kind] = {name:'Synthesized demo '+kind, mono:demoSound(kind,1)};
+    $('kit-status-'+kind).textContent = kit[kind].name;
+  }
+  const channel = new Float32Array(16*DRUM_RATE);
+  const pattern = ['Kick','Hat','Snare','Hat','Kick','Hat','Clap','Hat'];
+  const sounds = Object.fromEntries(CORE_DRUMS.map(kind => [kind,demoSound(kind,0)]));
+  for (let beat = 0; beat < 64; beat++) {
+    const hit = sounds[pattern[beat%8]];
+    const start = beat*12000;
+    for (let i = 0; i < hit.length; i++) channel[start+i] += hit[i]*(.63+(beat%3)*.11);
+  }
+  drumSource = {name:'Eight-bar drum demo', channels:[channel]};
+  $('source-name').textContent = 'Eight-bar drum demo loaded · synthesized fixture';
+  setDrumAudio('drum-original', wavBytes(drumSource.channels));
+}
+
+const crcTable = Uint32Array.from({length:256}, (_, seed) => {
+  for (let i=0; i<8; i++) seed = (seed >>> 1) ^ (seed & 1 ? 0xedb88320 : 0);
+  return seed >>> 0;
+});
+
+function zipArchive(entries) {
+  const files = [], directory = [];
+  let offset = 0, size = 0;
+  for (const [name, data] of entries) {
+    const label = new TextEncoder().encode(name);
+    let crc = 0xffffffff;
+    for (const byte of data) crc = crcTable[(crc ^ byte) & 255] ^ (crc >>> 8);
+    crc ^= 0xffffffff;
+    const local = new Uint8Array(30+label.length), central = new Uint8Array(46+label.length);
+    const a = new DataView(local.buffer), b = new DataView(central.buffer);
+    a.setUint32(0,0x04034b50,true); a.setUint16(4,20,true); a.setUint16(12,33,true);
+    a.setUint32(14,crc,true); a.setUint32(18,data.length,true); a.setUint32(22,data.length,true);
+    a.setUint16(26,label.length,true); local.set(label,30);
+    b.setUint32(0,0x02014b50,true); b.setUint16(4,20,true); b.setUint16(6,20,true); b.setUint16(14,33,true);
+    b.setUint32(16,crc,true); b.setUint32(20,data.length,true); b.setUint32(24,data.length,true);
+    b.setUint16(28,label.length,true); b.setUint32(42,offset,true); central.set(label,46);
+    files.push(local,data); directory.push(central);
+    offset += local.length + data.length;
+    size += central.length;
+  }
+  const end = new Uint8Array(22), view = new DataView(end.buffer);
+  view.setUint32(0,0x06054b50,true); view.setUint16(8,entries.length,true);
+  view.setUint16(10,entries.length,true); view.setUint32(12,size,true); view.setUint32(16,offset,true);
+  return new Blob([...files,...directory,end],{type:'application/zip'});
+}
+
+function exportDrums() {
+  const {mix, source, stems, exportGain} = drumOutput;
+  const manifest = {
+    version:'drum-auto-match-0.2', preset:'keep-uncertain-hits', sampleRate:DRUM_RATE, originSample:0,
+    frameCount:mix[0].length, channels:mix.length, exportGain, tailPolicy:'clip to source duration',
+    source:{name:drumSource.name, sha256:drumSource.digest ?? null, synthesizedDemo:fixture},
+    realSampleBank:bankSamples.map(item=>({id:item.id,name:item.name,kind:item.kind,sha256:item.digest,license:item.license||'user supplied; not verified',source:item.source||'user supplied'})),
+    samples:Object.fromEntries(Object.entries(kit).map(([kind,item]) => [kind,{
+      name:item.name, sha256:item.digest??null, origin:item.digest?'user-supplied':'synthesized demo'
+    }])),
+    events:drumEvents.map(event => ({...event, outputSample:event.at + Math.round(event.move * DRUM_RATE / 1000)}))
+  };
+  const entries = [
+    ...Object.entries(stems).map(([kind,channels]) => [kind.toLowerCase()+'.wav', wavBytes(channels)]),
+    ['retained-source.wav',wavBytes(source)],['rebuild-preview.wav',wavBytes(mix)],
+    ['reference-48k.wav',wavBytes(drumSource.channels)],
+    ['manifest.json',new TextEncoder().encode(JSON.stringify(manifest,null,2))]
+  ];
+  const url = URL.createObjectURL(zipArchive(entries));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'Jay_Vale_Drum_Rebuild.zip';
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+$('compare-tab').onclick = () => showWorkspace('compare');
+$('drum-tab').onclick = () => showWorkspace('drum');
+$('drum-demo').onclick = () => drumTask(async () => {
+  loadDemo();
+  drumEvents = classifyHits(drumSource.channels);
+  initialEvents = structuredClone(drumEvents);
+  showHits();
+  refreshRender();
+});
+$('drum-input').onchange = event => {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  drumTask(async () => {
+    $('drum-status').textContent = 'Reading the drum stem…';
+    await drumBankReady;
+    const sourceFile=/\.zip$/i.test(file.name)?await unpackDrumStem(file):file;
+    const decoded = await decodeDrum(sourceFile,240);
+    invalidateRebuild();
+    if (fixture) {
+      for (const kind of CORE_DRUMS) {
+        if (kit[kind] && !kit[kind].digest) {
+          delete kit[kind];
+          $('kit-status-'+kind).textContent = 'No sample selected.';
+        }
+      }
+    }
+    fixture = false;
+    drumSource = decoded;
+    $('source-name').textContent = decoded.name;
+    $('kit').open = false;
+    setDrumAudio('drum-original', wavBytes(drumSource.channels));
+    if(bankSamples.length){
+      $('drum-status').textContent='Automatically matching detected hits to '+bankSamples.length+' real recorded samples…';
+      drumEvents=classifyHits(drumSource.channels);
+      initialEvents=structuredClone(drumEvents);
+      showHits();refreshRender();
+    }else $('drum-status').textContent='Stem imported. Add a private real drum sample library ZIP once; no drum-by-drum selection needed.';
+  });
+};
+for (const kind of CORE_DRUMS) {
+  const label = document.createElement('label');
+  label.textContent = kind;
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'audio/*,.wav,.mp3,.m4a,.flac';
+  const status = document.createElement('output');
+  status.id = 'kit-status-'+kind;
+  status.textContent = 'No sample selected.';
+  label.append(input,status);
+  $('kit-fields').append(label);
+  input.onchange = () => {
+    const file = input.files[0];
+    input.value = '';
+    if (!file) return;
+    drumTask(async () => {
+      const item = await decodeDrum(file,2);
+      const mono = soloChannel(item.channels);
+      const [start] = onset(mono,0,mono.length);
+      if (start === undefined) throw Error('The '+kind.toLowerCase()+' sample has no clear onset.');
+      kit[kind] = {name:item.name, digest:item.digest, mono:mono.slice(start)};
+      status.textContent = item.name;
+      invalidateRebuild();
+    });
+  };
+}
+$('drum-run').onclick = () => drumTask(async () => {
+  $('drum-status').textContent = 'Detecting and rebuilding hits…';
+  drumEvents = classifyHits(drumSource.channels);
+  initialEvents = structuredClone(drumEvents);
+  showHits();
+  refreshRender();
+});
+$('apply-hits').onclick = () => drumTask(async () => {
+  drumEvents = Array.from($('hits').rows, (row,index) => {
+    const [choice, move, gain] = row.querySelectorAll('select,input');
+    return {...drumEvents[index], choice:choice.value, move:constrain(Number(move.value),-100,100), gain:constrain(Number(gain.value),-18,12)};
+  });
+  showHits();
+  refreshRender();
+});
+$('reset-hits').onclick = () => drumTask(async () => {
+  drumEvents = structuredClone(initialEvents);
+  showHits();
+  refreshRender();
+});
+$('drum-export').onclick = () => drumTask(async () => exportDrums());
+$('send-to-compare').onclick = () => {
+  if (working || detectorBusy || variants.A.loading || variants.B.loading) {
+    $('drum-status').textContent = 'Wait for the current comparison or detector check to finish.';
+    return;
+  }
+  if ((data('A') || data('B') || notes.length || references.length) && !confirm('Replace the current A/B files and notes with the drum comparison? Export your current report first if you need it.')) return;
+  clearCase();
+  $('case-name').value = 'Drum reconstruction';
+  $('detector-type').value = 'music';
+  const original = drumSource.original || new File([wavBytes(drumSource.channels)], 'Drum reference demo.wav',{type:'audio/wav'});
+  const rebuilt = new File([wavBytes(drumOutput.mix)], 'Rebuilt drum track.wav',{type:'audio/wav'});
+  showWorkspace('compare');
+  $('comparison-tools').open = true;
+  $('match').checked = true;
+  void Promise.all([load('A',original),load('B',rebuilt)]);
+};
+updateDrumControls();
+const STEM_MAX_ZIP = 150_000_000;
+const STEM_MAX_EXPANDED = 220_000_000;
+const STEM_MAX_FRAMES = DRUM_RATE*300;
+const STEM_LIMIT = 24;
+let stemProject = null, stemBusy = false;
+const stemUrls = {};
+
+function crc32(bytes) {
+  let crc = 0xffffffff;
+  for (const byte of bytes) crc = crcTable[(crc ^ byte) & 255] ^ (crc >>> 8);
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function stemZipDirectory(bytes) {
+  if (bytes.length > STEM_MAX_ZIP || bytes.length < 22) throw Error('Choose a standard ZIP up to 150 MB.');
+  const view = new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  const u16 = at => view.getUint16(at,true), u32 = at => view.getUint32(at,true);
+  let end = bytes.length-22;
+  while (end >= Math.max(0,bytes.length-65557)) {
+    if (u32(end) === 0x06054b50 && end+22+u16(end+20) === bytes.length) break;
+    end--;
+  }
+  if (end < Math.max(0,bytes.length-65557)) throw Error('This file has no valid ZIP directory.');
+  const count = u16(end+10), directory = u32(end+12), start = u32(end+16), limit = start+directory;
+  if (u16(end+4) || u16(end+6) || u16(end+8)!==count || count>256 || limit!==end) {
+    throw Error('Use a single-volume ZIP with at most 256 entries. ZIP64 is unavailable in this pilot.');
+  }
+  const decoder = new TextDecoder();
+  const seen = new Set();
+  const entries = [];
+  const skipped = [];
+  let total = 0, at = start;
+  for (let i=0;i<count;i++) {
+    if (at+46>limit || u32(at)!==0x02014b50) throw Error('Invalid ZIP directory entry.');
+    const flags=u16(at+8), method=u16(at+10), crc=u32(at+16), packed=u32(at+20), expanded=u32(at+24);
+    const nameLength=u16(at+28), extra=u16(at+30), comment=u16(at+32), local=u32(at+42);
+    const next=at+46+nameLength+extra+comment;
+    if (next>limit) throw Error('Truncated ZIP directory.');
+    const name=decoder.decode(bytes.subarray(at+46,at+46+nameLength));
+    at=next;
+    const parts=name.replace(/\/$/,'').split('/');
+    if (!name || /[\\:\u0000-\u001f\u007f]/.test(name) || parts.some(p=>!p||p==='.'||p==='..')) {
+      skipped.push('Unsafe entry skipped: '+(name||'(empty name)'));
+      continue;
+    }
+    if (name.endsWith('/') || parts[0]==='__MACOSX' || parts.at(-1)==='.DS_Store') continue;
+    const leaf=parts.at(-1);
+    if (!/\.(wav|flac|mp3|m4a|mid|midi)$/i.test(leaf) && !/^(alignment|tempo-map)\.json$/i.test(leaf)) {
+      skipped.push('Unsupported entry skipped: '+name);
+      continue;
+    }
+    try {
+      if (seen.has(name.toLowerCase())) throw Error('duplicate path');
+      if ((flags & 65) || ![0,8].includes(method)) throw Error('encrypted or unsupported compression');
+      if (expanded>120_000_000 || total+expanded>STEM_MAX_EXPANDED) throw Error('expanded size exceeds the pilot limit');
+      if (!expanded || local+30>start || u32(local)!==0x04034b50) throw Error('invalid local header');
+      const localNameLength=u16(local+26), body=local+30+localNameLength+u16(local+28);
+      if (u16(local+6)!==flags || u16(local+8)!==method || body+packed>start ||
+          name!==decoder.decode(bytes.subarray(local+30,local+30+localNameLength))) throw Error('entry headers disagree');
+      if (method===0 && packed!==expanded) throw Error('invalid stored length');
+      entries.push({name,leaf,method,crc,expanded,body,packed});
+      seen.add(name.toLowerCase());
+      total+=expanded;
+    } catch (error) {
+      skipped.push(name+': '+error.message);
+    }
+  }
+  if (at!==limit) throw Error('Unexpected bytes in ZIP directory.');
+  return {entries,skipped};
+}
+
+async function stemZipContents(bytes, entry) {
+  const packed=bytes.subarray(entry.body,entry.body+entry.packed);
+  let output=packed;
+  if (entry.method===8) {
+    output=new Uint8Array(entry.expanded);
+    const reader=new Blob([packed]).stream().pipeThrough(new DecompressionStream('deflate-raw')).getReader();
+    let position=0;
+    try {
+      while (true) {
+        const {done,value}=await reader.read();
+        if (done) break;
+        if (value.length>output.length-position) throw Error('entry expanded past its declared size');
+        output.set(value,position);
+        position+=value.length;
+      }
+      if (position!==output.length) throw Error('incorrect expanded length');
+    } finally { await reader.cancel(); }
+  }
+  if (crc32(output)!==entry.crc) throw Error('CRC mismatch');
+  return output;
+}
+
+async function digestAudio(bytes) {
+  if (!crypto.subtle) throw Error('Open the app in a secure browser context, such as a downloaded file in desktop Chrome.');
+  const hash=await crypto.subtle.digest('SHA-256',bytes);
+  return Array.from(new Uint8Array(hash),value=>value.toString(16).padStart(2,'0')).join('');
+}
+
+function setStemPlayer(id, bytes) {
+  const player=$(id);
+  player.pause();
+  if (stemUrls[id]) URL.revokeObjectURL(stemUrls[id]);
+  delete stemUrls[id];
+  if (bytes) {
+    player.src=stemUrls[id]=URL.createObjectURL(new Blob([bytes],{type:'audio/wav'}));
+  } else {
+    player.removeAttribute('src');
+    player.load();
+  }
+}
+
+function stemWav24(channels, frames, offset=0, gain=1) {
+  const block=channels.length*3;
+  const size=frames*block;
+  const pad=size%2;
+  const bytes=new Uint8Array(44+size+pad);
+  bytes.set([82,73,70,70],0); bytes.set([87,65,86,69,102,109,116,32],8); bytes.set([100,97,116,97],36);
+  const view=new DataView(bytes.buffer);
+  view.setUint32(4,bytes.length-8,true); view.setUint32(16,16,true);
+  view.setUint16(20,1,true); view.setUint16(22,channels.length,true);
+  view.setUint32(24,DRUM_RATE,true); view.setUint32(28,DRUM_RATE*block,true);
+  view.setUint16(32,block,true); view.setUint16(34,24,true); view.setUint32(40,size,true);
+  for (let i=0;i<Math.min(channels[0].length,frames-offset);i++) {
+    for(let c=0;c<channels.length;c++) {
+      const frame=44+(i+offset)*block+3*c;
+      const value=Math.round(constrain(channels[c][i]*gain,-1,1)*8388607);
+      bytes[frame]=value;
+      bytes[frame+1]=value>>8;
+      bytes[frame+2]=value>>16;
+    }
+  }
+  return bytes;
+}
+
+async function readStemProject(file) {
+  if (!file.size || file.size>STEM_MAX_ZIP) throw Error('Choose a nonempty ZIP up to 150 MB.');
+  const bytes=new Uint8Array(await file.arrayBuffer());
+  const {entries,skipped}=stemZipDirectory(bytes);
+  const audioEntries=entries.filter(item=>/\.(wav|flac)$/i.test(item.leaf));
+  if (audioEntries.length>STEM_LIMIT) throw Error('Use a ZIP with up to 24 audio entries for this pilot.');
+  const offsets=new Map();
+  const extras=[];
+  let tempoMap=null;
+  for (const entry of entries.filter(item=>!audioEntries.includes(item))) {
+    try {
+      if (entry.expanded>1_000_000) throw Error('sidecar exceeds 1 MB');
+      const contents=await stemZipContents(bytes,entry);
+      if (/^alignment\.json$/i.test(entry.leaf)) {
+        const parsed=JSON.parse(new TextDecoder().decode(contents));
+        if (!parsed || typeof parsed.offsetMs!=='object' || !parsed.offsetMs || Array.isArray(parsed.offsetMs)) {
+          throw Error('expected an offsetMs object mapping ZIP paths to milliseconds');
+        }
+        for (const [name,value] of Object.entries(parsed.offsetMs)) {
+          if (Number.isFinite(value) && value>=0 && value<=60000) offsets.set(name,value);
+          else skipped.push('Invalid offset ignored: '+name);
+        }
+      } else if (/^tempo-map\.json$/i.test(entry.leaf)) {
+        const parsed=JSON.parse(new TextDecoder().decode(contents));
+        if (!parsed || typeof parsed!=='object') throw Error('tempo map must contain JSON data');
+        tempoMap=contents.slice();
+      } else {
+        extras.push({leaf:entry.leaf,contents:contents.slice()});
+      }
+    } catch (error) { skipped.push(entry.name+': '+error.message); }
+  }
+  const tracks=[];
+  const known=new Set();
+  let decodedBytes=0;
+  let masterFound=false;
+  for (const entry of audioEntries) {
+    $('stem-status').textContent='Reading '+entry.name+'…';
+    try {
+      const contents=await stemZipContents(bytes,entry);
+      const hash=await digestAudio(contents);
+      const duplicate=known.has(hash);
+      const view=new DataView(contents.buffer,contents.byteOffset,contents.byteLength);
+      const sourceRate=contents.length>=26 && view.getUint32(0)===0x664c6143
+        ? view.getUint32(18)>>>12
+        : header(contents.buffer.slice(contents.byteOffset,contents.byteOffset+Math.min(65536,contents.length))).rate;
+      const decoder=new OfflineAudioContext(1,1,DRUM_RATE);
+      const audio=await decoder.decodeAudioData(contents.slice().buffer);
+      if (audio.length>STEM_MAX_FRAMES || audio.numberOfChannels>2) throw Error('use mono or stereo audio up to five minutes');
+      const memory=audio.length*audio.numberOfChannels*4;
+      if (decodedBytes+memory>170_000_000) throw Error('decoded audio exceeds the browser pilot memory budget');
+      decodedBytes+=memory;
+      const channels=Array.from({length:audio.numberOfChannels},(_,ch)=>audio.getChannelData(ch));
+      const master=/^(master|reference|full[ _-]?mix|mixdown)\.(wav|flac)$/i.test(entry.leaf);
+      let peak=0;
+      for (const track of channels) for (const sample of track) peak=Math.max(peak,Math.abs(sample));
+      const use=duplicate?'omit':master?(masterFound?'omit':'reference'):'mix';
+      if (use==='reference') masterFound=true;
+      tracks.push({name:entry.name,leaf:entry.leaf, hash,channels,sourceRate,peak,duplicate,use,offset:offsets.get(entry.name)??0});
+      known.add(hash);
+    } catch (error) { skipped.push(entry.name+': '+error.message); }
+  }
+  if (!tracks.length) throw Error('No usable WAV or FLAC tracks. '+skipped.slice(0,4).join(' · '));
+  return {name:file.name,tracks,skipped,tempoMap,extras};
+}
+
+function stemMix(project) {
+  const selected=project.tracks.filter(track=>track.use==='mix');
+  const references=project.tracks.filter(track=>track.use==='reference');
+  if (!selected.length) throw Error('Select at least one track for the mix.');
+  if (references.length>1) throw Error('Select only one reference master.');
+  const offset=track=>Math.round(track.offset*DRUM_RATE/1000);
+  const reference=references[0];
+  const frames=Math.max(...[...selected,...references].map(track=>track.channels[0].length+offset(track)));
+  if (frames>STEM_MAX_FRAMES) throw Error('The total timeline, including offsets, must be five minutes or less.');
+  const count=selected.some(track=>track.channels.length===2)?2:1;
+  const mix=Array.from({length:count},()=>new Float32Array(frames));
+  for (const track of selected) {
+    const start=offset(track);
+    for (let ch=0;ch<count;ch++) {
+      const samples=track.channels[ch]??track.channels[0];
+      for(let i=0;i<samples.length;i++) mix[ch][start+i]+=samples[i];
+    }
+  }
+  let peak=Math.max(...selected.map(track=>track.peak),0);
+  for (const channel of mix) for (let i=0;i<channel.length;i++) peak=Math.max(peak,Math.abs(channel[i]));
+  const gain=peak>.98?.98/peak:1;
+  return {selected,reference,frames,mix,offset,gain};
+}
+
+function showStemRows() {
+  $('stem-rows').replaceChildren(...stemProject.tracks.map(track=>{
+    const row=document.createElement('tr');
+    row.insertCell().textContent=track.name;
+    row.insertCell().textContent=(track.channels[0].length/DRUM_RATE).toFixed(2)+' s · '+(track.sourceRate ? track.sourceRate/1000+' kHz source · ' : '')+
+      (track.channels.length===2?'Stereo':'Mono')+(track.duplicate?' · Duplicate':'')+
+      (track.peak<=.00001?' · Silent':track.peak>=.999?' · Near full scale':'');
+    const choice=document.createElement('select');
+    choice.setAttribute('aria-label','Use '+track.name);
+    for(const [value,label] of [['mix','Mix'],['reference','Reference'],['omit','Omit']]) choice.add(new Option(label,value));
+    choice.value=track.use;
+    choice.onchange=()=>{track.use=choice.value; invalidateStemPreview();};
+    row.insertCell().append(choice);
+    const shift=document.createElement('input');
+    shift.type='number'; shift.min=0; shift.max=60000; shift.step='any'; shift.value=track.offset;
+    shift.setAttribute('aria-label','Start offset in milliseconds for '+track.name);
+    shift.onchange=()=>{
+      track.offset=constrain(Number(shift.value)||0,0,60000);
+      shift.value=track.offset;
+      invalidateStemPreview();
+    };
+    row.insertCell().append(shift);
+    return row;
+  }));
+}
+
+function invalidateStemPreview() {
+  setStemPlayer('stem-player',null);
+  setStemPlayer('stem-reference',null);
+  $('stem-reference-label').hidden=true;
+  $('stem-action').textContent='Track selection changed. Build a new preview or download the current selection.';
+}
+
+function printStemSummary(mix) {
+  $('stem-action').textContent=mix.selected.length+' tracks · '+(mix.frames/DRUM_RATE).toFixed(2)+' seconds · '+
+    (mix.gain<1 ? 'common headroom adjustment '+(20*Math.log10(mix.gain)).toFixed(1)+' dB' : 'no gain adjustment');
+}
+
+function previewStems() {
+  const mix=stemMix(stemProject);
+  setStemPlayer('stem-player',stemWav24(mix.mix,mix.frames,0,mix.gain));
+  $('stem-reference-label').hidden=!mix.reference;
+  setStemPlayer('stem-reference',mix.reference ? stemWav24(mix.reference.channels,mix.frames,mix.offset(mix.reference)) : null);
+  printStemSummary(mix);
+}
+
+async function makeStemPackage(project, bpm) {
+  const mix=stemMix(project);
+  const channels=mix.selected.reduce((count,track)=>count+track.channels.length,0)+mix.mix.length+(mix.reference?.channels.length??0);
+  if (mix.frames*channels*3>175_000_000) throw Error('The padded export exceeds 175 MB. Shorten or exclude tracks.');
+  const entries=[];
+  const manifestTracks=[];
+  const textEncoder=new TextEncoder();
+  for (const [name,track] of mix.selected.entries()) {
+    const label=track.leaf.replace(/\.[^.]+$/,'').replace(/[^a-zA-Z0-9_-]+/g,'-').slice(0,65)||'track';
+    const path='Stems/'+String(name+1).padStart(2,'0')+'-'+label+'.wav';
+    const bytes=stemWav24(track.channels,mix.frames,mix.offset(track),mix.gain);
+    entries.push([path,bytes]);
+    manifestTracks.push({source:track.name, sourceSha256:track.hash, output:path, outputSha256:await digestAudio(bytes),
+      lineage:'source retained', sourceRate:track.sourceRate, startSample:mix.offset(track), channelCount:track.channels.length});
+  }
+  entries.push(['Review/selected-mix.wav',stemWav24(mix.mix,mix.frames,0,mix.gain)]);
+  if(mix.reference) entries.push(['Review/reference.wav',stemWav24(mix.reference.channels,mix.frames,mix.offset(mix.reference))]);
+  for (const [index,asset] of project.extras.entries()) entries.push(['Guides/'+(index+1)+'.mid',asset.contents]);
+  if (project.tempoMap) entries.push(['Guides/supplied-tempo-map.json',project.tempoMap]);
+  entries.push(['Guides/tempo.json',textEncoder.encode(JSON.stringify({bpm:bpm??null,
+    suppliedMap:project.tempoMap?'supplied-tempo-map.json':null, note:'Supplied files are passed through. Verify the tempo and meter before setting the project grid.'},null,2))]);
+  entries.push(['manifest.json',textEncoder.encode(JSON.stringify({
+    version:'stem-handoff-1', target:'ACE Studio or Bitwig', sourceArchive:project.name, sampleRate:DRUM_RATE, bitDepth:24,
+    originSample:0, frameCount:mix.frames, commonGain:mix.gain, bpm:bpm??null,
+    reference:mix.reference?{source:mix.reference.name,sourceSha256:mix.reference.hash,startSample:mix.offset(mix.reference)}:null,
+    tracks:manifestTracks, omitted:project.tracks.filter(track=>track.use==='omit').map(track=>track.name), warnings:project.skipped
+  },null,2))]);
+  entries.push(['START-HERE.txt',textEncoder.encode([
+    '1. Extract the ZIP and start a new ACE Studio or Bitwig project.',
+    bpm ? '2. Set the grid to '+bpm+' BPM and check supplied guides if present.'
+      : '2. Verify the tempo on your project grid. No single BPM was entered here.',
+    '3. Import only the WAVs in Stems/ at the same timeline start, at unity gain.',
+    '4. Compare against Review/selected-mix.wav. A common gain is already baked into the exported stems.',
+    '5. Save the project in your workstation. In ACE Studio, collect the audio files when saving.'
+  ].join('\r\n'))]);
+  return {archive:zipArchive(entries),mix};
+}
+
+async function stemTask(task) {
+  if (stemBusy) return;
+  stemBusy=true;
+  const fields=Array.from($('stem-workspace').querySelectorAll('button,input,select'));
+  for(const field of fields) field.disabled=true;
+  try { await task(); }
+  catch(error) { $('stem-status').textContent=error.message; $('stem-action').textContent=error.message; }
+  finally {
+    for(const field of fields) field.disabled=false;
+    stemBusy=false;
+  }
+}
+
+async function importStems(file) {
+  $('stem-status').textContent='Checking ZIP…';
+  const imported=await readStemProject(file);
+  stemProject=imported;
+  $('stem-results').hidden=false;
+  $('stem-bpm').value='';
+  const warnings=$('stem-warnings');
+  warnings.hidden=!imported.skipped.length;
+  $('stem-warning-list').replaceChildren(...imported.skipped.map(message=>{
+    const item=document.createElement('li');
+    item.textContent=message;
+    return item;
+  }));
+  showStemRows();
+  invalidateStemPreview();
+  $('stem-status').textContent=imported.name+' · '+imported.tracks.length+' tracks ready'+
+    (imported.skipped.length ? ' · '+imported.skipped.length+' skipped entries or warnings' : '');
+  if(imported.tracks.some(track=>track.use==='mix')) previewStems();
+  else $('stem-action').textContent='Select at least one track for the mix.';
+}
+
+$('stems-tab').onclick=()=>showWorkspace('stem');
+$('stem-input').onchange=event=>{
+  const file=event.target.files[0];
+  event.target.value='';
+  if(file) void stemTask(()=>importStems(file));
+};
+$('stem-demo').onclick=()=>stemTask(async()=>{
+  const kick=new Float32Array(DRUM_RATE*3);
+  const clap=new Float32Array(DRUM_RATE*2);
+  kick.set(demoSound('Kick',0),DRUM_RATE/2);
+  kick.set(demoSound('Kick',1),DRUM_RATE*1.5);
+  clap.set(demoSound('Clap',0),DRUM_RATE*.6);
+  clap.set(demoSound('Clap',1),DRUM_RATE*1.6);
+  const zip=zipArchive([
+    ['Kick.wav',wavBytes([kick])],['Clap.wav',wavBytes([clap])],
+    ['alignment.json',new TextEncoder().encode(JSON.stringify({offsetMs:{'Clap.wav':400}}))]
+  ]);
+  await importStems(new File([zip],'Demo stem project.zip'));
+  $('stem-bpm').value=120;
+});
+$('stem-preview').onclick=()=>stemTask(async()=>previewStems());
+$('stem-export').onclick=()=>stemTask(async()=>{
+  const input=$('stem-bpm');
+  if(!input.checkValidity()) throw Error('Enter BPM from 20 to 400, or leave it blank.');
+  $('stem-action').textContent='Preparing ZIP…';
+  const {archive,mix}=await makeStemPackage(stemProject,input.value?Number(input.value):null);
+  const url=URL.createObjectURL(archive);
+  const link=document.createElement('a');
+  link.href=url; link.download='Jay_Vale_Aligned_Stems.zip'; link.click();
+  setTimeout(()=>URL.revokeObjectURL(url),60_000);
+  printStemSummary(mix);
+});
+
+showWorkspace('stem');
+
+// Private local acoustic-library installer. IndexedDB persists sample bank ZIP without cloud upload.
+function openDrumBankDB(){
+  return new Promise((resolve,reject)=>{
+    if(!('indexedDB' in window)){reject(Error('IndexedDB is unavailable in this browser.'));return;}
+    const request=indexedDB.open('JayValePrivateDrumLibrary',1);
+    request.onupgradeneeded=()=>request.result.createObjectStore('archives');
+    request.onsuccess=()=>resolve(request.result);
+    request.onerror=()=>reject(request.error);
+  });
+}
+async function cachedBank(operation,value){
+  const db=await openDrumBankDB();
+  return new Promise((resolve,reject)=>{
+    const transaction=db.transaction('archives',operation==='read'?'readonly':'readwrite');
+    const req=operation==='read'?transaction.objectStore('archives').get('real-drum-bank')
+      :transaction.objectStore('archives').put(value,'real-drum-bank');
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+    transaction.oncomplete=()=>db.close();
+  });
+}
+function identifyDrumKind(name){
+  const s=name.toLowerCase().replace(/[\-_]/g,' ');
+  if(/(^|[\/\s])(kicks?|bass drums?|bd\d*)([\/\s\d.]|$)/.test(s))return 'Kick';
+  if(/(^|[\/\s])(snares?|snr|sd\d*)([\/\s\d.]|$)/.test(s))return 'Snare';
+  if(/(^|[\/\s])(claps?|hand claps?)([\/\s\d.]|$)/.test(s))return 'Clap';
+  if(/(hi hat|hihat|hats|closed hat|open hat|hh\d*)/.test(s))return 'Hat';
+  if(/(tom|ltom|htom|floor tom)/.test(s))return 'Tom';
+  if(/(ride|flatride)/.test(s))return 'Ride';
+  if(/(crash|china|cymbal|splash)/.test(s))return 'Crash';
+  if(/(perc|cowbell|shaker|conga|bongo|tambourine|claves|woodblock)/.test(s))return 'Percussion';
+  return null;
+}
+async function unpackDrumStem(zip){
+  if(zip.size>150_000_000)throw Error('The drum ZIP must be smaller than 150 MB.');
+  const bytes=new Uint8Array(await zip.arrayBuffer());
+  const {entries}=stemZipDirectory(bytes);
+  const matches=entries.filter(item=>/\.(wav|mp3|flac|m4a)$/i.test(item.leaf));
+  if(matches.length!==1)throw Error('Drum reconstruction expects exactly one audio track in the uploaded ZIP, found '+matches.length+'.');
+  const e=matches[0], audio=await stemZipContents(bytes,e);
+  return new File([audio],e.leaf,{type:/\.mp3$/i.test(e.leaf)?'audio/mpeg':'application/octet-stream'});
+}
+async function installDrumBank(file,persist=true){
+  if(file.size>150_000_000)throw Error('The library ZIP must be under 150 MB.');
+  $('bank-status').textContent='Indexing real drum recordings…';
+  const bytes=new Uint8Array(await file.arrayBuffer());
+  const {entries}=stemZipDirectory(bytes);
+  const matching=entries.filter(e=>/\.(wav|flac|mp3|m4a)$/i.test(e.leaf)&&identifyDrumKind(e.name));
+  if(!matching.length)throw Error('No recognized one-shots. Organize by Kick/, Snare/, Clap/, Hat/ or include those names in filenames.');
+  if(matching.length>128)throw Error('This pilot supports up to 128 named drum samples per library.');
+  const bank=[];
+  for(let i=0;i<matching.length;i++){
+    const entry=matching[i];
+    $('bank-status').textContent='Indexing '+(i+1)+' / '+matching.length+' · '+entry.leaf;
+    const data=await stemZipContents(bytes,entry);
+    const decoded=await decodeDrum(new File([data],entry.leaf),2);
+    const mono=soloChannel(decoded.channels);
+    const detected=onset(mono,0,mono.length)[0]??0;
+    const trimmed=mono.slice(detected);
+    const kind=identifyDrumKind(entry.name);
+    const origin = entry.name.startsWith('Virtuosity/')?'Virtuosity Drums':entry.name.startsWith('Salamander/')?'Salamander Drumkit':'User-supplied';
+    const license = origin==='Virtuosity Drums'?'CC0-1.0':origin==='Salamander Drumkit'?'CC-BY-SA-3.0':'user library / requires verification';
+    bank.push({id:'real-'+i,kind,name:entry.leaf,source:origin+' / '+entry.name,license,digest:decoded.digest,
+      mono:trimmed,fp:drumFingerprint(trimmed)});
+    if(i%4===0)await new Promise(resolve=>setTimeout(resolve,0));
+  }
+  bankSamples=bank;
+  let cacheNote='';
+  if(persist)try{await cachedBank('write',new Blob([bytes],{type:'application/zip'}));}
+  catch(error){cacheNote=' · Cache unavailable: reimport after restarting browser ('+error.message+')';}
+  const counts=DRUMS.filter(kind=>bank.some(s=>s.kind===kind)).map(kind=>kind+': '+bank.filter(s=>s.kind===kind).length).join(' · ');
+  $('bank-status').textContent=bank.length+' indexed samples on this device · '+counts+cacheNote;
+  updateDrumControls();
+  if(drumSource&&!fixture){
+    drumEvents=classifyHits(drumSource.channels);initialEvents=structuredClone(drumEvents);
+    showHits();refreshRender();
+  }
+}
+$('bank-input').onchange=event=>{
+  const file=event.target.files[0];event.target.value='';if(!file)return;
+  drumTask(async()=>installDrumBank(file));
+};
+drumBankReady=(async()=>{
+  try{
+    const blob=await cachedBank('read');
+    if(blob)await installDrumBank(new File([blob],'saved-private-samples.zip'),false);
+    else $('bank-status').textContent='No private library installed yet. Import a real recorded sample pack ZIP once.';
+  }catch(error){$('bank-status').textContent='Private library not available: '+error.message;}
+})();
+
+// Automatic browser sampler. On static HTTPS hosting, fetch verified individual FLAC
+// recordings from both openly licensed upstream repositories; no Python or manual picking.
+// The *complete* original archives are installed only by the optional desktop server.
+let officialImportBusy=false, officialImporterActive=true, officialMode='browser';
+const BROWSER_DRUM_LIBRARY=[
+  // Recorded by Austin McMahon — Virtuosity Drums / CC0 1.0.
+  ...[
+    ['Kick','Samples/kickmic/kick/kickmic_kick_snoff_vl1_rr1.flac'],
+    ['Kick','Samples/kickmic/kick/kickmic_kick_snoff_vl2_rr1.flac'],
+    ['Kick','Samples/kickmic/kick/kickmic_kick_snoff_vl3_rr1.flac'],
+    ['Kick','Samples/kickmic/kick/kickmic_kick_snoff_vl4_rr1.flac'],
+    ['Snare','Samples/snaremic/snare/snaremic_snare_center_vl1.flac'],
+    ['Snare','Samples/snaremic/snare/snaremic_snare_center_vl4.flac'],
+    ['Snare','Samples/snaremic/snare/snaremic_snare_center_vl8.flac'],
+    ['Snare','Samples/snaremic/snare/snaremic_snare_center_vl12.flac'],
+    ['Hat','Samples/oh/hh/oh_hh_closed_vl1_rr1.flac'],
+    ['Hat','Samples/oh/hh/oh_hh_closed_vl2_rr1.flac'],
+    ['Hat','Samples/oh/hh/oh_hh_34_vl1_rr1.flac'],
+    ['Hat','Samples/oh/hh/oh_hh_34_vl2_rr1.flac'],
+    ['Tom','Samples/oh/htom/oh_htom_center_vl1.flac'],
+    ['Tom','Samples/oh/htom/oh_htom_center_vl6.flac'],
+    ['Ride','Samples/oh/ride/oh_ride_ride_vl1_rr1.flac'],
+    ['Ride','Samples/oh/ride/oh_ride_ride_vl2_rr1.flac'],
+    ['Crash','Samples/oh/crash/oh_crash_crash_vl1_rr1.flac'],
+    ['Crash','Samples/oh/crash/oh_crash_crash_vl2_rr1.flac']
+  ].map(([kind,path])=>({kind,path,source:'Virtuosity',repo:'sfzinstruments/virtuosity_drums'})),
+  // Alexander Holm / Salamander Drumkit; StudioRack FLAC redistribution, CC BY-SA 3.0.
+  ...[
+    ['Kick','kick_OH_FF_1.flac'],['Kick','kick_OH_FF_2.flac'],['Kick','kick2_OH_FF_1.flac'],
+    ['Snare','snare_OH_FF_1.flac'],['Snare','snare_OH_FF_2.flac'],['Snare','snare2_OH_FF_1.flac'],
+    ['Hat','hihatClosed_OH_F_1.flac'],['Hat','hihatClosed_OH_F_2.flac'],
+    ['Hat','hihatSemiOpen1_OH_F_1.flac'],['Hat','hihatOpen_OH_FF_1.flac'],
+    ['Tom','hiTom_OH_FF_1.flac'],['Tom','loTom_OH_FF_1.flac'],
+    ['Ride','ride1_OH_FF_1.flac'],['Crash','crash1_OH_FF_1.flac'],
+    ['Percussion','cowbell_FF_1.flac']
+  ].map(([kind,name])=>({kind,path:'Samples/'+name,source:'Salamander',repo:'studiorack/salamander-drumkit'}))
+];
+const BROWSER_LIBRARY_CREDITS=`Jay Vale Audio Lab v0.4 - recorded sample bank credits
+
+Virtuosity Drums: Versilian Studios / Karoryfer Lecolds, performed by Austin McMahon.
+https://github.com/sfzinstruments/virtuosity_drums
+License: Creative Commons CC0 1.0 Universal.
+
+Salamander Drumkit: Alexander Holm, modified FLAC copies from StudioRack.
+https://github.com/studiorack/salamander-drumkit
+License: Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0).
+https://creativecommons.org/licenses/by-sa/3.0/
+The selected recordings are converted from FLAC to mono PCM WAV and trimmed
+to 1.8 seconds for browser use. Attribution and ShareAlike obligations apply
+to this modified sample library when redistributed.
+
+The browser matching bank is a curated subset of the original sample sets.
+It does NOT contain the full original libraries. More detailed source metadata
+and per-hit samples are included in exported manifests.
+`;
+function browserLibraryAvailable(){
+  return location.protocol==='https:' || ['localhost','127.0.0.1'].includes(location.hostname);
+}
+async function fetchRecordedFile(record){
+  const path=record.path.split('/').map(encodeURIComponent).join('/');
+  const urls=[
+    `https://raw.githubusercontent.com/${record.repo}/master/${path}`,
+    `https://cdn.jsdelivr.net/gh/${record.repo}@master/${path}`
+  ];
+  let error;
+  for(const url of urls){
+    try {
+      const response=await fetch(url,{mode:'cors',signal:AbortSignal.timeout(30000),cache:'force-cache'});
+      if(!response.ok)throw Error('HTTP '+response.status);
+      const data=new Uint8Array(await response.arrayBuffer());
+      if(data.byteLength<1000||data.byteLength>10_000_000 ||
+          !(data[0]===102&&data[1]===76&&data[2]===97&&data[3]===67))
+        throw Error('Not a valid FLAC recording');
+      return data;
+    }catch(e){error=e;}
+  }
+  throw Error(`Unable to download ${record.source} / ${record.path}: ${error?.message||'unknown error'}`);
+}
+async function mobileOneShotToWav(flacBytes){
+  // Original recordings may be long cymbal tails; the browser pilot requires <=2s.
+  const decoder=new OfflineAudioContext(1,1,DRUM_RATE);
+  let decoded;
+  try { decoded=await decoder.decodeAudioData(flacBytes.buffer.slice(flacBytes.byteOffset,flacBytes.byteOffset+flacBytes.byteLength)); }
+  catch { throw Error('The browser could not decode this FLAC recording.'); }
+  if(!decoded.length)throw Error('Empty decoded recording');
+  const frames=Math.min(Math.round(1.8*DRUM_RATE),decoded.length);
+  const mono=new Float32Array(frames);
+  const left=decoded.getChannelData(0);
+  const right=decoded.numberOfChannels>1?decoded.getChannelData(1):null;
+  for(let i=0;i<frames;i++)mono[i]=right?(left[i]+right[i])*0.5:left[i];
+  return wavBytes([mono]);
+}
+async function installBrowserDrumBank(){
+  if(!browserLibraryAvailable())throw Error('Open the HTTPS Audio Lab website. The Android Downloads content:// viewer cannot securely install samples.');
+  await drumBankReady;
+  officialImportBusy=true;
+  $('official-install').disabled=true;
+  const files=[];const failed=[];
+  let next=0,complete=0;
+  try{
+    const workers=Array.from({length:3},async()=>{
+      while(next<BROWSER_DRUM_LIBRARY.length){
+        const record=BROWSER_DRUM_LIBRARY[next++];
+        try{
+          const bytes=await fetchRecordedFile(record);
+          const wav=await mobileOneShotToWav(bytes);
+          const name=record.path.split('/').at(-1).replace(/\.flac$/i,'.wav');
+          files.push([`${record.source}/${record.kind}/${name}`,wav]);
+        }catch(e){failed.push(e.message)}
+        finally{
+          complete++;
+          $('official-status').textContent=`Downloading real recordings: ${complete}/${BROWSER_DRUM_LIBRARY.length} · ${files.length} ready`;
+        }
+      }
+    });
+    await Promise.all(workers);
+    const both=['Virtuosity','Salamander'].every(name=>files.filter(([path])=>path.startsWith(name+'/')).length>=4);
+    if(!both || files.length<16)throw Error(`Could not collect both libraries (${files.length} files). Check Wi-Fi and try again. ${failed[0]||''}`);
+    files.push(['LIBRARY_CREDITS_AND_LICENSE.txt',new TextEncoder().encode(BROWSER_LIBRARY_CREDITS)]);
+    const blob=zipArchive(files);
+    $('official-status').textContent=`Indexing ${files.length-1} recorded samples locally…`;
+    await installDrumBank(new File([blob],'Jay_Vale_Browser_Real_Drum_Bank.zip'));
+    const status=`Installed ${bankSamples.length} recorded samples from both source libraries on this device. Automatic matching is ready.`;
+    $('official-status').textContent=status;
+    $('official-install').textContent='Reinstall browser matching bank';
+    if(failed.length)$('official-status').textContent+=` (${failed.length} source files unavailable.)`;
+  }finally{
+    officialImportBusy=false;
+    $('official-install').disabled=false;
+  }
+}
+async function officialInstallerStatus(){
+  if(!officialImporterActive)return;
+  let result;
+  try{
+    const response=await fetch('/api/library/status',{cache:'no-store',signal:AbortSignal.timeout(3000)});
+    if(!response.ok||!response.headers.get('content-type')?.includes('application/json'))throw Error('No local Python installer');
+    result=await response.json();
+    if(!['not-installed','ready','installing','failed'].includes(result.state))throw Error('Invalid server');
+    officialMode='desktop';
+  }catch{
+    officialImporterActive=false;
+    officialMode='browser';
+    $('official-install').disabled=false;
+    await drumBankReady;
+    const fromBoth=bankSamples.some(s=>s.source?.startsWith('Virtuosity'))&&bankSamples.some(s=>s.source?.startsWith('Salamander'));
+    $('official-status').textContent=fromBoth
+      ?`Both libraries connected (${bankSamples.length} indexed recordings). Ready for automatic matching.`
+      :browserLibraryAvailable()
+        ?'Mobile/browser installer ready. Tap Install free recorded samples — no Python needed.'
+        :'Android downloads viewer detected. Open the published HTTPS Audio Lab link to install automatically.';
+    return;
+  }
+  $('official-status').textContent=result.message||result.state;
+  $('official-install').disabled=result.state==='installing'||result.state==='ready'||officialImportBusy;
+  if(result.state!=='ready'||officialImportBusy||working)return;
+  await drumBankReady;
+  const fromOfficial=bankSamples.some(item=>item.source?.startsWith('Virtuosity Drums'))&&
+                     bankSamples.some(item=>item.source?.startsWith('Salamander Drumkit'));
+  if(fromOfficial)return;
+  officialImportBusy=true;
+  $('official-status').textContent='Loading desktop-created two-library bank…';
+  try {
+    const response=await fetch('/api/library/bank',{cache:'no-store'});
+    if(!response.ok)throw Error('Matching bank download failed');
+    const blob=await response.blob();
+    await drumTask(async()=>installDrumBank(new File([blob],'official-two-library-samples.zip')));
+    $('official-status').textContent='Both licensed libraries connected. Matching is automatic.';
+  }catch(e){$('official-status').textContent='Could not load desktop bank: '+e.message;}
+  finally{officialImportBusy=false;}
+}
+$('official-install').onclick=async()=>{
+  if(officialImportBusy)return;
+  if(officialMode==='browser'){
+    try{await installBrowserDrumBank();}
+    catch(e){$('official-status').textContent='Installation unsuccessful: '+e.message; $('official-install').disabled=false;}
+    return;
+  }
+  $('official-status').textContent='Requesting full desktop library installation…';
+  try {
+    const response=await fetch('/api/library/install',{method:'POST'});
+    if(!response.ok)throw Error('Desktop installer unavailable');
+    await officialInstallerStatus();
+  }catch(e){$('official-status').textContent=e.message;}
+};
+void officialInstallerStatus();
+setInterval(()=>{if(officialImporterActive)void officialInstallerStatus()},4000);
+
+</script>
+</body>
+</html>
