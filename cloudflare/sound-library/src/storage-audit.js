@@ -31,8 +31,9 @@ export async function auditStorage(env){
    .bind(new Date().toISOString(),records.length,observed.size,matched,missing,mismatched,unindexed,complete?1:0).run();
 }
 export async function auditedHealth(env){
-  let total=0,sourceFiles=0,duplicateEntries=0,importer=null,storage=null,sourceImportRows=null;
+  let total=0,sourceFiles=0,duplicateEntries=0,importer=null,storage=null,sourceImportRows=null,familyCounts={};
   try{total=Number((await env.DB.prepare('SELECT COUNT(*) AS n FROM samples').first())?.n||0)}catch{}
+  try{const groups=await env.DB.prepare('SELECT family,COUNT(*) AS count,COALESCE(SUM(bytes),0) AS bytes FROM samples GROUP BY family').all(); for(const r of groups.results||[])familyCounts[r.family]={samples:Number(r.count),bytes:Number(r.bytes)};}catch{}
   try{
     sourceImportRows=await env.DB.prepare('SELECT status,COUNT(*) AS n FROM cc0_seed_imports GROUP BY status').all();
     for(const r of sourceImportRows.results||[]){
@@ -46,7 +47,7 @@ export async function auditedHealth(env){
     if(x)storage={...x,complete:Boolean(x.complete),verified:x.complete===1&&x.d1_rows===total&&x.matched===total&&x.missing_objects===0&&x.size_mismatches===0};
   }catch{}
   return {service:'Jay Vale Sound Library',version:'0.5.0',online:true,
-    sample_count:total,cc0_manifest_items:306,
+    sample_count:total,cc0_manifest_items:306,family_counts:familyCounts,
     source_entries_processed:sourceFiles,
     duplicate_source_entries:duplicateEntries,
     importer:importer||{status:'migration_pending_or_cron_not_started'},
