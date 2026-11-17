@@ -107,7 +107,7 @@ export async function seedCC0(env) {
     if(done.has(url))continue;
     if(attempts++>=MAX_BATCH)break;
     try {
-      const resp=await fetch(url,{redirect:'error'});
+      const resp=await fetch(url,{redirect:'follow'});
       if(!resp.ok)throw Error('Source HTTP '+resp.status);
       if(Number(resp.headers.get('content-length')||0)>15000000)throw Error('Audio too large');
       const audio=await resp.arrayBuffer();
