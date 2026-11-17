@@ -11,11 +11,16 @@ function analyzeWav(buffer) {
   let p = 12, fmt = null, start = -1, length = 0;
   while (p + 8 <= v.byteLength) {
     const id = ascii(v, p), n = v.getUint32(p + 4, true), end = p + 8 + n;
-    if (end > v.byteLength) throw Error('Invalid RIFF chunk');
+    // The first complete data chunk is sufficient; don't parse raw PCM bytes or trailing tags as RIFF chunks.
+    if (id === 'data' && start < 0 && fmt) {
+      if (end > v.byteLength) throw Error('WAV data chunk truncated: '+n+' bytes at '+p+' of '+v.byteLength);
+      start = p + 8; length = n; break;
+    }
+    if (end > v.byteLength) throw Error('WAV chunk '+id+' invalid at '+p+' length '+n+' file '+v.byteLength);
     if (id === 'fmt ') {
+      if (n<16) throw Error('WAV fmt chunk too short');
       fmt = { format: v.getUint16(p+8,true), channels: v.getUint16(p+10,true), rate: v.getUint32(p+12,true), align: v.getUint16(p+20,true), bits: v.getUint16(p+22,true) };
     }
-    if (id === 'data' && start < 0) { start = p + 8; length = n; }
     p = end + (n % 2);
   }
   if (!fmt || start < 0 || !length || ![1,3].includes(fmt.format) || ![16,24,32].includes(fmt.bits) || fmt.channels < 1 || fmt.channels > 8 || fmt.rate < 8000 || fmt.rate > 192000 || fmt.align !== fmt.channels * fmt.bits / 8) throw Error('Unsupported WAV format');
