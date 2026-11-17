@@ -1,5 +1,6 @@
 import { CC0_PACK } from './cc0-seed-manifest.js';
 import { TR808_PACK } from './tr808-seed-manifest.js';
+import { EXPANSION_PACKS } from './expansion-manifest.js';
 import {sampleKey,collectionSlug} from './catalogue.js';
 const BANDS = [45, 75, 125, 205, 340, 560, 920, 1510, 2500, 4100, 6800, 11200];
 const MAX_BATCH = 12;
@@ -101,7 +102,7 @@ export async function seedCC0(env) {
   let attempts=0,added=0,errors=0,lastError=null,lastDetail=null;
   const startedAt=new Date().toISOString();
   await env.DB.prepare('UPDATE import_health SET last_attempt_at=? WHERE id=1').bind(startedAt).run();
-  const entries=[...CC0_PACK.entries.map(entry=>({entry,pack:CC0_PACK})),...TR808_PACK.entries.map(entry=>({entry,pack:TR808_PACK}))];
+  const entries=[...CC0_PACK.entries.map(entry=>({entry,pack:CC0_PACK})),...TR808_PACK.entries.map(entry=>({entry,pack:TR808_PACK})),...EXPANSION_PACKS.flatMap(pack=>pack.entries.map(entry=>({entry,pack})))];
   for (const {entry,pack} of entries) {
     const url='https://raw.githubusercontent.com/'+pack.owner+'/'+pack.repo+'/'+pack.revision+'/'+entry.path.split('/').map(encodeURIComponent).join('/');
     if(done.has(url))continue;
@@ -117,17 +118,19 @@ export async function seedCC0(env) {
       const duplicate=await env.DB.prepare('SELECT id FROM samples WHERE sha256=?').bind(sha).first();
       const id=duplicate?.id||crypto.randomUUID();
       if(!duplicate) {
-        const [family,instrument,tags]=classify(entry.path,pack);
+        const [family,instrument,tags]=entry.family?[entry.family,entry.instrument,entry.tags||[]]:classify(entry.path,pack);
         const used=await env.DB.prepare('SELECT COALESCE(SUM(bytes),0) AS amount FROM samples').first();
         if(Number(used?.amount||0)+audio.byteLength>Number(env.MAX_LIBRARY_BYTES||9500000000))throw Error('Library storage limit reached');
-        const sourceVariant=pack.repo==='sounds-tr808-fischer'?'tr808':entry.path.split('/')[1]||'standard';
-        const articulation=tags.includes('open')?'open':tags.includes('closed')?'closed':'normal';
-        const key=sampleKey({family,instrument,sample_type:'one_shot',variant:sourceVariant+(articulation==='normal'?'':'_'+articulation),source_name:pack.source_name},sha,'wav');
+        const sourceVariant=entry.variant||(pack.repo==='sounds-tr808-fischer'?'tr808':entry.path.split('/')[1]||'standard');
+        const articulation=tags.includes('pizzicato')?'pizzicato':tags.includes('staccato')?'staccato':tags.includes('open')?'open':tags.includes('closed')?'closed':'normal';
+        const sourceName=pack.source_name||pack.name;
+        const sampleType=entry.sample_type||'one_shot';
+        const key=sampleKey({family,instrument,sample_type:sampleType,variant:sourceVariant+(articulation==='normal'||sourceVariant.includes(articulation)?'':'_'+articulation),source_name:sourceName},sha,'wav');
         await env.SAMPLES.put(key,audio,{httpMetadata:{contentType:'audio/wav'},customMetadata:{license:pack.license_spdx}});
         await env.DB.prepare('INSERT OR IGNORE INTO samples(id,sha256,r2_key,original_filename,family,instrument,bytes,duration_ms,sample_rate,root_midi,articulation,velocity_layer,tags_json,features_json,source_name,source_url,license_spdx,license_url,attribution,sample_type,collection_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)').bind(
-          id,sha,key,entry.path.split('/').at(-1),family,instrument,audio.byteLength,duration_ms,sample_rate,null,'normal',null,JSON.stringify(tags),JSON.stringify(features),
-          pack.source_name,url,pack.license_spdx,pack.license_url,
-          pack.source_name+' — CC0 1.0','one_shot',collectionSlug(pack.source_name)
+          id,sha,key,entry.path.split('/').at(-1),family,instrument,audio.byteLength,duration_ms,sample_rate,entry.root_midi??null,articulation,entry.velocity_layer??null,JSON.stringify(tags),JSON.stringify(features),
+          sourceName,url,pack.license_spdx,pack.license_url,
+          sourceName+' — CC0 1.0',sampleType,collectionSlug(sourceName)
         ).run();
         added++;
       }
