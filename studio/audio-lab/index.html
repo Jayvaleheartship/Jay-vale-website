@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Jay Vale Audio Lab — Mobile Auto Drum Library v0.4</title>
+<title>Jay Vale Audio Lab — Source-Locked Drum Matching v0.5</title>
 <style>
 :root{color-scheme:dark;--bg:#101316;--panel:#191e23;--ink:#eef1f2;--muted:#b4bec7;--line:#37434c;--a:#70d8d1;--b:#ffc482}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Instrument Sans",system-ui,sans-serif}
@@ -29,7 +29,7 @@ nav.bar {margin:0 0 18px}
 </style>
 </head>
 <body>
-<header><p class="brand">Heartship Records / Jay Vale</p><h1>Audio Lab</h1><p class="muted">One stem in, automatically match real recorded drums, export reconstructed audio.</p></header>
+<header><p class="brand">Heartship Records / Jay Vale</p><h1>Audio Lab</h1><p class="muted">One stem in. Preserve its original character, add close real-drum layers only when matching confidence is sufficient.</p></header>
 <main>
 <nav class="bar" aria-label="Workspace">
   <button id="stems-tab" aria-pressed="false">Prepare a stem ZIP</button>
@@ -68,7 +68,7 @@ nav.bar {margin:0 0 18px}
 <section id="drum-workspace" hidden>
   <section class="panel">
     <h2>1. Upload one drum stem — automatic matching</h2>
-    <p class="muted">Drop a WAV, MP3, FLAC or single-stem ZIP, up to 240 seconds. The app locates hits and matches their spectral envelope against a locally indexed library of <strong>real recorded one-shots</strong>. No manual drum selection per song.</p>
+    <p class="muted">Drop a WAV, MP3, FLAC or single-stem ZIP, up to 240 seconds. The app locates drum onsets and cautiously compares them with a locally indexed library of <strong>real recorded one-shots</strong>. It will <strong>not replace your sound</strong> unless you explicitly choose experimental replacement.</p>
     <div class="bar">
       <label>Drum stem or ZIP<input type="file" id="drum-input" accept=".zip,application/zip,audio/*,.wav,.mp3,.m4a,.flac"></label>
       <button id="drum-demo">Load synthesized test demo</button>
@@ -87,20 +87,28 @@ nav.bar {margin:0 0 18px}
       <output class="status" id="bank-status" role="status">Checking private library index…</output>
     </details>
     <details id="kit"><summary>Optional manual sample overrides (advanced)</summary><p class="muted">The default is automatic real-library matching. These four overrides remain only for technical comparison. The demo kit is synthesized and not a replacement for real recordings.</p><div class="fields" id="kit-fields"></div></details>
-    <h2>2. Detect, match and reconstruct</h2>
-    <div class="bar"><button class="primary" id="drum-run" disabled>Run automatic matching again</button></div>
+    <h2>2. Analyze and reconstruct — preserve your original sound</h2>
+    <p class="muted"><strong>Sound-lock is on by default.</strong> The original drum sound stays intact. Only close matches can contribute a quiet recorded transient. If the library has no convincing match, the hit stays untouched. The 33 acoustic recordings are not sufficient for exact matching of processed or electronic drum sounds.</p>
+    <details id="drum-sound-options"><summary>Sound-preservation controls (optional)</summary>
+      <div class="fields">
+        <label>Processing method<select id="drum-fidelity-mode"><option value="preserve" selected>Source-locked: retain original and add real character</option><option value="replace">Experimental: replace selected hits (changes sound)</option></select></label>
+        <label>Recorded-layer strength: <output id="drum-layer-label" style="display:inline">7%</output><input type="range" id="drum-layer" min="0" max="25" step="1" value="7"></label>
+      </div>
+      <p class="muted">At 0%, the rendered mix stays exactly the decoded source unless you select experimental replacement. Higher strengths increase the risk of audible timbre differences. A processed stem is not proven to be human-recorded by this operation.</p>
+    </details>
+    <div class="bar"><button class="primary" id="drum-run" disabled>Analyze drum matches again</button></div>
     <output class="status" id="drum-status" role="status"></output>
   </section>
   <section class="panel" id="drum-result" hidden>
     <h2>3. Listen, adjust and export</h2>
     <div class="pair">
       <label>Original<audio id="drum-original" controls preload="metadata"></audio></label>
-      <label>Rebuild<audio id="drum-render" controls preload="metadata"></audio></label>
+      <label>Source-locked preview<audio id="drum-render" controls preload="metadata"></audio></label>
     </div>
     <div class="bar"><button id="send-to-compare">Open synchronized A/B</button><button id="drum-export" class="primary">Download Bitwig ZIP</button></div>
-    <p class="muted">The ZIP includes aligned kicks, snares, claps, hats, retained source audio, the preview mix and a hit-by-hit manifest with sample sources and matching scores. This pilot does not guarantee exact drum recovery, human provenance, or AI-detector classifications. Long songs can require significant browser memory.</p>
+    <p class="muted">The ZIP contains the retained source, recorded transient accent layers (or experimental replacement stems), preview mix, and a hit-by-hit report. Source-lock prioritizes original timbre over aggressive reconstruction. Exact original sample identification, human provenance and AI detector outcomes are not guaranteed. Large files use significant browser memory.</p>
     <details><summary>Edit detected hits</summary>
-      <p class="muted">Choose the replacement per hit, move it by a few milliseconds or change its gain. Keep Source preserves that hit.</p>
+      <p class="muted">Only compatible real recordings are applied automatically. Keep Original means no alteration to that hit. Manual alternatives are available for comparison.</p>
       <div class="hit-scroll"><table class="hit-table"><thead><tr><th>Time</th><th>Estimate</th><th>Use</th><th>Move (ms)</th><th>Gain (dB)</th></tr></thead><tbody id="hits"></tbody></table></div>
       <div class="bar"><button id="apply-hits">Apply changes</button><button id="reset-hits">Reset hit edits</button></div>
     </details>
@@ -989,11 +997,55 @@ function drumFingerprint(samples, start=0) {
   const bands=[lows/total,mids/total,highs/total];
   const sum=env.reduce((a,b)=>a+b,1e-12);
   const envelope=env.map(x=>Math.sqrt(x/sum));
-  return [...bands,...envelope,Math.min(1,peak/Math.sqrt(energy/frame)/12),zcr/frame];
+  return [...bands,...envelope,Math.min(1,peak/Math.sqrt(energy/frame)/12),zcr/frame,...drumSpectralBands(samples,start)];
 }
 function fingerprintDistance(a,b) {
   const weights=[1.5,1.4,1.5,.65,.7,.8,.8,.65,.55];
-  return Math.sqrt(a.reduce((sum,value,i)=>sum+weights[i]*(value-b[i])**2,0));
+  const base=Math.sqrt(weights.reduce((sum,w,i)=>sum+w*(a[i]-b[i])**2,0));
+  if(a.length<31||b.length<31)return base;
+  let spectral=0;
+  for(let i=9;i<31;i++)spectral+=(a[i]-b[i])**2;
+  return Math.hypot(base, .63*Math.sqrt(spectral));
+}
+// Frequency response at attack and early decay. This supplements the simple
+// envelope features but cannot identify an exact sample within a mixed stem.
+function drumSpectralBands(samples,start=0){
+  const N=1024, bounds=[0,90,160,280,500,900,1600,2800,4800,8000,14000,24001];
+  const result=[];
+  for(const offset of [0,1200]){
+    const real=new Float32Array(N),imag=new Float32Array(N);
+    for(let i=0;i<N;i++)real[i]=(samples[start+offset+i]||0)*(.5-.5*Math.cos(2*Math.PI*i/(N-1)));
+    // Iterative radix-2 FFT, using only half the real spectrum.
+    for(let i=1,j=0;i<N;i++){
+      let bit=N>>1;
+      for(;j&bit;bit>>=1)j^=bit;
+      j^=bit;
+      if(i<j){const swap=real[i];real[i]=real[j];real[j]=swap;}
+    }
+    for(let len=2;len<=N;len<<=1){
+      const angle=-2*Math.PI/len,wr=Math.cos(angle),wi=Math.sin(angle);
+      for(let i=0;i<N;i+=len){
+        let cr=1,ci=0;
+        for(let j=0;j<len/2;j++){
+          const u=i+j,v=i+j+len/2;
+          const vr=real[v]*cr-imag[v]*ci,vi=real[v]*ci+imag[v]*cr;
+          real[v]=real[u]-vr;imag[v]=imag[u]-vi;
+          real[u]+=vr;imag[u]+=vi;
+          const nr=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=nr;
+        }
+      }
+    }
+    const energies=new Float64Array(bounds.length-1);
+    for(let k=1;k<N/2;k++){
+      const hz=k*DRUM_RATE/N;
+      let bucket=0;
+      while(bucket<bounds.length-2&&hz>=bounds[bucket+1])bucket++;
+      energies[bucket]+=real[k]*real[k]+imag[k]*imag[k];
+    }
+    const sum=energies.reduce((a,b)=>a+b,1e-12);
+    for(const energy of energies)result.push(Math.sqrt(energy/sum));
+  }
+  return result;
 }
 function classifyHits(channels) {
   const mono = soloChannel(channels);
@@ -1008,14 +1060,16 @@ function classifyHits(channels) {
       .sort((a,b)=>a.distance-b.distance);
     const winner=ranked[0], second=ranked.find(x=>x.sample.kind!==winner.sample.kind);
     const gap=(second?.distance??1.5)-winner.distance;
-    const confidence=Math.max(0,Math.min(1,1-winner.distance/1.25));
-    // Require acoustic resemblance. With bleeding or stacked hits we retain source.
-    // A small category margin is acceptable because similar acoustic snares can cluster.
-    const accepted=legacy ? (candidates.length===CORE_DRUMS.length && winner.distance<.5 && gap>.04) : winner.distance<.85;
-    const kind=winner.sample.kind;
+    // A conservative relative and absolute gate: do not pretend that the nearest
+    // sound from a tiny library is necessarily the right sound.
+    const accepted=legacy
+      ? (candidates.length===CORE_DRUMS.length && winner.distance<.58 && gap>.055)
+      : (winner.distance<.44 && (gap>.075 || winner.distance<.22));
+    const confidence=Math.max(0,Math.min(1,1-winner.distance/.65));
+    const kind=accepted?winner.sample.kind:'Uncertain';
     const window=Math.max(1,Math.min(Math.round(DRUM_RATE*.18),(starts[index+1]??mono.length)-at));
     return {at,length:window,estimate:kind,distance:winner.distance,margin:gap,
-      confidence,choice:accepted?winner.sample.id:'Source',
+      confidence,matched:accepted,choice:accepted?winner.sample.id:'Source',
       sampleName:winner.sample.name||winner.sample.id,
       alternatives:ranked.slice(0,5).map(x=>x.sample.id),move:0,gain:0};
   });
@@ -1036,10 +1090,12 @@ function resolveDrumSample(id){
 function renderDrums() {
   const {channels}=drumSource;
   const length=channels[0].length,mono=soloChannel(channels);
+  const preserve=$('drum-fidelity-mode').value==='preserve';
+  const strength=preserve?Number($('drum-layer').value)/100:1;
   const source=channels.map(ch=>ch.slice());
   const stems=Object.fromEntries(EXPORT_DRUM_GROUPS.map(kind=>[kind,channels.map(()=>new Float32Array(length))]));
   for(const event of drumEvents){
-    if(event.choice==='Source')continue;
+    if(event.choice==='Source'||(preserve&&!event.matched&&!event.manual))continue;
     const item=resolveDrumSample(event.choice);
     if(!item)continue;
     const group=EXPORT_DRUM_GROUPS.includes(item.kind)?item.kind:'Other';
@@ -1049,38 +1105,59 @@ function renderDrums() {
     const referencePeak=peakBetween(mono,event.at,event.at+event.length);
     const samplePeak=peakBetween(sample,0,sample.length);
     const gain=Math.min(3,referencePeak/Math.max(.00001,samplePeak))*10**(event.gain/20);
-    for(let i=0;i<event.length;i++){
-      const edge=Math.min(1,(i+1)/96,(event.length-i)/192);
-      for(const channel of source)channel[event.at+i]*=1-edge;
-    }
-    // Allow natural sample decay after the onset-replacement window.
-    for(let i=0;i<sample.length;i++){
-      const frame=target+i;
-      if(frame<0||frame>=length)continue;
-      const attack=Math.min(1,(i+1)/96);
-      for(const channel of replacements)channel[frame]+=sample[i]*attack*gain;
+    if(preserve){
+      // Keep every original input frame. Only add the first milliseconds of
+      // a highly compatible recorded transient. No artificial tail replacement.
+      const maxAccent=Math.min(sample.length,event.length,Math.round(DRUM_RATE*({Kick:.12,Snare:.09,Clap:.07,Hat:.06,Tom:.10,Ride:.075,Crash:.08,Percussion:.07}[item.kind]||.075)));
+      for(let i=0;i<maxAccent;i++){
+        const frame=target+i;
+        if(frame<0||frame>=length)continue;
+        const edge=Math.min(1,(i+1)/144,(maxAccent-i)/Math.max(1,DRUM_RATE*.014));
+        const accent=sample[i]*edge*gain*strength;
+        for(const channel of replacements)channel[frame]+=accent;
+      }
+    }else{
+      // Explicit opt-in only. Replaces transients and may change sound.
+      for(let i=0;i<event.length;i++){
+        const edge=Math.min(1,(i+1)/96,(event.length-i)/192);
+        for(const channel of source)channel[event.at+i]*=1-edge;
+      }
+      for(let i=0;i<sample.length;i++){
+        const frame=target+i;
+        if(frame<0||frame>=length)continue;
+        const attack=Math.min(1,(i+1)/96);
+        for(const channel of replacements)channel[frame]+=sample[i]*attack*gain;
+      }
     }
   }
-  let peak=0;
+  let peak=0,sourceSum=0,deltaSum=0;
   const stemTracks=Object.values(stems);
   const mix=source.map((channel,ch)=>Float32Array.from(channel,(value,i)=>{
+    const original=value;
     for(const stem of stemTracks)value+=stem[ch][i];
-    peak=Math.max(peak,Math.abs(value));return value;
+    peak=Math.max(peak,Math.abs(value));
+    sourceSum+=original*original;
+    deltaSum+=(value-original)**2;
+    return value;
   }));
-  const exportGain=peak>.98?.98/peak:1;
+  const exportGain=peak>.995?.995/peak:1;
   if(exportGain<1)for(const channel of [...mix,...source,...Object.values(stems).flat()]){
     for(let i=0;i<channel.length;i++)channel[i]*=exportGain;
   }
-  return {mix,source,stems,exportGain};
+  // Deviation of added/replacement components relative to the retained input.
+  const differenceDb=10*Math.log10(Math.max(1e-20,deltaSum)/Math.max(1e-20,sourceSum));
+  return {mix,source,stems,exportGain,preserve,layerStrength:strength,differenceDb};
 }
 
 function refreshRender() {
   drumOutput = renderDrums();
   setDrumAudio('drum-render', wavBytes(drumOutput.mix));
-  const replaced = drumEvents.filter(event => event.choice !== 'Source').length;
-  $('drum-status').textContent = drumEvents.length
-    ? replaced+' of '+drumEvents.length+' detected hits rebuilt. '+(drumEvents.length-replaced)+' kept as source.'
-    : 'No distinct hits detected. The render retains the source audio.';
+  const replaced = drumEvents.filter(event => event.choice !== 'Source' && (!drumOutput.preserve || event.matched || event.manual)).length;
+  const total=drumEvents.length;
+  const difference=Number.isFinite(drumOutput.differenceDb)?drumOutput.differenceDb.toFixed(1)+' dB':'unavailable';
+  $('drum-status').textContent = drumOutput.preserve
+    ?`Source-locked preview: ${replaced} of ${total} onsets received subtle recorded layers; ${total-replaced} left original. Added-component energy: ${difference} relative to retained audio. The original sound is the foundation, not a new recording.`
+    :`Experimental replacement: ${replaced} of ${total} onsets replaced, ${total-replaced} retained. Replacements may not sound like the input.`;
 }
 
 function showHits() {
@@ -1165,7 +1242,9 @@ function zipArchive(entries) {
 function exportDrums() {
   const {mix, source, stems, exportGain} = drumOutput;
   const manifest = {
-    version:'drum-auto-match-0.2', preset:'keep-uncertain-hits', sampleRate:DRUM_RATE, originSample:0,
+    version:'drum-source-locked-0.5', preset:drumOutput.preserve?'source-locked-accent':'experimental-replacement',
+    preserveSource:drumOutput.preserve,recordedLayerStrength:drumOutput.layerStrength,componentDifferenceDb:drumOutput.differenceDb,
+    sampleRate:DRUM_RATE, originSample:0,
     frameCount:mix[0].length, channels:mix.length, exportGain, tailPolicy:'clip to source duration',
     source:{name:drumSource.name, sha256:drumSource.digest ?? null, synthesizedDemo:fixture},
     realSampleBank:bankSamples.map(item=>({id:item.id,name:item.name,kind:item.kind,sha256:item.digest,license:item.license||'user supplied; not verified',source:item.source||'user supplied'})),
@@ -1264,7 +1343,7 @@ $('drum-run').onclick = () => drumTask(async () => {
 $('apply-hits').onclick = () => drumTask(async () => {
   drumEvents = Array.from($('hits').rows, (row,index) => {
     const [choice, move, gain] = row.querySelectorAll('select,input');
-    return {...drumEvents[index], choice:choice.value, move:constrain(Number(move.value),-100,100), gain:constrain(Number(gain.value),-18,12)};
+    return {...drumEvents[index], choice:choice.value, manual:choice.value!==(initialEvents[index]?.choice||'Source'), move:constrain(Number(move.value),-100,100), gain:constrain(Number(gain.value),-18,12)};
   });
   showHits();
   refreshRender();
@@ -1274,6 +1353,9 @@ $('reset-hits').onclick = () => drumTask(async () => {
   showHits();
   refreshRender();
 });
+$('drum-layer').oninput=()=>{$('drum-layer-label').textContent=$('drum-layer').value+'%';};
+$('drum-layer').onchange=()=>{if(drumSource&&drumEvents&&!working)drumTask(async()=>refreshRender());};
+$('drum-fidelity-mode').onchange=()=>{if(drumSource&&drumEvents&&!working)drumTask(async()=>refreshRender());};
 $('drum-export').onclick = () => drumTask(async () => exportDrums());
 $('send-to-compare').onclick = () => {
   if (working || detectorBusy || variants.A.loading || variants.B.loading) {
