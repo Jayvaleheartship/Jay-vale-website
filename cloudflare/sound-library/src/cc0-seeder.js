@@ -20,10 +20,11 @@ function analyzeWav(buffer) {
     if (id === 'fmt ') {
       if (n<16) throw Error('WAV fmt chunk too short');
       fmt = { format: v.getUint16(p+8,true), channels: v.getUint16(p+10,true), rate: v.getUint32(p+12,true), align: v.getUint16(p+20,true), bits: v.getUint16(p+22,true) };
+      if(fmt.format===65534 && n>=40)fmt.format=v.getUint16(p+8+24,true); // WAVE_FORMAT_EXTENSIBLE subformat
     }
     p = end + (n % 2);
   }
-  if (!fmt || start < 0 || !length || ![1,3].includes(fmt.format) || ![16,24,32].includes(fmt.bits) || fmt.channels < 1 || fmt.channels > 8 || fmt.rate < 8000 || fmt.rate > 192000 || fmt.align !== fmt.channels * fmt.bits / 8) throw Error('Unsupported WAV format');
+  if (!fmt || start < 0 || !length || ![1,3].includes(fmt.format) || ![8,16,24,32].includes(fmt.bits) || fmt.channels < 1 || fmt.channels > 8 || fmt.rate < 8000 || fmt.rate > 192000 || fmt.align !== fmt.channels * fmt.bits / 8) throw Error('Unsupported WAV format fmt='+JSON.stringify(fmt)+' data='+length);
   if (fmt.format === 3 && fmt.bits !== 32) throw Error('Unsupported float WAV');
   const frames = Math.floor(length / fmt.align), n = Math.min(frames, fmt.rate * 5);
   const mono = new Float32Array(n);
@@ -33,6 +34,7 @@ function analyzeWav(buffer) {
       const at = start + i * fmt.align + c * fmt.bits / 8;
       let x;
       if (fmt.format === 3) x = v.getFloat32(at,true);
+      else if (fmt.bits === 8) x = (v.getUint8(at)-128)/128;
       else if (fmt.bits === 16) x = v.getInt16(at,true) / 32768;
       else if (fmt.bits === 32) x = v.getInt32(at,true) / 2147483648;
       else { x = v.getUint8(at) | v.getUint8(at+1)<<8 | v.getUint8(at+2)<<16; if(x & 0x800000)x -= 0x1000000; x /= 8388608; }
