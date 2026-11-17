@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "jay-vale-sound-library",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-17",
+  "r2_buckets": [
+    {
+      "binding": "SAMPLES",
+      "bucket_name": "jay-vale-sound-library"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "jay-vale-sound-index",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "ALLOWED_ORIGIN": "https://jayvalemusic.com",
+    "MAX_LIBRARY_BYTES": "9500000000",
+    "MAX_SAMPLE_BYTES": "15000000"
+  }
+}
