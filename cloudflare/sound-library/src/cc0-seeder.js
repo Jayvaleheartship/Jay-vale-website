@@ -1,7 +1,7 @@
 import { CC0_PACK } from './cc0-seed-manifest.js';
 import { TR808_PACK } from './tr808-seed-manifest.js';
 const BANDS = [45, 75, 125, 205, 340, 560, 920, 1510, 2500, 4100, 6800, 11200];
-const MAX_BATCH = 7;
+const MAX_BATCH = 12;
 function ascii(v, p) { return String.fromCharCode(...new Uint8Array(v.buffer, p, 4)); }
 function analyzeWav(buffer) {
   const v = new DataView(buffer);
