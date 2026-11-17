@@ -2,7 +2,7 @@
  * Jay Vale Sound Library taxonomy v1.
  * GM1 program numbers are 1-128, as documented at https://midi.community/docs/general-midi/
  * A catalogue entry is a TARGET, not evidence of available recorded audio.
- * Files are stored at samples/<family>/<instrument>/<sample_type>/<collection>/<sha256>.<ext>
+ * Files are stored at samples/<family>/<instrument>/<sample_type>/<variant>/<collection>/<sha256>.<ext>
  */
 export const FAMILY_BUDGETS = Object.freeze({
   drums:2500000000,bass:1500000000,guitar:1000000000,keys:1000000000,
@@ -46,13 +46,13 @@ const GM_ROWS = [
 ];
 export function slug(value) { return String(value).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,64); }
 export function collectionSlug(value) {return slug(value).slice(0,48);}
-export function sampleKey({family,instrument,sample_type='one_shot',source_name},sha256,extension='wav') {
+export function sampleKey({family,instrument,sample_type='one_shot',variant='standard',source_name},sha256,extension='wav') {
   if(!Object.hasOwn(FAMILY_BUDGETS,family))throw Error('Unknown family');
   if(!/^[a-z][a-z0-9_]{1,40}$/.test(instrument))throw Error('Invalid instrument');
   if(!SAMPLE_TYPES.includes(sample_type))throw Error('Unknown sample type');
   if(!/^[0-9a-f]{64}$/.test(sha256))throw Error('Invalid audio hash');
   if(!['wav','flac','mp3','ogg'].includes(extension))throw Error('Invalid extension');
-  return 'samples/'+family+'/'+instrument+'/'+sample_type+'/'+collectionSlug(source_name||'unknown')+'/'+sha256+'.'+extension;
+  return 'samples/'+family+'/'+instrument+'/'+sample_type+'/'+(slug(variant).slice(0,40)||'standard')+'/'+collectionSlug(source_name||'unknown')+'/'+sha256+'.'+extension;
 }
 export const GM_PROGRAMS = Object.freeze(GM_ROWS.flatMap(([group,family,names],groupIndex)=>
   names.map((label,i)=>({program:groupIndex*8+i+1,group,family,label,id:'gm_'+String(groupIndex*8+i+1).padStart(3,'0')+'_'+slug(label)}))
