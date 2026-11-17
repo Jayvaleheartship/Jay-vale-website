@@ -18,7 +18,7 @@ export const EXPANSION_PACKS = [
         "instrument": "steel_guitar",
         "sample_type": "multisample",
         "variant": "steel_acoustic",
-        "root_midi": null,
+        "root_midi": 40,
         "velocity_layer": null,
         "tags": [
           "plucked"
@@ -31,7 +31,7 @@ export const EXPANSION_PACKS = [
         "instrument": "steel_guitar",
         "sample_type": "multisample",
         "variant": "steel_acoustic",
-        "root_midi": null,
+        "root_midi": 43,
         "velocity_layer": null,
         "tags": [
           "plucked"
@@ -44,7 +44,7 @@ export const EXPANSION_PACKS = [
         "instrument": "steel_guitar",
         "sample_type": "multisample",
         "variant": "steel_acoustic",
-        "root_midi": null,
+        "root_midi": 46,
         "velocity_layer": null,
         "tags": [
           "plucked"
@@ -57,7 +57,7 @@ export const EXPANSION_PACKS = [
         "instrument": "steel_guitar",
         "sample_type": "multisample",
         "variant": "steel_acoustic",
-        "root_midi": null,
+        "root_midi": 49,
         "velocity_layer": null,
         "tags": [
           "plucked"
@@ -70,7 +70,7 @@ export const EXPANSION_PACKS = [
         "instrument": "steel_guitar",
         "sample_type": "multisample",
         "variant": "steel_acoustic",
-        "root_midi": null,
+        "root_midi": 52,
         "velocity_layer": null,
         "tags": [
           "plucked"
@@ -83,7 +83,7 @@ export const EXPANSION_PACKS = [
         "instrument": "steel_guitar",
         "sample_type": "multisample",
         "variant": "steel_acoustic",
-        "root_midi": null,
+        "root_midi": 55,
         "velocity_layer": null,
         "tags": [
           "plucked"
@@ -96,7 +96,7 @@ export const EXPANSION_PACKS = [
         "instrument": "steel_guitar",
         "sample_type": "multisample",
         "variant": "steel_acoustic",
-        "root_midi": null,
+        "root_midi": 58,
         "velocity_layer": null,
         "tags": [
           "plucked"
@@ -109,7 +109,7 @@ export const EXPANSION_PACKS = [
         "instrument": "steel_guitar",
         "sample_type": "multisample",
         "variant": "steel_acoustic",
-        "root_midi": null,
+        "root_midi": 61,
         "velocity_layer": null,
         "tags": [
           "plucked"
@@ -122,7 +122,7 @@ export const EXPANSION_PACKS = [
         "instrument": "steel_guitar",
         "sample_type": "multisample",
         "variant": "steel_acoustic",
-        "root_midi": null,
+        "root_midi": 64,
         "velocity_layer": null,
         "tags": [
           "plucked"
@@ -135,7 +135,7 @@ export const EXPANSION_PACKS = [
         "instrument": "steel_guitar",
         "sample_type": "multisample",
         "variant": "steel_acoustic",
-        "root_midi": null,
+        "root_midi": 68,
         "velocity_layer": null,
         "tags": [
           "plucked"
@@ -148,7 +148,7 @@ export const EXPANSION_PACKS = [
         "instrument": "steel_guitar",
         "sample_type": "multisample",
         "variant": "steel_acoustic",
-        "root_midi": null,
+        "root_midi": 71,
         "velocity_layer": null,
         "tags": [
           "plucked"
@@ -161,7 +161,7 @@ export const EXPANSION_PACKS = [
         "instrument": "steel_guitar",
         "sample_type": "multisample",
         "variant": "steel_acoustic",
-        "root_midi": null,
+        "root_midi": 74,
         "velocity_layer": null,
         "tags": [
           "plucked"
@@ -174,7 +174,7 @@ export const EXPANSION_PACKS = [
         "instrument": "steel_guitar",
         "sample_type": "multisample",
         "variant": "steel_acoustic",
-        "root_midi": null,
+        "root_midi": 77,
         "velocity_layer": null,
         "tags": [
           "plucked"
@@ -187,7 +187,7 @@ export const EXPANSION_PACKS = [
         "instrument": "steel_guitar",
         "sample_type": "multisample",
         "variant": "steel_acoustic",
-        "root_midi": null,
+        "root_midi": 80,
         "velocity_layer": null,
         "tags": [
           "plucked"
@@ -200,7 +200,7 @@ export const EXPANSION_PACKS = [
         "instrument": "steel_guitar",
         "sample_type": "multisample",
         "variant": "steel_acoustic",
-        "root_midi": null,
+        "root_midi": 83,
         "velocity_layer": null,
         "tags": [
           "plucked"
@@ -213,7 +213,7 @@ export const EXPANSION_PACKS = [
         "instrument": "finger_bass",
         "sample_type": "multisample",
         "variant": "electric_finger",
-        "root_midi": null,
+        "root_midi": 69,
         "velocity_layer": 2,
         "tags": [
           "fingered"
@@ -226,7 +226,7 @@ export const EXPANSION_PACKS = [
         "instrument": "finger_bass",
         "sample_type": "multisample",
         "variant": "electric_finger",
-        "root_midi": null,
+        "root_midi": 69,
         "velocity_layer": 4,
         "tags": [
           "fingered"
@@ -239,7 +239,7 @@ export const EXPANSION_PACKS = [
         "instrument": "finger_bass",
         "sample_type": "multisample",
         "variant": "electric_finger",
-        "root_midi": null,
+        "root_midi": 24,
         "velocity_layer": 2,
         "tags": [
           "fingered"
@@ -252,7 +252,7 @@ export const EXPANSION_PACKS = [
         "instrument": "finger_bass",
         "sample_type": "multisample",
         "variant": "electric_finger",
-        "root_midi": null,
+        "root_midi": 24,
         "velocity_layer": 4,
         "tags": [
           "fingered"
@@ -265,7 +265,7 @@ export const EXPANSION_PACKS = [
         "instrument": "finger_bass",
         "sample_type": "multisample",
         "variant": "electric_finger",
-        "root_midi": null,
+        "root_midi": 36,
         "velocity_layer": 2,
         "tags": [
           "fingered"
@@ -278,7 +278,7 @@ export const EXPANSION_PACKS = [
         "instrument": "finger_bass",
         "sample_type": "multisample",
         "variant": "electric_finger",
-        "root_midi": null,
+        "root_midi": 36,
         "velocity_layer": 4,
         "tags": [
           "fingered"
@@ -291,7 +291,7 @@ export const EXPANSION_PACKS = [
         "instrument": "finger_bass",
         "sample_type": "multisample",
         "variant": "electric_finger",
-        "root_midi": null,
+        "root_midi": 48,
         "velocity_layer": 2,
         "tags": [
           "fingered"
@@ -304,7 +304,7 @@ export const EXPANSION_PACKS = [
         "instrument": "finger_bass",
         "sample_type": "multisample",
         "variant": "electric_finger",
-        "root_midi": null,
+        "root_midi": 48,
         "velocity_layer": 4,
         "tags": [
           "fingered"
@@ -317,7 +317,7 @@ export const EXPANSION_PACKS = [
         "instrument": "finger_bass",
         "sample_type": "multisample",
         "variant": "electric_finger",
-        "root_midi": null,
+        "root_midi": 60,
         "velocity_layer": 2,
         "tags": [
           "fingered"
@@ -330,7 +330,7 @@ export const EXPANSION_PACKS = [
         "instrument": "finger_bass",
         "sample_type": "multisample",
         "variant": "electric_finger",
-        "root_midi": null,
+        "root_midi": 60,
         "velocity_layer": 4,
         "tags": [
           "fingered"
@@ -343,7 +343,7 @@ export const EXPANSION_PACKS = [
         "instrument": "finger_bass",
         "sample_type": "multisample",
         "variant": "electric_finger",
-        "root_midi": null,
+        "root_midi": 30,
         "velocity_layer": 2,
         "tags": [
           "fingered"
@@ -356,7 +356,7 @@ export const EXPANSION_PACKS = [
         "instrument": "finger_bass",
         "sample_type": "multisample",
         "variant": "electric_finger",
-        "root_midi": null,
+        "root_midi": 30,
         "velocity_layer": 4,
         "tags": [
           "fingered"
@@ -369,7 +369,7 @@ export const EXPANSION_PACKS = [
         "instrument": "finger_bass",
         "sample_type": "multisample",
         "variant": "electric_finger",
-        "root_midi": null,
+        "root_midi": 42,
         "velocity_layer": 2,
         "tags": [
           "fingered"
@@ -382,7 +382,7 @@ export const EXPANSION_PACKS = [
         "instrument": "finger_bass",
         "sample_type": "multisample",
         "variant": "electric_finger",
-        "root_midi": null,
+        "root_midi": 42,
         "velocity_layer": 4,
         "tags": [
           "fingered"
@@ -395,7 +395,7 @@ export const EXPANSION_PACKS = [
         "instrument": "finger_bass",
         "sample_type": "multisample",
         "variant": "electric_finger",
-        "root_midi": null,
+        "root_midi": 54,
         "velocity_layer": 2,
         "tags": [
           "fingered"
@@ -408,7 +408,7 @@ export const EXPANSION_PACKS = [
         "instrument": "finger_bass",
         "sample_type": "multisample",
         "variant": "electric_finger",
-        "root_midi": null,
+        "root_midi": 54,
         "velocity_layer": 4,
         "tags": [
           "fingered"
@@ -421,7 +421,7 @@ export const EXPANSION_PACKS = [
         "instrument": "finger_bass",
         "sample_type": "multisample",
         "variant": "electric_finger",
-        "root_midi": null,
+        "root_midi": 66,
         "velocity_layer": 2,
         "tags": [
           "fingered"
@@ -434,7 +434,7 @@ export const EXPANSION_PACKS = [
         "instrument": "finger_bass",
         "sample_type": "multisample",
         "variant": "electric_finger",
-        "root_midi": null,
+        "root_midi": 66,
         "velocity_layer": 4,
         "tags": [
           "fingered"
@@ -551,7 +551,7 @@ export const EXPANSION_PACKS = [
         "instrument": "electric_piano",
         "sample_type": "multisample",
         "variant": "rhodes",
-        "root_midi": null,
+        "root_midi": 29,
         "velocity_layer": null,
         "tags": [
           "rhodes"
@@ -564,7 +564,7 @@ export const EXPANSION_PACKS = [
         "instrument": "electric_piano",
         "sample_type": "multisample",
         "variant": "rhodes",
-        "root_midi": null,
+        "root_midi": 40,
         "velocity_layer": null,
         "tags": [
           "rhodes"
@@ -577,7 +577,7 @@ export const EXPANSION_PACKS = [
         "instrument": "electric_piano",
         "sample_type": "multisample",
         "variant": "rhodes",
-        "root_midi": null,
+        "root_midi": 50,
         "velocity_layer": null,
         "tags": [
           "rhodes"
@@ -590,7 +590,7 @@ export const EXPANSION_PACKS = [
         "instrument": "electric_piano",
         "sample_type": "multisample",
         "variant": "rhodes",
-        "root_midi": null,
+        "root_midi": 59,
         "velocity_layer": null,
         "tags": [
           "rhodes"
@@ -603,7 +603,7 @@ export const EXPANSION_PACKS = [
         "instrument": "electric_piano",
         "sample_type": "multisample",
         "variant": "rhodes",
-        "root_midi": null,
+        "root_midi": 65,
         "velocity_layer": null,
         "tags": [
           "rhodes"
@@ -616,7 +616,7 @@ export const EXPANSION_PACKS = [
         "instrument": "electric_piano",
         "sample_type": "multisample",
         "variant": "rhodes",
-        "root_midi": null,
+        "root_midi": 76,
         "velocity_layer": null,
         "tags": [
           "rhodes"
@@ -629,7 +629,7 @@ export const EXPANSION_PACKS = [
         "instrument": "electric_piano",
         "sample_type": "multisample",
         "variant": "rhodes",
-        "root_midi": null,
+        "root_midi": 86,
         "velocity_layer": null,
         "tags": [
           "rhodes"
@@ -642,7 +642,7 @@ export const EXPANSION_PACKS = [
         "instrument": "electric_piano",
         "sample_type": "multisample",
         "variant": "rhodes",
-        "root_midi": null,
+        "root_midi": 96,
         "velocity_layer": null,
         "tags": [
           "rhodes"
@@ -1553,17 +1553,215 @@ export const EXPANSION_PACKS = [
         "tags": [
           "staccato"
         ]
+      },
+      {
+        "path": "VSCO 1 Percussion/drums/snare/drum1/snare1_fff_1.wav",
+        "bytes": 183946,
+        "family": "drums",
+        "instrument": "snare",
+        "sample_type": "one_shot",
+        "variant": "acoustic_snare",
+        "root_midi": null,
+        "velocity_layer": null,
+        "tags": [
+          "acoustic"
+        ]
+      },
+      {
+        "path": "VSCO 1 Percussion/drums/snare/drum1/snare1_nosnare_ppp_2.wav",
+        "bytes": 87160,
+        "family": "drums",
+        "instrument": "snare",
+        "sample_type": "one_shot",
+        "variant": "acoustic_snare",
+        "root_midi": null,
+        "velocity_layer": null,
+        "tags": [
+          "acoustic"
+        ]
+      },
+      {
+        "path": "VSCO 1 Percussion/drums/snare/drum2/snare2_ff_1.wav",
+        "bytes": 151690,
+        "family": "drums",
+        "instrument": "snare",
+        "sample_type": "one_shot",
+        "variant": "acoustic_snare",
+        "root_midi": null,
+        "velocity_layer": null,
+        "tags": [
+          "acoustic"
+        ]
+      },
+      {
+        "path": "VSCO 1 Percussion/drums/snare/drum2/snare2_p_1.wav",
+        "bytes": 112972,
+        "family": "drums",
+        "instrument": "snare",
+        "sample_type": "one_shot",
+        "variant": "acoustic_snare",
+        "root_midi": null,
+        "velocity_layer": null,
+        "tags": [
+          "acoustic"
+        ]
+      },
+      {
+        "path": "VSCO 1 Percussion/drums/snare/drum3_marching/snare3_mp_1.wav",
+        "bytes": 112972,
+        "family": "drums",
+        "instrument": "snare",
+        "sample_type": "one_shot",
+        "variant": "acoustic_snare",
+        "root_midi": null,
+        "velocity_layer": null,
+        "tags": [
+          "acoustic"
+        ]
+      },
+      {
+        "path": "VSCO 1 Percussion/drums/snare/OldSnare/snare_mf2.wav",
+        "bytes": 37170,
+        "family": "drums",
+        "instrument": "snare",
+        "sample_type": "one_shot",
+        "variant": "acoustic_snare",
+        "root_midi": null,
+        "velocity_layer": null,
+        "tags": [
+          "acoustic"
+        ]
+      },
+      {
+        "path": "VSCO 1 Percussion/drums/bass/bdrum_ff_1.wav",
+        "bytes": 1763962,
+        "family": "drums",
+        "instrument": "kick",
+        "sample_type": "one_shot",
+        "variant": "acoustic_bass_drum",
+        "root_midi": null,
+        "velocity_layer": null,
+        "tags": [
+          "acoustic"
+        ]
+      },
+      {
+        "path": "VSCO 1 Percussion/drums/bass/bdrum_muted_fff_1.wav",
+        "bytes": 934396,
+        "family": "drums",
+        "instrument": "kick",
+        "sample_type": "one_shot",
+        "variant": "acoustic_bass_drum",
+        "root_midi": null,
+        "velocity_layer": null,
+        "tags": [
+          "acoustic"
+        ]
+      },
+      {
+        "path": "VSCO 1 Percussion/drums/bass/bdrum_muted_pp_2.wav",
+        "bytes": 165958,
+        "family": "drums",
+        "instrument": "kick",
+        "sample_type": "one_shot",
+        "variant": "acoustic_bass_drum",
+        "root_midi": null,
+        "velocity_layer": null,
+        "tags": [
+          "acoustic"
+        ]
+      },
+      {
+        "path": "VSCO 1 Percussion/drums/bass/bdrum_pp_2.wav",
+        "bytes": 1344814,
+        "family": "drums",
+        "instrument": "kick",
+        "sample_type": "one_shot",
+        "variant": "acoustic_bass_drum",
+        "root_midi": null,
+        "velocity_layer": null,
+        "tags": [
+          "acoustic"
+        ]
+      },
+      {
+        "path": "VSCO 1 Percussion/drums/bass/bdrum_special_sidehit.wav",
+        "bytes": 227086,
+        "family": "drums",
+        "instrument": "kick",
+        "sample_type": "one_shot",
+        "variant": "acoustic_bass_drum",
+        "root_midi": null,
+        "velocity_layer": null,
+        "tags": [
+          "acoustic"
+        ]
+      },
+      {
+        "path": "VSCO 1 Percussion/drums/bass/bdrum3_mp_1.wav",
+        "bytes": 1807624,
+        "family": "drums",
+        "instrument": "kick",
+        "sample_type": "one_shot",
+        "variant": "acoustic_bass_drum",
+        "root_midi": null,
+        "velocity_layer": null,
+        "tags": [
+          "acoustic"
+        ]
+      },
+      {
+        "path": "VSCO 1 Percussion/drums/other/Bongos/HighBongo1.wav",
+        "bytes": 214590,
+        "family": "percussion",
+        "instrument": "bongo",
+        "sample_type": "one_shot",
+        "variant": "acoustic_bongo",
+        "root_midi": null,
+        "velocity_layer": null,
+        "tags": [
+          "acoustic"
+        ]
+      },
+      {
+        "path": "VSCO 1 Percussion/drums/other/Bongos/HighBongo2.wav",
+        "bytes": 201474,
+        "family": "percussion",
+        "instrument": "bongo",
+        "sample_type": "one_shot",
+        "variant": "acoustic_bongo",
+        "root_midi": null,
+        "velocity_layer": null,
+        "tags": [
+          "acoustic"
+        ]
+      },
+      {
+        "path": "VSCO 1 Percussion/drums/other/Bongos/LowBongo1.wav",
+        "bytes": 201710,
+        "family": "percussion",
+        "instrument": "bongo",
+        "sample_type": "one_shot",
+        "variant": "acoustic_bongo",
+        "root_midi": null,
+        "velocity_layer": null,
+        "tags": [
+          "acoustic"
+        ]
+      },
+      {
+        "path": "VSCO 1 Percussion/drums/other/Bongos/LowBongo2.wav",
+        "bytes": 190954,
+        "family": "percussion",
+        "instrument": "bongo",
+        "sample_type": "one_shot",
+        "variant": "acoustic_bongo",
+        "root_midi": null,
+        "velocity_layer": null,
+        "tags": [
+          "acoustic"
+        ]
       }
     ]
-  },
-  {
-    "owner": "sfzinstruments",
-    "repo": "virtuosity_drums",
-    "revision": "9f04cf9a734527edfbb0a4eee1f674e45bbf71bc",
-    "name": "Virtuosity Drums CC0",
-    "license_spdx": "CC0-1.0",
-    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "source_url": "https://github.com/sfzinstruments/virtuosity_drums",
-    "entries": []
   }
 ];
