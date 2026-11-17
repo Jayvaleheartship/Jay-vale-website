@@ -1,10 +1,10 @@
 import {seedCC0} from './cc0-seeder.js';
+import {FAMILY_BUDGETS as BUDGETS, SAMPLE_TYPES, sampleKey, collectionSlug, catalogueTemplate} from './catalogue.js';
 /**
  * Jay Vale Sound Library — private R2 + D1 API
  * A 9.5 GB software budget is NOT a Cloudflare billing cap.
  * All sample access requires a separate secret. Never embed tokens in public HTML.
  */
-const BUDGETS = {drums:3000000000,bass:1500000000,guitar:1200000000,keys:1200000000,strings:1000000000,winds:800000000,percussion:800000000};
 const LICENSES = new Set(['CC0-1.0','CC-BY-4.0','CC-BY-SA-3.0']);
 const AUDIO_MIME = {wav:'audio/wav',flac:'audio/flac',mp3:'audio/mpeg',ogg:'audio/ogg'};
 function json(data,status=200){return new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});}
@@ -35,6 +35,8 @@ function metaError(m){
  if(!Object.hasOwn(BUDGETS,m.family))return 'Unknown instrument family';
  if(typeof m.instrument!=='string'||!/^[a-z][a-z0-9_-]{1,40}$/.test(m.instrument))return 'Invalid instrument';
  if(!LICENSES.has(m.license_spdx))return 'License must be verified and approved';
+ if(m.sample_type!=null&&!SAMPLE_TYPES.includes(m.sample_type))return 'Unknown sample type';
+ if(m.variant!=null&&(typeof m.variant!=='string'||!/^[a-zA-Z0-9 _-]{1,40}$/.test(m.variant)))return 'Invalid variant';
  for(const field of ['source_name','source_url','license_url','attribution'])if(typeof m[field]!=='string'||!m[field].trim()||m[field].length>1500)return 'Missing or invalid '+field;
  if(!Number.isInteger(m.duration_ms)||m.duration_ms<0||m.duration_ms>300000)return 'Invalid duration_ms';
  if(!Number.isInteger(m.sample_rate)||m.sample_rate<8000||m.sample_rate>384000)return 'Invalid sample_rate';
@@ -74,11 +76,11 @@ async function upload(req,env){
  const used=await totals(env);
  if(used.used_bytes+bytes.byteLength>used.soft_limit_bytes)return error('Library soft limit reached',409);
  if(used.by_family[meta.family].bytes+bytes.byteLength>BUDGETS[meta.family])return error('Instrument-family budget reached',409);
- const id=crypto.randomUUID(),key='samples/'+meta.family+'/'+meta.instrument+'/'+hash+'.'+extension;
+ const id=crypto.randomUUID(),key=sampleKey({...meta,sample_type:meta.sample_type||'one_shot',variant:meta.variant||meta.articulation||'standard'},hash,extension);
  await env.SAMPLES.put(key,bytes,{httpMetadata:{contentType:AUDIO_MIME[extension]},customMetadata:{sha256:hash,license:meta.license_spdx}});
  try{
-   await env.DB.prepare('INSERT INTO samples(id,sha256,r2_key,original_filename,family,instrument,bytes,duration_ms,sample_rate,root_midi,articulation,velocity_layer,tags_json,features_json,source_name,source_url,license_spdx,license_url,attribution) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)').bind(
-    id,hash,key,file.name.slice(0,300),meta.family,meta.instrument,bytes.byteLength,meta.duration_ms,meta.sample_rate,meta.root_midi??null,meta.articulation||'normal',meta.velocity_layer??null,JSON.stringify(meta.tags||[]),JSON.stringify(meta.features),meta.source_name,meta.source_url,meta.license_spdx,meta.license_url,meta.attribution
+   await env.DB.prepare('INSERT INTO samples(id,sha256,r2_key,original_filename,family,instrument,bytes,duration_ms,sample_rate,root_midi,articulation,velocity_layer,tags_json,features_json,source_name,source_url,license_spdx,license_url,attribution,sample_type,collection_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)').bind(
+    id,hash,key,file.name.slice(0,300),meta.family,meta.instrument,bytes.byteLength,meta.duration_ms,meta.sample_rate,meta.root_midi??null,meta.articulation||'normal',meta.velocity_layer??null,JSON.stringify(meta.tags||[]),JSON.stringify(meta.features),meta.source_name,meta.source_url,meta.license_spdx,meta.license_url,meta.attribution,meta.sample_type||'one_shot',collectionSlug(meta.source_name)
    ).run();
  }catch(e){await env.SAMPLES.delete(key);throw e;}
  return json({created:true,id,bytes:bytes.byteLength,used_bytes:used.used_bytes+bytes.byteLength},201);
@@ -115,6 +117,32 @@ async function sample(req,env,id){
  headers.set('content-disposition','attachment; filename="'+row.original_filename.replace(/["\\\r\n]/g,'_')+'"');
  return new Response(object.body,{headers});
 }
+
+async function catalogueInventory(env){
+ const schema=catalogueTemplate();
+ const rows=await env.DB.prepare('SELECT family,instrument,sample_type,collection_id,COUNT(*) AS count,COALESCE(SUM(bytes),0) AS bytes FROM samples GROUP BY family,instrument,sample_type,collection_id ORDER BY family,instrument,sample_type,collection_id').all();
+ const present=rows.results||[];
+ const byInstrument=new Map();
+ for(const r of present){ const key=r.family+'/'+r.instrument;byInstrument.set(key,(byInstrument.get(key)||0)+Number(r.count||0)); }
+ const families=schema.families.map(f=>({...f,
+   actual_samples:present.filter(r=>r.family===f.id).reduce((n,r)=>n+Number(r.count||0),0),
+   instruments:f.instruments.map(v=>({...v,actual_samples:byInstrument.get(f.id+'/'+v.id)||0,status:byInstrument.get(f.id+'/'+v.id)?'indexed':'unfilled'}))
+ }));
+ const sources=await env.DB.prepare('SELECT source_name,license_spdx,COUNT(*) AS samples,COALESCE(SUM(bytes),0) AS bytes FROM samples GROUP BY source_name,license_spdx ORDER BY source_name').all();
+ return {schema_version:1,complete_instrument_taxonomy:true,complete_audio_collection:false,
+  note:'128 GM programs are targets; counts only reflect audio files actually indexed in D1.',
+  families,sample_types:schema.sample_types,general_midi:schema.general_midi,
+  source_collections:sources.results||[],
+  indexed_folders:present};
+}
+async function publicHealth(env){
+ let count=0,import_status=null;
+ try{count=(await env.DB.prepare('SELECT COUNT(*) AS n FROM samples').first())?.n||0;}catch{}
+ try{import_status=await env.DB.prepare('SELECT last_attempt_at,last_finished_at,attempted,imported,failed,last_error_code,last_success_at FROM import_health WHERE id=1').first();}catch{}
+ return {service:'Jay Vale Sound Library',version:'0.4.0',online:true,configured:configured(env),sample_count:count,cc0_manifest_items:173,
+  importer:import_status||{status:'migration_pending_or_cron_not_started'}};
+}
+
 export default {
  scheduled(_event,env,ctx){ctx.waitUntil(seedCC0(env));},
  async fetch(req,env){
@@ -123,8 +151,9 @@ export default {
   if(req.method==='OPTIONS')return new Response(null,{status:204,headers:corsHeaders(req,env)});
   const url=new URL(req.url),path=url.pathname;
   try{
-   if(path==='/health'&&req.method==='GET')return wrap(json({service:'Jay Vale Sound Library',version:'0.3.0',online:true,configured:configured(env),sample_count:env.DB?(await env.DB.prepare('SELECT COUNT(*) AS n FROM samples').first())?.n||0:0,cc0_manifest_items:173}),req,env);
+   if(path==='/health'&&req.method==='GET')return wrap(json(await publicHealth(env)),req,env);
    if(!configured(env))return wrap(error('Library secrets not configured',503),req,env);
+   if(path==='/v1/catalog'&&req.method==='GET')return wrap(readable(req,env)?json(await catalogueInventory(env)):error('Unauthorized',401),req,env);
    if(path==='/v1/status'&&req.method==='GET')return wrap(readable(req,env)?json(await totals(env)):error('Unauthorized',401),req,env);
    if(path==='/v1/match'&&req.method==='GET')return wrap(await matches(req,env),req,env);
    if(path==='/v1/admin/samples'&&req.method==='POST')return wrap(await upload(req,env),req,env);
