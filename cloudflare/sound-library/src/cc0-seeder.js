@@ -1,5 +1,6 @@
 import { CC0_PACK } from './cc0-seed-manifest.js';
 import { TR808_PACK } from './tr808-seed-manifest.js';
+import {sampleKey,collectionSlug} from './catalogue.js';
 const BANDS = [45, 75, 125, 205, 340, 560, 920, 1510, 2500, 4100, 6800, 11200];
 const MAX_BATCH = 12;
 function ascii(v, p) { return String.fromCharCode(...new Uint8Array(v.buffer, p, 4)); }
@@ -97,7 +98,9 @@ export async function seedCC0(env) {
   if(!env.DB || !env.SAMPLES)return;
   const doneResult=await env.DB.prepare('SELECT source_url FROM cc0_seed_imports').all();
   const done=new Set((doneResult.results||[]).map(r=>r.source_url));
-  let attempts=0,added=0,errors=0;
+  let attempts=0,added=0,errors=0,lastError=null;
+  const startedAt=new Date().toISOString();
+  await env.DB.prepare('UPDATE import_health SET last_attempt_at=? WHERE id=1').bind(startedAt).run();
   const entries=[...CC0_PACK.entries.map(entry=>({entry,pack:CC0_PACK})),...TR808_PACK.entries.map(entry=>({entry,pack:TR808_PACK}))];
   for (const {entry,pack} of entries) {
     const url='https://raw.githubusercontent.com/'+pack.owner+'/'+pack.repo+'/'+pack.revision+'/'+entry.path.split('/').map(encodeURIComponent).join('/');
@@ -117,17 +120,23 @@ export async function seedCC0(env) {
         const [family,instrument,tags]=classify(entry.path,pack);
         const used=await env.DB.prepare('SELECT COALESCE(SUM(bytes),0) AS amount FROM samples').first();
         if(Number(used?.amount||0)+audio.byteLength>Number(env.MAX_LIBRARY_BYTES||9500000000))throw Error('Library storage limit reached');
-        const key='samples/'+family+'/'+instrument+'/'+sha+'.wav';
+        const sourceVariant=pack.repo==='sounds-tr808-fischer'?'tr808':entry.path.split('/')[1]||'standard';
+        const articulation=tags.includes('open')?'open':tags.includes('closed')?'closed':'normal';
+        const key=sampleKey({family,instrument,sample_type:'one_shot',variant:sourceVariant+(articulation==='normal'?'':'_'+articulation),source_name:pack.source_name},sha,'wav');
         await env.SAMPLES.put(key,audio,{httpMetadata:{contentType:'audio/wav'},customMetadata:{license:pack.license_spdx}});
-        await env.DB.prepare('INSERT OR IGNORE INTO samples(id,sha256,r2_key,original_filename,family,instrument,bytes,duration_ms,sample_rate,root_midi,articulation,velocity_layer,tags_json,features_json,source_name,source_url,license_spdx,license_url,attribution) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)').bind(
+        await env.DB.prepare('INSERT OR IGNORE INTO samples(id,sha256,r2_key,original_filename,family,instrument,bytes,duration_ms,sample_rate,root_midi,articulation,velocity_layer,tags_json,features_json,source_name,source_url,license_spdx,license_url,attribution,sample_type,collection_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)').bind(
           id,sha,key,entry.path.split('/').at(-1),family,instrument,audio.byteLength,duration_ms,sample_rate,null,'normal',null,JSON.stringify(tags),JSON.stringify(features),
           pack.source_name,url,pack.license_spdx,pack.license_url,
-          pack.source_name+' — CC0 1.0'
+          pack.source_name+' — CC0 1.0','one_shot',collectionSlug(pack.source_name)
         ).run();
         added++;
       }
       await env.DB.prepare('INSERT OR IGNORE INTO cc0_seed_imports(source_url,sha256,status,sample_id) VALUES(?,?,?,?)').bind(url,sha,duplicate?'duplicate':'imported',id).run();
-    } catch(e) { errors++;console.error('CC0 seed import',entry.path,String(e).slice(0,250)); }
+    } catch(e) { errors++;lastError=String(e).slice(0,160);console.error('CC0 seed import',entry.path,lastError); }
   }
+  const code=lastError?
+    (lastError.includes('WAV')?'invalid_wav':lastError.includes('HTTP')?'source_http':lastError.includes('size')?'source_size':lastError.includes('SQLITE')?'database':'import_error'):null;
+  await env.DB.prepare('UPDATE import_health SET last_finished_at=?,attempted=?,imported=?,failed=?,last_error_code=?,last_success_at=CASE WHEN ? > 0 THEN ? ELSE last_success_at END WHERE id=1')
+    .bind(new Date().toISOString(),attempts,added,errors,code,added,new Date().toISOString()).run();
   console.log('CC0 seed:',{attempts,added,errors,total:entries.length});
 }
