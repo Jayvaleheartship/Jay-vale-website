@@ -98,7 +98,7 @@ export async function seedCC0(env) {
   if(!env.DB || !env.SAMPLES)return;
   const doneResult=await env.DB.prepare('SELECT source_url FROM cc0_seed_imports').all();
   const done=new Set((doneResult.results||[]).map(r=>r.source_url));
-  let attempts=0,added=0,errors=0,lastError=null;
+  let attempts=0,added=0,errors=0,lastError=null,lastDetail=null;
   const startedAt=new Date().toISOString();
   await env.DB.prepare('UPDATE import_health SET last_attempt_at=? WHERE id=1').bind(startedAt).run();
   const entries=[...CC0_PACK.entries.map(entry=>({entry,pack:CC0_PACK})),...TR808_PACK.entries.map(entry=>({entry,pack:TR808_PACK}))];
@@ -132,11 +132,13 @@ export async function seedCC0(env) {
         added++;
       }
       await env.DB.prepare('INSERT OR IGNORE INTO cc0_seed_imports(source_url,sha256,status,sample_id) VALUES(?,?,?,?)').bind(url,sha,duplicate?'duplicate':'imported',id).run();
-    } catch(e) { errors++;lastError=String(e).slice(0,160);console.error('CC0 seed import',entry.path,lastError); }
+     } catch(e) { errors++;lastError=String(e).slice(0,160);
+      lastDetail=(String(e?.name||'Error')+': '+String(e?.message||e)).replace(/[^\w .:/()-]/g,'').slice(0,130);
+      console.error('CC0 seed import',entry.path,lastError); }
   }
   const code=lastError?
     (lastError.includes('WAV')?'invalid_wav':lastError.includes('HTTP')?'source_http':lastError.includes('size')?'source_size':lastError.includes('SQLITE')?'database':'import_error'):null;
-  await env.DB.prepare('UPDATE import_health SET last_finished_at=?,attempted=?,imported=?,failed=?,last_error_code=?,last_success_at=CASE WHEN ? > 0 THEN ? ELSE last_success_at END WHERE id=1')
-    .bind(new Date().toISOString(),attempts,added,errors,code,added,new Date().toISOString()).run();
+  await env.DB.prepare('UPDATE import_health SET last_finished_at=?,attempted=?,imported=?,failed=?,last_error_code=?,last_error_detail=?,last_success_at=CASE WHEN ? > 0 THEN ? ELSE last_success_at END WHERE id=1')
+    .bind(new Date().toISOString(),attempts,added,errors,code,lastDetail,added,new Date().toISOString()).run();
   console.log('CC0 seed:',{attempts,added,errors,total:entries.length});
 }
