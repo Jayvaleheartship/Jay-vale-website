@@ -139,7 +139,7 @@ async function catalogueInventory(env){
 async function publicHealth(env){
  let count=0,import_status=null;
  try{count=(await env.DB.prepare('SELECT COUNT(*) AS n FROM samples').first())?.n||0;}catch{}
- try{import_status=await env.DB.prepare('SELECT last_attempt_at,last_finished_at,attempted,imported,failed,last_error_code,last_success_at FROM import_health WHERE id=1').first();}catch{}
+ try{import_status=await env.DB.prepare('SELECT last_attempt_at,last_finished_at,attempted,imported,failed,last_error_code,last_error_detail,last_success_at FROM import_health WHERE id=1').first();}catch{}
  return {service:'Jay Vale Sound Library',version:'0.4.0',online:true,configured:configured(env),sample_count:count,cc0_manifest_items:173,
   importer:import_status||{status:'migration_pending_or_cron_not_started'}};
 }
