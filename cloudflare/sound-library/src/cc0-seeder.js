@@ -3,7 +3,7 @@ import { TR808_PACK } from './tr808-seed-manifest.js';
 import { EXPANSION_PACKS } from './expansion-manifest.js';
 import {sampleKey,collectionSlug} from './catalogue.js';
 const BANDS = [45, 75, 125, 205, 340, 560, 920, 1510, 2500, 4100, 6800, 11200];
-const MAX_BATCH = 12;
+const MAX_BATCH = 18;
 function ascii(v, p) { return String.fromCharCode(...new Uint8Array(v.buffer, p, 4)); }
 function analyzeWav(buffer) {
   const v = new DataView(buffer);
@@ -109,11 +109,18 @@ export async function seedCC0(env) {
   let attempts=0,added=0,errors=0,lastError=null,lastDetail=null;
   const startedAt=new Date().toISOString();
   await env.DB.prepare('UPDATE import_health SET last_attempt_at=? WHERE id=1').bind(startedAt).run();
-  const entries=[...CC0_PACK.entries.map(entry=>({entry,pack:CC0_PACK})),...TR808_PACK.entries.map(entry=>({entry,pack:TR808_PACK})),...EXPANSION_PACKS.flatMap(pack=>pack.entries.map(entry=>({entry,pack})))];
+  const existing=[...CC0_PACK.entries.map(entry=>({entry,pack:CC0_PACK})),...TR808_PACK.entries.map(entry=>({entry,pack:TR808_PACK}))];
+  // Round-robin the new collection so every batch makes progress across 808, bass, keys, strings, brass and winds.
+  const expansion=EXPANSION_PACKS.slice().sort((a,b)=>(a.repo==='0x808'?-1:b.repo==='0x808'?1:0));
+  const interleaved=[];
+  for(let i=0;i<Math.max(...expansion.map(pack=>pack.entries.length));i++)
+    for(const pack of expansion)if(pack.entries[i])interleaved.push({entry:pack.entries[i],pack});
+  const entries=[...existing,...interleaved];
   for (const {entry,pack} of entries) {
     const url='https://raw.githubusercontent.com/'+pack.owner+'/'+pack.repo+'/'+pack.revision+'/'+entry.path.split('/').map(encodeURIComponent).join('/');
     if(done.has(url))continue;
-    if(attempts++>=MAX_BATCH)break;
+    if(attempts>=MAX_BATCH)break;
+    attempts++;
     try {
       const resp=await fetch(url,{redirect:'follow'});
       if(!resp.ok)throw Error('Source HTTP '+resp.status);
