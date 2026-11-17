@@ -1169,7 +1169,7 @@ function refreshRender() {
   const total=drumEvents.length;
   const difference=Number.isFinite(drumOutput.differenceDb)?drumOutput.differenceDb.toFixed(1)+' dB':'unavailable';
   $('drum-status').textContent = drumOutput.preserve
-    ?`Source-locked preview: ${replaced} of ${total} onsets received subtle recorded layers; ${total-replaced} left original. Added-component energy: ${difference} relative to retained audio. The original sound is the foundation, not a new recording.`
+    ?`Source-locked preview: ${replaced} of ${total} onsets received subtle ${fixture?'synthesized demo':'recorded'} layers; ${total-replaced} received no extra layer. Added-component energy: ${difference} relative to retained audio. The original sound is the foundation, not a new recording.`
     :`Experimental replacement: ${replaced} of ${total} onsets replaced, ${total-replaced} retained. Replacements may not sound like the input.`;
 }
 
