@@ -11,7 +11,6 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "jay-vale-sound-index",
       "migrations_dir": "migrations"
     }
   ],
