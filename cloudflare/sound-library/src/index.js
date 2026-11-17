@@ -123,7 +123,7 @@ export default {
   if(req.method==='OPTIONS')return new Response(null,{status:204,headers:corsHeaders(req,env)});
   const url=new URL(req.url),path=url.pathname;
   try{
-   if(path==='/health'&&req.method==='GET')return wrap(json({service:'Jay Vale Sound Library',version:'0.3.0',online:true,configured:configured(env),sample_count:env.DB?(await env.DB.prepare('SELECT COUNT(*) AS n FROM samples').first())?.n||0:0,cc0_manifest_items:57}),req,env);
+   if(path==='/health'&&req.method==='GET')return wrap(json({service:'Jay Vale Sound Library',version:'0.3.0',online:true,configured:configured(env),sample_count:env.DB?(await env.DB.prepare('SELECT COUNT(*) AS n FROM samples').first())?.n||0:0,cc0_manifest_items:173}),req,env);
    if(!configured(env))return wrap(error('Library secrets not configured',503),req,env);
    if(path==='/v1/status'&&req.method==='GET')return wrap(readable(req,env)?json(await totals(env)):error('Unauthorized',401),req,env);
    if(path==='/v1/match'&&req.method==='GET')return wrap(await matches(req,env),req,env);
