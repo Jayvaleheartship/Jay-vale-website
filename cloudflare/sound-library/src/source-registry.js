@@ -13,5 +13,6 @@ export const SOURCE_REGISTRY = Object.freeze([
   {id:'discord_gm_selected',name:'Discord SFZ GM — reviewed CC0 instruments',url:'https://github.com/sfzinstruments/Discord-SFZ-GM-Bank',license:'CC0-1.0 (per instrument SFZ)',manifest_files:49,kind:'piano_electric_bass_steel_guitar',status:'import_configured',families:['bass','guitar','keys']},
   {id:'vcsl_expansion',name:'VCSL — CC0 instrument starter set',url:'https://github.com/sgossner/VCSL',license:'CC0-1.0',manifest_files:33,kind:'pianos_fm_synth_mallets',status:'import_configured',families:['keys','synths','percussion']},
   {id:'vsco2_expansion',name:'VSCO 2 Community Edition — CC0 orchestra and percussion',url:'https://github.com/sgossner/VSCO-2-CE',license:'CC0-1.0',manifest_files:51,kind:'strings_brass_woodwinds_drums',status:'import_configured',families:['strings','brass','woodwinds','drums','percussion']},
+  {id:'classic_0x808',name:'0x808 bundled CC0 classic drum machines',url:'https://github.com/averagenative/0x808',license:'CC0-1.0 (bundled samples)',manifest_files:42,kind:'tr808_tr909',status:'import_configured',families:['drums','percussion']},
   {id:'bitwig_factory',name:'User-owned Bitwig Studio factory library',url:'https://www.bitwig.com/',license:'PROPRIETARY_LOCAL_USE',kind:'installed_local_instruments_and_presets',status:'local_bridge_only_never_mirror',families:[]}
 ]);
