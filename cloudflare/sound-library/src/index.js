@@ -1,5 +1,6 @@
 import {seedCC0} from './cc0-seeder.js';
 import {FAMILY_BUDGETS as BUDGETS, SAMPLE_TYPES, sampleKey, collectionSlug, catalogueTemplate} from './catalogue.js';
+import {SOURCE_REGISTRY} from './source-registry.js';
 /**
  * Jay Vale Sound Library — private R2 + D1 API
  * A 9.5 GB software budget is NOT a Cloudflare billing cap.
@@ -132,7 +133,7 @@ async function catalogueInventory(env){
  return {schema_version:1,complete_instrument_taxonomy:true,complete_audio_collection:false,
   note:'128 GM programs are targets; counts only reflect audio files actually indexed in D1.',
   families,sample_types:schema.sample_types,general_midi:schema.general_midi,
-  source_collections:sources.results||[],
+  source_collections:sources.results||[],approved_and_candidate_sources:SOURCE_REGISTRY,
   indexed_folders:present};
 }
 async function publicHealth(env){
