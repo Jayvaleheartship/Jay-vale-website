@@ -1132,15 +1132,28 @@ function renderDrums() {
   }
   let peak=0,sourceSum=0,deltaSum=0;
   const stemTracks=Object.values(stems);
-  const mix=source.map((channel,ch)=>Float32Array.from(channel,(value,i)=>{
-    const original=value;
-    for(const stem of stemTracks)value+=stem[ch][i];
+  const mix=source.map((channel,ch)=>Float32Array.from(channel,(original,i)=>{
+    let added=0;
+    for(const stem of stemTracks)added+=stem[ch][i];
+    if(preserve&&added){
+      // Keep the source WAV bit-for-bit after decoding. Limit only new audio,
+      // never turn down or reprocess the retained original to create headroom.
+      const unclamped=original+added;
+      const ceiling=.999;
+      if((unclamped>ceiling&&added>0)||(unclamped< -ceiling&&added<0)){
+        const target=unclamped>ceiling?ceiling:-ceiling;
+        const ratio=Math.max(0,Math.min(1,(target-original)/added));
+        added*=ratio;
+        for(const stem of stemTracks)stem[ch][i]*=ratio;
+      }
+    }
+    const value=original+added;
     peak=Math.max(peak,Math.abs(value));
     sourceSum+=original*original;
-    deltaSum+=(value-original)**2;
+    deltaSum+=added*added;
     return value;
   }));
-  const exportGain=peak>.995?.995/peak:1;
+  const exportGain=!preserve&&peak>.995?.995/peak:1;
   if(exportGain<1)for(const channel of [...mix,...source,...Object.values(stems).flat()]){
     for(let i=0;i<channel.length;i++)channel[i]*=exportGain;
   }
