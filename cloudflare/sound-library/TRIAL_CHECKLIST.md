@@ -1,6 +1,6 @@
 # Jay Vale Audio Lab — First-Trial Checklist
 
-Updated 17 November 2026 after live R2/D1 verification. This checklist is persisted with the cloud backend source. Only mark tasks complete after verifying actual results, not merely committing code.
+Updated 17 November 2026 after live R2/D1 verification. For **every to-do task**: complete the work, verify the outcome, update this saved checklist immediately, display the revised task list, and let the user choose the next item. Never mark a task complete from code commits alone.
 
 ## Infrastructure and setup completed
 
@@ -8,13 +8,13 @@ Updated 17 November 2026 after live R2/D1 verification. This checklist is persis
 - [x] 9.5 GB library software budget and instrument-family taxonomy defined.
 - [x] Full target inventory: 128 General MIDI programs, 47 standard percussion notes, 131 additional entries; target names are **not** recordings.
 - [x] Hierarchical R2 object key conventions and private catalogue API implemented.
-- [x] 173 CC0 source WAV references in pinned importer manifests (Boochi44 57, TR-808 116).
-- [x] Scheduled import completed and reconciled all 173 source WAV references: 134 unique R2/D1 samples, 39 duplicate source entries; all 134 bytes and keys verified with the R2 integrity audit.
+- [x] 348 licensed CC0 source WAV references: 173 original recordings plus 175 new from the reviewed instrument and drum-machine source manifests.
+- [x] Scheduled import reconciled all 348 source entries: 309 unique R2/D1 samples and 39 duplicate entries; all 309 byte sizes and storage keys verified with the R2 integrity audit.
 
 ## First-trial tasks (ordered)
 
 - [x] **1. Fix and verify sample importer — COMPLETE.** Live Worker v0.5 verified 173/173 source entries processed; 134 distinct WAV recordings in D1, 39 duplicate source entries. R2 integrity audit confirmed 134/134 corresponding objects and exact sizes, 0 missing files, 0 size mismatches and 0 unindexed objects, with last scheduled batch reporting 0 errors. Verified at `2026-11-17T20:30:33.623Z` (UTC).
-- [ ] **2. Populate more licensed samples — HIGH.** Drums and 808s first, then bass, guitars, piano/keys, synths, strings and winds. Track each source's license and sample/velocity/pitch coverage.
+- [x] **2. Expand licensed instrument and 808 library — COMPLETE (first expansion phase).** Live Worker reconciled 348/348 CC0 source entries (173 original + 175 newly added), 39 duplicates, 309 unique D1 recordings verified against 309 R2 objects of identical byte sizes. No missing objects, mismatches, unindexed files or final-batch errors. Family coverage: drums 124, bass 23, guitar 15, keys 24, synths 14, strings 17, brass 6, woodwinds 12, percussion 74. Verified `2026-11-17T20:57:38.979Z` (UTC). Sample quality, remaining instrument coverage and enhanced pitch extraction are future work.
 - [ ] **3. Securely connect Audio Lab to cloud sample database — CRITICAL.** The public website must *never* contain R2/admin/read shared tokens. Use user authentication, short-lived signed URLs or a secure proxy.
 - [ ] **4. Improve sample-matching accuracy — CRITICAL.** Rank by audio fingerprints, spectral shape, transient, attack/decay, bass pitch and articulation. Reject inadequate candidates.
 - [ ] **5. Automate single drum-stem reconstruction — CRITICAL.** Analyze kick/snare/clap/hat/808 hits, choose recordings, preserve original timing, and compare output with source-lock controls.
@@ -35,5 +35,7 @@ Cloud source: https://github.com/Jayvaleheartship/Jay-vale-website/tree/main/clo
 ### Definitions of done
 
 **Task 1:** `source_entries_processed=173`, failures=0, `r2_integrity.complete=true`, all D1 samples verified in R2 with byte-length agreement, no unindexed objects. 134 unique samples are acceptable if the difference is verified duplicate content; do not fabricate 173 unique assets.
+
+**Task 2:** `cc0_manifest_items=348`, `source_entries_processed=348`, last cron batch 0 errors, `r2_integrity.complete=true`, `r2_integrity.verified=true`, 309/309 D1 records matching R2 objects; 39 duplicate source entries. This closes the first source-expansion batch, not the entire future 10 GB instrument catalogue.
 
 **Task 8:** Export and listen to a reconstructed WAV aligned with the supplied drum stem, and review measurable differences. A detector score is not proof of human provenance.
