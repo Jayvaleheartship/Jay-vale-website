@@ -47,7 +47,7 @@ export async function auditedHealth(env){
     if(x)storage={...x,complete:Boolean(x.complete),verified:x.complete===1&&x.d1_rows===total&&x.matched===total&&x.missing_objects===0&&x.size_mismatches===0};
   }catch{}
   return {service:'Jay Vale Sound Library',version:'0.5.0',online:true,
-    sample_count:total,cc0_manifest_items:306,family_counts:familyCounts,
+    sample_count:total,cc0_manifest_items:348,family_counts:familyCounts,
     source_entries_processed:sourceFiles,
     duplicate_source_entries:duplicateEntries,
     importer:importer||{status:'migration_pending_or_cron_not_started'},
