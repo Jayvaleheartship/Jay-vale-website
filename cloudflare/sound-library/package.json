@@ -1,0 +1,24 @@
+{
+  "name": "jay-vale-sound-library",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "npm run db:migrate && wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply DB --remote",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  },
+  "cloudflare": {
+    "bindings": {
+      "READ_TOKEN": {
+        "description": "**Private** read-only access token (32+ random characters). Never put this in public site code."
+      },
+      "ADMIN_TOKEN": {
+        "description": "**Private** admin upload token, different from READ_TOKEN (32+ random characters). Never share or commit it."
+      }
+    }
+  }
+}
