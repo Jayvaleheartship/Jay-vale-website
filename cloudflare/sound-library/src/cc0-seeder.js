@@ -1,5 +1,5 @@
 import { CC0_PACK } from './cc0-seed-manifest.js';
-const BASE = 'https://raw.githubusercontent.com/' + CC0_PACK.owner + '/' + CC0_PACK.repo + '/' + CC0_PACK.revision + '/';
+import { TR808_PACK } from './tr808-seed-manifest.js';
 const BANDS = [45, 75, 125, 205, 340, 560, 920, 1510, 2500, 4100, 6800, 11200];
 const MAX_BATCH = 7;
 function ascii(v, p) { return String.fromCharCode(...new Uint8Array(v.buffer, p, 4)); }
@@ -73,7 +73,17 @@ function analyzeWav(buffer) {
     }
   };
 }
-function classify(path) {
+function classify(path,pack) {
+  if(pack.repo==='sounds-tr808-fischer'){
+    const dir=path.split('/')[0];
+    if(dir==='bd8')return ['drums','kick',['808','analog']];
+    if(dir==='sd8')return ['drums','snare',['808','analog']];
+    if(dir==='ch8'||dir==='oh8')return ['drums','hat',['808',dir==='oh8'?'open':'closed']];
+    if(dir==='cp8')return ['drums','clap',['808','analog']];
+    if(['ht8','mt8','lt8'].includes(dir))return ['drums','tom',['808','analog']];
+    if(dir==='cy8')return ['percussion','cymbal',['808','analog']];
+    return ['percussion','percussion',['808','analog']];
+  }
   const part=path.split('/')[2];
   if(part==='808s')return ['bass','bass808',['808','sub-bass']];
   if(part==='kicks')return ['drums','kick',['one-shot']];
@@ -88,8 +98,9 @@ export async function seedCC0(env) {
   const doneResult=await env.DB.prepare('SELECT source_url FROM cc0_seed_imports').all();
   const done=new Set((doneResult.results||[]).map(r=>r.source_url));
   let attempts=0,added=0,errors=0;
-  for (const entry of CC0_PACK.entries) {
-    const url=BASE+entry.path.split('/').map(encodeURIComponent).join('/');
+  const entries=[...CC0_PACK.entries.map(entry=>({entry,pack:CC0_PACK})),...TR808_PACK.entries.map(entry=>({entry,pack:TR808_PACK}))];
+  for (const {entry,pack} of entries) {
+    const url='https://raw.githubusercontent.com/'+pack.owner+'/'+pack.repo+'/'+pack.revision+'/'+entry.path.split('/').map(encodeURIComponent).join('/');
     if(done.has(url))continue;
     if(attempts++>=MAX_BATCH)break;
     try {
@@ -103,20 +114,20 @@ export async function seedCC0(env) {
       const duplicate=await env.DB.prepare('SELECT id FROM samples WHERE sha256=?').bind(sha).first();
       const id=duplicate?.id||crypto.randomUUID();
       if(!duplicate) {
-        const [family,instrument,tags]=classify(entry.path);
+        const [family,instrument,tags]=classify(entry.path,pack);
         const used=await env.DB.prepare('SELECT COALESCE(SUM(bytes),0) AS amount FROM samples').first();
         if(Number(used?.amount||0)+audio.byteLength>Number(env.MAX_LIBRARY_BYTES||9500000000))throw Error('Library storage limit reached');
         const key='samples/'+family+'/'+instrument+'/'+sha+'.wav';
-        await env.SAMPLES.put(key,audio,{httpMetadata:{contentType:'audio/wav'},customMetadata:{license:CC0_PACK.license_spdx}});
+        await env.SAMPLES.put(key,audio,{httpMetadata:{contentType:'audio/wav'},customMetadata:{license:pack.license_spdx}});
         await env.DB.prepare('INSERT OR IGNORE INTO samples(id,sha256,r2_key,original_filename,family,instrument,bytes,duration_ms,sample_rate,root_midi,articulation,velocity_layer,tags_json,features_json,source_name,source_url,license_spdx,license_url,attribution) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)').bind(
           id,sha,key,entry.path.split('/').at(-1),family,instrument,audio.byteLength,duration_ms,sample_rate,null,'normal',null,JSON.stringify(tags),JSON.stringify(features),
-          CC0_PACK.source_name,url,CC0_PACK.license_spdx,CC0_PACK.license_url,
-          'Boochi44 Free Drum Samples — CC0 1.0'
+          pack.source_name,url,pack.license_spdx,pack.license_url,
+          pack.source_name+' — CC0 1.0'
         ).run();
         added++;
       }
       await env.DB.prepare('INSERT OR IGNORE INTO cc0_seed_imports(source_url,sha256,status,sample_id) VALUES(?,?,?,?)').bind(url,sha,duplicate?'duplicate':'imported',id).run();
     } catch(e) { errors++;console.error('CC0 seed import',entry.path,String(e).slice(0,250)); }
   }
-  console.log('CC0 seed:',{attempts,added,errors,total:CC0_PACK.entries.length});
+  console.log('CC0 seed:',{attempts,added,errors,total:entries.length});
 }
