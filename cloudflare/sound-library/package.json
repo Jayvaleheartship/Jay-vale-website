@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "deploy": "npm run db:migrate && wrangler deploy",
+    "deploy": "wrangler deploy && wrangler d1 migrations apply DB --remote",
     "db:migrate": "wrangler d1 migrations apply DB --remote",
     "test": "node --test"
   },
