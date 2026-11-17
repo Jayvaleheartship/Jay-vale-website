@@ -22,7 +22,7 @@
   "keep_vars": true,
   "triggers": {
     "crons": [
-      "*/5 * * * *"
+      "* * * * *"
     ]
   }
 }
