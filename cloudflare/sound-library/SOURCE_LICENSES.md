@@ -2,6 +2,17 @@
 
 > Source manifests are **candidates for ingestion**, not proof of files stored in R2. The definitive completion check is the live Cloudflare Worker health audit of R2/D1 and `source_entries_processed`.
 
+## Verified Cloudflare completion audit — 17 November 2026
+
+- Source entries processed: **348 of 348**
+- Duplicate source entries: **39** (deduplicated by content)
+- Unique WAV recordings indexed in D1: **309**
+- R2 objects: **309**, all matching the D1 keys and byte sizes
+- Missing files, size mismatches, unindexed objects, final-batch import errors: **0**
+- Verified at **2026-11-17T20:57:38.979Z**
+- Actual indexed family counts: drums 124, bass 23, guitar 15, keys 24, synths 14, strings 17, brass 6, woodwinds 12, percussion 74
+- This is the first expansion batch, not full instrument/velocity/pitch coverage and not a completely filled 10 GB library.
+
 ## Current source manifest (348 audio entries)
 
 | Source | Pinned revision | Source entries | License evidence | Content |
