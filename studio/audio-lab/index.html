@@ -1930,6 +1930,10 @@ async function stemTask(task) {
   catch(error) { $('stem-status').textContent=error.message; $('stem-action').textContent=error.message; $('stem-handoff-status').textContent='Action not completed: '+error.message; }
   finally {
     for(const field of fields) field.disabled=false;
+    const selected=stemProject?.tracks?.[Number($('stem-to-drum').value)];
+    $('stem-start-drum').disabled=!selected || selected.channels[0].length + Math.round(selected.offset*DRUM_RATE/1000)>DRUM_RATE*240;
+    $('stem-preview').disabled=!stemProject;
+    $('stem-export').disabled=!stemProject;
     stemBusy=false;
   }
 }
