@@ -3,6 +3,8 @@ on:
   push:
     paths:
       - 'studio/audio-lab/index.html'
+      - 'studio/audio-lab/drum-matcher.js'
+      - 'studio/audio-lab/drum-audit.js'
       - 'cloudflare/sound-library/**'
       - '.github/workflows/audio-lab-cloud-tests.yml'
   workflow_dispatch:
