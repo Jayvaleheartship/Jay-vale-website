@@ -106,7 +106,7 @@ nav.bar {margin:0 0 18px}
       <label>Choose or drop a drum stem or ZIP<input type="file" id="drum-input" accept=".zip,application/zip,audio/*,.wav,.mp3,.m4a,.flac"></label>
       <small>WAV · MP3 · FLAC · M4A · ZIP with exactly one audio stem · up to 240 seconds · stem audio stays local</small>
     </div>
-    <div class="bar"><button id="drum-demo">Run built-in demo (no cloud key needed)</button><button id="drum-recorded-demo" disabled>Test with installed recorded samples</button></div>
+    <div class="bar"><button id="drum-demo">Run built-in demo (no cloud key needed)</button><button id="drum-recorded-demo" disabled>Test with installed recorded samples</button><small>Diagnostic loop built from bank recordings, not an independent accuracy test.</small></div>
     <output id="source-name" role="status">No drum stem selected.</output>
     <details id="cloud-library" open>
   <summary>Private Cloudflare instrument library — 309 licensed recordings</summary>
@@ -913,7 +913,7 @@ function updateTrialMetrics(){
   const avg=accepted.length?accepted.reduce((sum,e)=>sum+(Number(e.confidence)||0),0)/accepted.length:0;
   $('trial-match-summary').textContent=events.length
     ?'Accepted candidates: '+(Object.entries(byKind).map(([name,n])=>name+' '+n).join(' · ')||'none')+
-     ' · Mean prototype score: '+(avg*100).toFixed(0)+'% · '+unmodified+' hits retained without added sample layer. '+(fixture?'Built-in synthetic test sounds, not real recordings. ':'')+'Matching is approximate, not proof of original instrument identity.'
+     ' · Relative similarity heuristic: '+(avg*100).toFixed(0)+'% (not a probability of correctness) · '+unmodified+' hits retained without added sample layer. '+(fixture?'Built-in synthetic test sounds, not real recordings. ':'')+'Matching is approximate, not proof of original instrument identity.'
     :'No onsets analyzed. Load recorded samples and choose a stem.';
 }
 function safeTrialFilename(name){
