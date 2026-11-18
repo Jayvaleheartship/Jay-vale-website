@@ -1,3 +1,4 @@
+import {newChallenge,openReadSession,verifyReadSession,pruneLabChallenges} from './session-auth.js';
 import {auditStorage,auditedHealth} from './storage-audit.js';
 import {seedCC0} from './cc0-seeder.js';
 import {FAMILY_BUDGETS as BUDGETS, SAMPLE_TYPES, sampleKey, collectionSlug, catalogueTemplate} from './catalogue.js';
@@ -13,7 +14,7 @@ function json(data,status=200){return new Response(JSON.stringify(data),{status,
 function error(msg,status=400){return json({error:msg},status);}
 function number(n,otherwise=0){n=Number(n);return Number.isFinite(n)?n:otherwise;}
 function authorized(request,token){return typeof token==='string'&&token.length>=32&&request.headers.get('authorization')==='Bearer '+token;}
-function readable(request,env){return authorized(request,env.READ_TOKEN)||authorized(request,env.ADMIN_TOKEN);}
+async function readable(request,env){return authorized(request,env.READ_TOKEN)||authorized(request,env.ADMIN_TOKEN)||await verifyReadSession(request,env);}
 function configured(env){return !!(env.SAMPLES&&env.DB&&typeof env.READ_TOKEN==='string'&&env.READ_TOKEN.length>=32&&typeof env.ADMIN_TOKEN==='string'&&env.ADMIN_TOKEN.length>=32&&env.READ_TOKEN!==env.ADMIN_TOKEN);}
 function corsHeaders(req,env){
  const origin=req.headers.get('origin');
@@ -88,7 +89,7 @@ async function upload(req,env){
  return json({created:true,id,bytes:bytes.byteLength,used_bytes:used.used_bytes+bytes.byteLength},201);
 }
 async function matches(req,env){
- if(!readable(req,env))return error('Unauthorized',401);
+ if(!await readable(req,env))return error('Unauthorized',401);
  const u=new URL(req.url),family=u.searchParams.get('family'),instrument=u.searchParams.get('instrument');
  if(!Object.hasOwn(BUDGETS,family)||!instrument||!/^[a-z][a-z0-9_-]{1,40}$/.test(instrument))return error('Valid family and instrument required');
  let f;try{f=JSON.parse(u.searchParams.get('features')||'null');}catch{return error('Malformed features');}
@@ -110,7 +111,7 @@ async function matches(req,env){
  return json({family,instrument,candidates:found,warning:'No exact-match guarantee; reject low-confidence candidates.'});
 }
 async function sample(req,env,id){
- if(!readable(req,env))return error('Unauthorized',401);
+ if(!await readable(req,env))return error('Unauthorized',401);
  const row=await env.DB.prepare('SELECT r2_key,original_filename,license_spdx,attribution FROM samples WHERE id=?').bind(id).first();
  if(!row)return error('Sample not found',404);
  const object=await env.SAMPLES.get(row.r2_key);if(!object)return error('Sample bytes not found',404);
@@ -118,6 +119,28 @@ async function sample(req,env,id){
  object.writeHttpMetadata(headers);
  headers.set('content-disposition','attachment; filename="'+row.original_filename.replace(/["\\\r\n]/g,'_')+'"');
  return new Response(object.body,{headers});
+}
+
+
+async function listLibrarySamples(req,env){
+ if(!await readable(req,env))return error('Unauthorized',401);
+ const u=new URL(req.url),family=u.searchParams.get('family')||'drums';
+ if(!Object.hasOwn(BUDGETS,family))return error('Unknown family');
+ const limit=Math.min(150,Math.max(1,Math.floor(number(u.searchParams.get('limit'),80))));
+ const r=await env.DB.prepare('SELECT id,original_filename,family,instrument,bytes,duration_ms,sample_rate,root_midi,velocity_layer,articulation,sample_type,source_name,license_spdx FROM samples WHERE family=? ORDER BY instrument,original_filename LIMIT ?').bind(family,limit).all();
+ return json({family,items:r.results||[],source:'private R2/D1',note:'Recorded audio requires read-only authorization'});
+}
+async function pairReadSession(req,env){
+ if(req.headers.get('origin')!==env.ALLOWED_ORIGIN)return error('Use the official Audio Lab HTTPS website',403);
+ if(number(req.headers.get('content-length'))>4096)return error('Connection request too large',413);
+ let data;
+ try{const raw=await req.text();if(raw.length>4096)return error('Connection request too large',413);data=JSON.parse(raw);}
+ catch{return error('Invalid connection request',400);}
+ if(typeof data?.challenge!=='string'||typeof data?.proof!=='string')return error('Malformed connection request');
+ const result=await openReadSession(env,data.challenge,data.proof);
+ if(!result)return error('Incorrect read-only key or expired challenge',401);
+ if(result.replayed)return error('Connection challenge already used',409);
+ return json(result);
 }
 
 async function catalogueInventory(env){
@@ -149,6 +172,7 @@ export default {
  scheduled(_event,env,ctx){ctx.waitUntil((async()=>{
   try{await seedCC0(env)}catch(e){console.error('CC0 seed failed',String(e).slice(0,200))}
   try{await auditStorage(env)}catch(e){console.error('R2 integrity audit failed',String(e).slice(0,200))}
+  try{await pruneLabChallenges(env)}catch(e){console.error('Challenge cleanup failed',String(e).slice(0,150))}
 })());},
  async fetch(req,env){
   const origin=req.headers.get('origin');
@@ -158,8 +182,14 @@ export default {
   try{
    if(path==='/health'&&req.method==='GET')return wrap(json({...await auditedHealth(env),configured:configured(env)}),req,env);
    if(!configured(env))return wrap(error('Library secrets not configured',503),req,env);
-   if(path==='/v1/catalog'&&req.method==='GET')return wrap(readable(req,env)?json(await catalogueInventory(env)):error('Unauthorized',401),req,env);
-   if(path==='/v1/status'&&req.method==='GET')return wrap(readable(req,env)?json(await totals(env)):error('Unauthorized',401),req,env);
+   if(path==='/v1/session/challenge'&&req.method==='GET') {
+     if(origin!==env.ALLOWED_ORIGIN)return wrap(error('Use the official Audio Lab website',403),req,env);
+     return wrap(json(await newChallenge(env)),req,env);
+   }
+   if(path==='/v1/session/open'&&req.method==='POST')return wrap(await pairReadSession(req,env),req,env);
+   if(path==='/v1/library/samples'&&req.method==='GET')return wrap(await listLibrarySamples(req,env),req,env);
+   if(path==='/v1/catalog'&&req.method==='GET')return wrap(await readable(req,env)?json(await catalogueInventory(env)):error('Unauthorized',401),req,env);
+   if(path==='/v1/status'&&req.method==='GET')return wrap(await readable(req,env)?json(await totals(env)):error('Unauthorized',401),req,env);
    if(path==='/v1/match'&&req.method==='GET')return wrap(await matches(req,env),req,env);
    if(path==='/v1/admin/samples'&&req.method==='POST')return wrap(await upload(req,env),req,env);
    const m=path.match(/^\/v1\/samples\/([0-9a-fA-F-]{36})$/);
