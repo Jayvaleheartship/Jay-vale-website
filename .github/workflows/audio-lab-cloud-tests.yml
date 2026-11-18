@@ -1,0 +1,21 @@
+name: Audio Lab Cloud Bridge Tests
+on:
+  push:
+    paths:
+      - 'studio/audio-lab/index.html'
+      - 'cloudflare/sound-library/**'
+      - '.github/workflows/audio-lab-cloud-tests.yml'
+  workflow_dispatch:
+jobs:
+  read-session-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify read session security and static UI syntax
+        working-directory: cloudflare/sound-library
+        run: npm test
