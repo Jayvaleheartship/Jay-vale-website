@@ -42,3 +42,9 @@ When a sample fails, the fallback is to preserve the source, not to fabricate a 
 2. Inspect ambiguous overlapping hits, per-event matcher selections, false positives/negatives and audit fallbacks. Benchmark memory on mobile and desktop.
 3. Export and listen to level-matched source and rebuilt tracks, document false rejections, musical timing, attack, decay and artifacts.
 4. Keep production untouched until Netlify credits refresh / deployment is specifically authorized.
+
+## User's actual drum ZIP: offline MP3 comparison (18 November 2026)
+
+See the trial checklist for full provenance. The ZIP contains only the original `2 Drums.mp3`; it has no separate recordings. We used isolated user-owned transient snippets from the same MP3 for a cautious **source-locked** sample-layer test. Of 773 possible detected hits, 554 were matched to a temporary same-song snippet bank, 15 sample layers failed source-reference QC and were reverted, leaving 539 applied. **This is a real-sound technical reconstruction test, not independent instrument reconstruction, not a 99% perceptual score, and not proof of human playing**.
+
+Two exported 320-kbps stereo MP3s independently decode to 193.104 seconds/9,268,992 frames at 48 kHz. Output samples differ. Original-to-rebuild post-MP3 waveform correlation 0.9900247, residual relative level -16.83 dB, 0 new clipped samples. Both files and the full private JSON hit report were returned through the conversation, never placed in public GitHub. Still pending: human listening and independent licensed recorded-bank test under Tasks 5/8. No Netlify deployment.
