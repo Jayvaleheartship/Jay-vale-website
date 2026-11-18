@@ -80,7 +80,7 @@ test('ambiguous cross-instrument category ties are conservatively rejected',()=>
  const q=signature(synth(55));
  const altered={...q,fp:[...q.fp],envelope:[...q.envelope]};
  altered.fp[0]=Math.min(1,altered.fp[0]+.2);
- altered.fp[1]=Math.max(0,altered.fp[1]-.05);
+ altered.fp[1]=Math.min(1,altered.fp[1]+.17);
  const candidates=[{id:'a',kind:'Kick',sig:altered},{id:'b',kind:'Tom',sig:altered}];
  const result=matcher.select(q,candidates);
  assert.ok(result.winner.total>.115&&result.winner.total<.26,'score '+result.winner.total);
@@ -98,9 +98,9 @@ test('integration: actual classifier uses v1 for real bank and keeps unknown ori
  const source=extract('function soloChannel(','function demoSound(')
   +extract('function onset(','function drumShape(')
   +extract('function drumFingerprint(','function peakBetween(');
- const make=new Function('DRUM_RATE','CORE_DRUMS','fixture','bankSamples','kit','JVDrumMatcher',source+';return classifyHits;');
+ const make=new Function('DRUM_RATE','CORE_DRUMS','fixture','bankSamples','kit','JVDrumMatcher','globalThis',source+';return classifyHits;');
  const bank=[sample('real-kick','Kick',synth(55))];
- const classify=make(48000,['Kick','Snare','Clap','Hat'],false,bank,{},matcher);
+ const classify=make(48000,['Kick','Snare','Clap','Hat'],false,bank,{},matcher,{JVDrumMatcher:matcher});
  const same=new Float32Array(36000);same.set(synth(55),2400);
  const matched=classify([same]);
  assert.ok(matched.length>=1,'should detect at least one 808 onset');
