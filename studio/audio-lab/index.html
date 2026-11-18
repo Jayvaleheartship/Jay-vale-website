@@ -121,9 +121,9 @@ nav.bar {margin:0 0 18px}
   <output id="cloud-status" class="status" role="status">Not connected. Your cloud library remains private.</output>
   <output id="cloud-summary" class="muted" role="status"></output>
   <div class="bar">
-    <button id="cloud-load-drums" disabled>Load cloud drum samples for matching</button>
+    <button id="cloud-load-drums" disabled>Load cloud drum + 808 samples for matching</button>
   </div>
-  <output id="cloud-load-status" class="status" role="status">Connect first, then load a balanced selection of licensed kick, snare, clap, hat, tom and percussion sounds. Audio stays in this browser's memory.</output>
+  <output id="cloud-load-status" class="status" role="status">Connect first, then load a balanced selection of licensed kick, 808 bass, snare, clap, hat, tom and percussion sounds. Audio stays in this browser's memory.</output>
   <p class="muted">If your session expires, reconnect. The browser does not save your key, session token or downloaded cloud samples. Your existing local-bank option remains available below.</p>
 </details>
     <details id="real-bank-setup">
@@ -2148,6 +2148,7 @@ async function cloudCall(path,options={},requireSession=true){
   return response;
 }
 function cloudKind(item){
+  if(item.family==='bass')return ['bass808','sub_bass'].includes(item.instrument)?'Kick':null;
   if(item.family==='percussion'){
     if(item.instrument==='cymbal')return 'Crash';
     return 'Percussion';
@@ -2208,14 +2209,24 @@ $('cloud-load-drums').onclick=async()=>{
   $('cloud-load-drums').disabled=true;
   try{
     await drumBankReady;
-    const lists=await Promise.all(['drums','percussion'].map(family=>
+    const lists=await Promise.all(['drums','percussion','bass'].map(family=>
       cloudCall('/v1/library/samples?family='+family+'&limit=150').then(r=>r.json())));
     const groups=new Map(DRUMS.map(kind=>[kind,[]]));
     for(const row of lists.flatMap(x=>x.items||[])){
       if(!row.id||!row.original_filename||!row.duration_ms||row.duration_ms>2000||row.bytes>3000000)continue;
       const kind=cloudKind(row);
-      if(groups.has(kind))groups.get(kind).push(row);
+      if(kind&&groups.has(kind))groups.get(kind).push(row);
     }
+    // Include tonal 808s without excluding conventional acoustic/electronic kicks.
+    const kicks=groups.get('Kick')||[];
+    const sub=kicks.filter(x=>x.family==='bass'&&['bass808','sub_bass'].includes(x.instrument));
+    const plain=kicks.filter(x=>x.family!=='bass');
+    const balanced=[];
+    for(let i=0;i<Math.max(sub.length,plain.length);i++){
+      if(sub[i])balanced.push(sub[i]);
+      if(plain[i])balanced.push(plain[i]);
+    }
+    groups.set('Kick',balanced);
     const chosen=[];
     // Balanced sample selection avoids filling the pilot bank with 808 kicks only.
     for(let round=0;chosen.length<72&&round<50;round++){
