@@ -180,7 +180,7 @@ test('source-locked render preserves every original frame when matches are rejec
   const main=new Float32Array(48000);
   main.set(synth(55),9600);
   const bank=[sample('clean-kick','Kick',synth(55))];
-  const render=new Function('DRUM_RATE','drumSource','drumEvents','bankSamples','kit','EXPORT_DRUM_GROUPS','
+  const render=new Function('DRUM_RATE','drumSource','drumEvents','bankSamples','kit','EXPORT_DRUM_GROUPS','$',
     source+renderCode+';return renderDrums;')(
       48000,{channels:[main]},
       [{at:9600,length:8640,move:0,gain:0,choice:'Source',matched:false,manual:false}],
@@ -199,56 +199,7 @@ test('source-locked accepted layer is added only at original hit timeline withou
   const main=new Float32Array(48000);
   main.set(synth(55),9600);
   const bank=[sample('clean-kick','Kick',synth(55))];
-  const render=new Function('drumSource','drumEvents','bankSamples','kit','EXPORT_DRUM_GROUPS','$',
-    source+renderCode+';return renderDrums;')(
-      48000,{channels:[main]},
-      [{at:9600,length:8640,move:0,gain:0,choice:'clean-kick',matched:true,manual:false}],
-      bank,{},['Kick','Snare','Clap','Hat','Other'],
-      id=>({'drum-fidelity-mode':{value:'preserve'},'drum-layer':{value:'35'}}[id])
-    );
-  const output=render();
-  assert.equal(output.mix[0].length,main.length);
-  assert.deepEqual(Array.from(output.source[0]),Array.from(main));
-  assert.equal(output.exportGain,1);
-  assert.ok(output.mix[0].some((v,i)=>i>=9600&&i<16000&&v!==main[i]),'additive layer expected at onset');
-  for(let i=0;i<9600;i++)assert.equal(output.mix[0][i],main[i]);
-  for(let i=20000;i<48000;i++)assert.equal(output.mix[0][i],main[i]);
-});
-,
-    source+renderCode+';return renderDrums;')(
-      48000,{channels:[main]},
-      [{at:9600,length:8640,move:0,gain:0,choice:'Source',matched:false,manual:false}],
-      bank,{},['Kick','Snare','Clap','Hat','Other'],
-      id=>({'drum-fidelity-mode':{value:'preserve'},'drum-layer':{value:'50'}}[id])
-    );
-  const output=render();
-  assert.equal(output.preserve,true);
-  assert.equal(output.exportGain,1);
-  assert.deepEqual(Array.from(output.mix[0]),Array.from(main));
-  assert.deepEqual(Array.from(output.source[0]),Array.from(main));
-});
-test('source-locked accepted layer is added only at original hit timeline without shifting reference',()=>{
-  const source=extract('function soloChannel(','function demoSound(');
-  const renderCode=extract('function peakBetween(','function refreshRender(');
-  const main=new Float32Array(48000);
-  main.set(synth(55),9600);
-  const bank=[sample('clean-kick','Kick',synth(55))];
-  const render=new Function('DRUM_RATE','drumSource','drumEvents','bankSamples','kit','EXPORT_DRUM_GROUPS','
-    source+renderCode+';return renderDrums;')(
-      48000,{channels:[main]},
-      [{at:9600,length:8640,move:0,gain:0,choice:'clean-kick',matched:true,manual:false}],
-      bank,{},['Kick','Snare','Clap','Hat','Other'],
-      id=>({'drum-fidelity-mode':{value:'preserve'},'drum-layer':{value:'35'}}[id])
-    );
-  const output=render();
-  assert.equal(output.mix[0].length,main.length);
-  assert.deepEqual(Array.from(output.source[0]),Array.from(main));
-  assert.equal(output.exportGain,1);
-  assert.ok(output.mix[0].some((v,i)=>i>=9600&&i<16000&&v!==main[i]),'additive layer expected at onset');
-  for(let i=0;i<9600;i++)assert.equal(output.mix[0][i],main[i]);
-  for(let i=20000;i<48000;i++)assert.equal(output.mix[0][i],main[i]);
-});
-,
+  const render=new Function('DRUM_RATE','drumSource','drumEvents','bankSamples','kit','EXPORT_DRUM_GROUPS','$',
     source+renderCode+';return renderDrums;')(
       48000,{channels:[main]},
       [{at:9600,length:8640,move:0,gain:0,choice:'clean-kick',matched:true,manual:false}],
