@@ -1,3 +1,4 @@
+import {verifyCloudBridge,readCloudBridgeHealth} from './bridge-selftest.js';
 import {newChallenge,openReadSession,verifyReadSession,pruneLabChallenges} from './session-auth.js';
 import {auditStorage,auditedHealth} from './storage-audit.js';
 import {seedCC0} from './cc0-seeder.js';
@@ -173,6 +174,7 @@ export default {
   try{await seedCC0(env)}catch(e){console.error('CC0 seed failed',String(e).slice(0,200))}
   try{await auditStorage(env)}catch(e){console.error('R2 integrity audit failed',String(e).slice(0,200))}
   try{await pruneLabChallenges(env)}catch(e){console.error('Challenge cleanup failed',String(e).slice(0,150))}
+  try{await verifyCloudBridge(env)}catch(e){console.error('Bridge verification job failed',String(e).slice(0,150))}
 })());},
  async fetch(req,env){
   const origin=req.headers.get('origin');
@@ -180,7 +182,7 @@ export default {
   if(req.method==='OPTIONS')return new Response(null,{status:204,headers:corsHeaders(req,env)});
   const url=new URL(req.url),path=url.pathname;
   try{
-   if(path==='/health'&&req.method==='GET')return wrap(json({...await auditedHealth(env),configured:configured(env)}),req,env);
+   if(path==='/health'&&req.method==='GET')return wrap(json({...await auditedHealth(env),configured:configured(env),cloud_bridge:await readCloudBridgeHealth(env)}),req,env);
    if(!configured(env))return wrap(error('Library secrets not configured',503),req,env);
    if(path==='/v1/session/challenge'&&req.method==='GET') {
      if(origin!==env.ALLOWED_ORIGIN)return wrap(error('Use the official Audio Lab website',403),req,env);
