@@ -1,6 +1,6 @@
 # Jay Vale Audio Lab — First-Trial Checklist
 
-Updated 17 November 2026 after live R2/D1 verification. For **every to-do task**: complete the work, verify the outcome, update this saved checklist immediately, display the revised task list, and let the user choose the next item. Never mark a task complete from code commits alone.
+Rechecked 18 November 2026 after live R2/D1 verification. For **every to-do task**: complete the work, verify the outcome, update this saved checklist immediately, display the revised task list, and let the user choose the next item. Never mark a task complete from code commits alone.
 
 ## Infrastructure and setup completed
 
@@ -10,6 +10,12 @@ Updated 17 November 2026 after live R2/D1 verification. For **every to-do task**
 - [x] Hierarchical R2 object key conventions and private catalogue API implemented.
 - [x] 348 licensed CC0 source WAV references: 173 original recordings plus 175 new from the reviewed instrument and drum-machine source manifests.
 - [x] Scheduled import reconciled all 348 source entries: 309 unique R2/D1 samples and 39 duplicate entries; all 309 byte sizes and storage keys verified with the R2 integrity audit.
+
+## Verified resumption check — 18 November 2026
+
+- [x] Expanded library still verified live: 348/348 source entries processed, 39 duplicate entries and 309 unique D1 samples matching 309 R2 objects.
+- [x] No missing R2 files, no size mismatches, no orphaned R2 objects, no import errors on latest batch.
+- [x] Expansion covers drums and 808s, bass, guitar, keys, synths, strings, brass, woodwinds and percussion. A complete playable instrument bank and the remainder of the 9.5 GB catalogue are still future work.
 
 ## First-trial tasks (ordered)
 
