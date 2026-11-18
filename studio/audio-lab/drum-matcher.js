@@ -49,7 +49,7 @@
     for(let i=0;i<count;i++){signal[i]-=mean;energy+=signal[i]*signal[i];}
     if(energy/count<1e-7)return {hz:null,clarity:0};
     let best=-1,bestLag=0;
-    const minLag=Math.floor(downRate/170),maxLag=Math.ceil(downRate/38);
+    const minLag=Math.floor(downRate/170),maxLag=Math.ceil(downRate/38),peaks=[];
     for(let lag=minLag;lag<=maxLag&&lag<count/2;lag++){
       let dot=0,a=0,b=0;
       for(let i=0;i<count-lag;i++){
@@ -57,7 +57,18 @@
         dot+=x*y;a+=x*x;b+=y*y;
       }
       const correlation=dot/Math.sqrt(Math.max(EPS,a*b));
+      peaks.push({lag,correlation});
       if(correlation>best){best=correlation;bestLag=lag;}
+    }
+    // A tonal 808 may correlate almost equally at 1x and 2x periods.
+    // Select the shortest *local maximum* close to the best peak to prevent
+    // common octave-down misidentification of 80–170 Hz bass notes.
+    if(best>=.72){
+      const plausible=peaks.filter((p,i)=>p.correlation>=best-.018 &&
+        p.correlation>=.72 && i>0 && i<peaks.length-1 &&
+        p.correlation>=peaks[i-1].correlation &&
+        p.correlation>peaks[i+1].correlation);
+      if(plausible.length)bestLag=plausible[0].lag;
     }
     // Avoid identifying brief noisy clicks or near-silence as pitched 808s.
     const clarity=limit(best,0,1);
