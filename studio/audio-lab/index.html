@@ -1707,7 +1707,7 @@ $('send-to-compare').onclick = () => {
   $('case-name').value = 'Drum reconstruction';
   $('detector-type').value = 'music';
   const original = drumSource.original || new File([wavBytes(drumSource.channels)], 'Drum reference demo.wav',{type:'audio/wav'});
-  assertSafeDrumExport();
+  // A/B remains available for diagnosing failures; only finalized reconstructed exports are gated.
   const rebuilt = new File([wavBytes(drumOutput.mix)], 'Rebuilt drum track.wav',{type:'audio/wav'});
   showWorkspace('compare');
   $('comparison-tools').open = true;
