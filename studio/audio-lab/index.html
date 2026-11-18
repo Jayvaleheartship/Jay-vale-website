@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Jay Vale Audio Lab — Cloud-connected Drum Matching v0.6</title>
+<title>Jay Vale Audio Lab — First Trial Interface v0.7</title>
 <style>
 :root{color-scheme:dark;--bg:#101316;--panel:#191e23;--ink:#eef1f2;--muted:#b4bec7;--line:#37434c;--a:#70d8d1;--b:#ffc482}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Instrument Sans",system-ui,sans-serif}
@@ -26,6 +26,23 @@ nav.bar {margin:0 0 18px}
 #stem-workspace audio{display:block;width:100%;margin-top:6px}
 #stem-workspace input[type=file]{max-width:100%}
 #stem-workspace td:first-child{overflow-wrap:anywhere}
+.trial-progress{display:flex;gap:8px;flex-wrap:wrap;list-style:none;padding:0;margin:12px 0}
+.trial-progress li{margin:0;flex:1 1 125px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-size:13px;color:var(--muted);background:#11171b}
+.trial-progress li[data-state="active"]{border-color:var(--a);color:var(--ink);box-shadow:inset 0 0 0 1px var(--a)}
+.trial-progress li[data-state="done"]{color:var(--a)}
+.trial-progress li[data-state="error"]{border-color:var(--b);color:var(--b)}
+.trial-drop{border:2px dashed #52716f;border-radius:11px;padding:15px;background:#111a1e;margin:10px 0}
+.trial-drop[data-dragging="true"]{border-color:var(--a);background:#182b2e}
+.trial-drop:focus-within{outline:2px solid var(--a);outline-offset:2px}
+.trial-drop input{max-width:100%}
+.trial-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:12px 0}
+.trial-metrics div{background:#11171b;border:1px solid var(--line);border-radius:9px;padding:10px}
+.trial-metrics strong{display:block;color:var(--ink);font-size:20px;font-variant-numeric:tabular-nums}
+.trial-metrics span{display:block;color:var(--muted);font-size:12px}
+.trial-error{border-left:3px solid var(--b);padding:8px 12px;margin:10px 0;background:#2b201b}
+.trial-error[hidden]{display:none}
+#trial-report{overflow-wrap:anywhere}
+@media(max-width:430px){.trial-progress li{flex-basis:46%}}
 </style>
 </head>
 <body>
@@ -39,7 +56,7 @@ nav.bar {margin:0 0 18px}
 <section id="stem-workspace" hidden>
   <section class="panel">
     <h2>1. Add your stem ZIP</h2>
-    <p class="muted">Use WAV or FLAC tracks. Already aligned stems can go straight to export. Audio stays in this browser session.</p>
+    <p class="muted">Upload a ZIP containing WAV, FLAC, MP3 or M4A stems (up to 24 tracks). Check the alignment, export all stems, or send one track directly to the drum reconstruction trial. Audio remains on your device.</p>
     <div class="bar">
       <label>Song ZIP<input id="stem-input" type="file" accept=".zip,application/zip"></label>
       <button id="stem-demo">Try demo ZIP</button>
@@ -51,6 +68,11 @@ nav.bar {margin:0 0 18px}
     <h2>2. Check tracks and timing</h2>
     <p class="muted">Use Mix for audio you want in the preview and export. Choose Reference for a supplied master. Move an early stem later with a positive offset.</p>
     <div class="hit-scroll"><table class="hit-table"><thead><tr><th>Track</th><th>Source</th><th>Use</th><th>Start offset (ms)</th></tr></thead><tbody id="stem-rows"></tbody></table></div>
+    <div class="bar">
+      <label>Choose a stem for reconstruction<select id="stem-to-drum" aria-label="Stem to reconstruct"></select></label>
+      <button class="primary" id="stem-start-drum">Open selected stem in drum trial</button>
+    </div>
+    <output id="stem-handoff-status" class="status" role="status">No stem selected for the drum trial yet.</output>
     <div class="bar">
       <label class="num">BPM (optional)<input id="stem-bpm" type="number" min="20" max="400" step=".01" placeholder="Unknown"></label>
       <button id="stem-preview">Build preview</button>
@@ -67,12 +89,24 @@ nav.bar {margin:0 0 18px}
 </section>
 <section id="drum-workspace" hidden>
   <section class="panel">
-    <h2>1. Upload one drum stem — automatic matching</h2>
+    <h2>First reconstruction trial</h2>
+    <p class="muted">Follow these steps to import a drum stem, choose licensed recordings, analyze matches, compare audio and export the result. This pilot preserves the source by default; it does not certify human provenance.</p>
+    <ol class="trial-progress" id="trial-steps" aria-label="Reconstruction progress">
+      <li data-state="active">1 · Upload stem</li>
+      <li>2 · Load sample bank</li>
+      <li>3 · Analyze matches</li>
+      <li>4 · Listen A/B</li>
+      <li>5 · Export WAV</li>
+    </ol>
+    <output id="trial-stage" role="status" class="status">Ready to import a single drum stem or ZIP.</output>
+    <div id="trial-error" class="trial-error" role="alert" hidden></div>
+    <h3>1. Add a drum stem or ZIP</h3>
     <p class="muted">Drop a WAV, MP3, FLAC or single-stem ZIP, up to 240 seconds. The app locates drum onsets and cautiously compares them with <strong>licensed recorded one-shots from Cloudflare or your local bank</strong>. It will <strong>not replace your sound</strong> unless you explicitly choose experimental replacement.</p>
-    <div class="bar">
-      <label>Drum stem or ZIP<input type="file" id="drum-input" accept=".zip,application/zip,audio/*,.wav,.mp3,.m4a,.flac"></label>
-      <button id="drum-demo">Load synthesized test demo</button>
+    <div class="trial-drop" id="trial-drop">
+      <label>Choose or drop a drum stem or ZIP<input type="file" id="drum-input" accept=".zip,application/zip,audio/*,.wav,.mp3,.m4a,.flac"></label>
+      <small>WAV · MP3 · FLAC · M4A · ZIP with exactly one audio stem · up to 240 seconds · stem audio stays local</small>
     </div>
+    <div class="bar"><button id="drum-demo">Run built-in demo (no cloud key needed)</button></div>
     <output id="source-name" role="status">No drum stem selected.</output>
     <details id="cloud-library" open>
   <summary>Private Cloudflare instrument library — 309 licensed recordings</summary>
@@ -105,7 +139,7 @@ nav.bar {margin:0 0 18px}
       <output class="status" id="bank-status" role="status">Checking private library index…</output>
     </details>
     <details id="kit"><summary>Optional manual sample overrides (advanced)</summary><p class="muted">The default is automatic real-library matching. These four overrides remain only for technical comparison. The demo kit is synthesized and not a replacement for real recordings.</p><div class="fields" id="kit-fields"></div></details>
-    <h2>2. Analyze and reconstruct — preserve your original sound</h2>
+    <h3>2. Analyze and reconstruct — preserve your original sound</h3>
     <p class="muted"><strong>Sound-lock is on by default.</strong> The original drum sound stays intact. Only close matches can contribute a quiet recorded transient. If the library has no convincing match, the hit stays untouched. The 33 acoustic recordings are not sufficient for exact matching of processed or electronic drum sounds.</p>
     <details id="drum-sound-options"><summary>Sound-preservation controls (optional)</summary>
       <div class="fields">
@@ -118,12 +152,26 @@ nav.bar {margin:0 0 18px}
     <output class="status" id="drum-status" role="status"></output>
   </section>
   <section class="panel" id="drum-result" hidden>
-    <h2>3. Listen, adjust and export</h2>
+    <h2>3. Review detected samples and A/B audio</h2>
+    <div class="trial-metrics" id="trial-metrics" aria-live="polite">
+      <div><strong id="trial-total-hits">0</strong><span>Detected onsets</span></div>
+      <div><strong id="trial-matched-hits">0</strong><span>Confident matches</span></div>
+      <div><strong id="trial-original-hits">0</strong><span>Left unchanged</span></div>
+      <div><strong id="trial-bank-count">0</strong><span>Samples in matching bank</span></div>
+    </div>
+    <output id="trial-match-summary" role="status">No drum analysis yet.</output>
     <div class="pair">
       <label>Original<audio id="drum-original" controls preload="metadata"></audio></label>
       <label>Source-locked preview<audio id="drum-render" controls preload="metadata"></audio></label>
     </div>
-    <div class="bar"><button id="send-to-compare">Open synchronized A/B</button><button id="drum-export" class="primary">Download Bitwig ZIP</button></div>
+    <div class="bar">
+      <button id="send-to-compare">Open synchronized A/B</button>
+      <button id="trial-export-wav" class="primary">Download rebuilt WAV (24-bit)</button>
+      <button id="trial-export-reference">Download original WAV (24-bit)</button>
+      <button id="drum-export">Download Bitwig / ACE Studio ZIP</button>
+      <button id="trial-export-report">Download match report (JSON)</button>
+    </div>
+    <output id="trial-export-status" class="status" role="status">Analyze a stem to enable the exports.</output>
     <p class="muted">The ZIP contains the retained source, recorded transient accent layers (or experimental replacement stems), preview mix, and a hit-by-hit report. Source-lock prioritizes original timbre over aggressive reconstruction. Exact original sample identification, human provenance and AI detector outcomes are not guaranteed. Large files use significant browser memory.</p>
     <details><summary>Edit detected hits</summary>
       <p class="muted">Only compatible real recordings are applied automatically. Keep Original means no alteration to that hit. Manual alternatives are available for comparison.</p>
