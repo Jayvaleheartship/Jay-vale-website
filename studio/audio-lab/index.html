@@ -106,7 +106,7 @@ nav.bar {margin:0 0 18px}
       <label>Choose or drop a drum stem or ZIP<input type="file" id="drum-input" accept=".zip,application/zip,audio/*,.wav,.mp3,.m4a,.flac"></label>
       <small>WAV · MP3 · FLAC · M4A · ZIP with exactly one audio stem · up to 240 seconds · stem audio stays local</small>
     </div>
-    <div class="bar"><button id="drum-demo">Run built-in demo (no cloud key needed)</button></div>
+    <div class="bar"><button id="drum-demo">Run built-in demo (no cloud key needed)</button><button id="drum-recorded-demo" disabled>Test with installed recorded samples</button></div>
     <output id="source-name" role="status">No drum stem selected.</output>
     <details id="cloud-library" open>
   <summary>Private Cloudflare instrument library — 309 licensed recordings</summary>
@@ -966,6 +966,7 @@ function updateDrumControls() {
   $('drum-result').hidden = !drumOutput;
   for (const id of ['drum-input', 'bank-input', 'drum-demo', 'apply-hits', 'drum-export', 'reset-hits']) $(id).disabled = working;
   for (const id of ['trial-export-wav','trial-export-reference','trial-export-report'])$(id).disabled = working || !drumOutput;
+  $('drum-recorded-demo').disabled=working||!bankSamples.length;
   $('send-to-compare').disabled = working || detectorBusy;
   for (const field of $('kit-fields').querySelectorAll('input')) field.disabled = working;
 }
@@ -1496,6 +1497,37 @@ $('drum-demo').onclick=()=>drumTask(async()=>{
   initialEvents=structuredClone(drumEvents);
   showHits();refreshRender();
 });
+function loadRecordedBankDemo(){
+  if(!bankSamples.length)throw Error('Install a licensed recorded sample bank first.');
+  const groupOrder=['Kick','Hat','Snare','Hat','Kick','Clap','Tom','Hat'];
+  const available=[...new Set(bankSamples.map(item=>item.kind))];
+  if(available.length<2)throw Error('This bank needs at least two drum types for the recorded demo.');
+  const step=Math.round(DRUM_RATE*.65),soundLength=Math.round(DRUM_RATE*.22);
+  const mono=new Float32Array(step*13);
+  for(let n=0;n<12;n++){
+    let kind=groupOrder[n%groupOrder.length];
+    if(!available.includes(kind))kind=available[n%available.length];
+    const item=bankSamples.find(x=>x.kind===kind);
+    if(!item)continue;
+    const at=Math.round(DRUM_RATE*.20)+step*n;
+    for(let i=0;i<Math.min(item.mono.length,soundLength,mono.length-at);i++){
+      mono[at+i]+=item.mono[i]*.62;
+    }
+  }
+  fixture=false;
+  drumSource={name:'Recorded sample-bank calibration loop (not a real song)',channels:[mono]};
+  invalidateRebuild();
+  $('source-name').textContent=drumSource.name+' · '+bankSamples.length+' licensed/installed candidates';
+  setDrumAudio('drum-original',wavBytes([mono]));
+}
+$('drum-recorded-demo').onclick=()=>drumTask(async()=>{
+  setTrialStage(2,'Testing the advanced matcher with installed real-recording samples…');
+  loadRecordedBankDemo();
+  drumEvents=classifyHits(drumSource.channels);
+  initialEvents=structuredClone(drumEvents);
+  showHits();refreshRender();
+});
+
 $('drum-input').onchange=event=>{
   const file=event.target.files?.[0];event.target.value='';
   loadTrialFile(file);
