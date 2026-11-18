@@ -140,7 +140,7 @@ nav.bar {margin:0 0 18px}
     </details>
     <details id="kit"><summary>Optional manual sample overrides (advanced)</summary><p class="muted">The default is automatic real-library matching. These four overrides remain only for technical comparison. The demo kit is synthesized and not a replacement for real recordings.</p><div class="fields" id="kit-fields"></div></details>
     <h3>2. Analyze and reconstruct — preserve your original sound</h3>
-    <p class="muted"><strong>Sound-lock is on by default.</strong> The original drum sound stays intact. Only close matches can contribute a quiet recorded transient. If the library has no convincing match, the hit stays untouched. The 33 acoustic recordings are not sufficient for exact matching of processed or electronic drum sounds.</p>
+    <p class="muted"><strong>Sound-lock is on by default.</strong> The original drum sound stays intact. Only close matches can contribute a quiet recorded transient. If the library has no convincing match, the hit stays untouched. The available recorded sample bank is not guaranteed to contain the original processed drum sound. Advanced matching considers transient attack, decay, spectrum and low-frequency pitch; uncertain hits stay unchanged.</p>
     <details id="drum-sound-options"><summary>Sound-preservation controls (optional)</summary>
       <div class="fields">
         <label>Processing method<select id="drum-fidelity-mode"><option value="preserve" selected>Source-locked: retain original and add real character</option><option value="replace">Experimental: replace selected hits (changes sound)</option></select></label>
@@ -175,7 +175,7 @@ nav.bar {margin:0 0 18px}
     <p class="muted">The ZIP contains the retained source, recorded transient accent layers (or experimental replacement stems), preview mix, and a hit-by-hit report. Source-lock prioritizes original timbre over aggressive reconstruction. Exact original sample identification, human provenance and AI detector outcomes are not guaranteed. Large files use significant browser memory.</p>
     <details><summary>Edit detected hits</summary>
       <p class="muted">Only compatible real recordings are applied automatically. Keep Original means no alteration to that hit. Manual alternatives are available for comparison.</p>
-      <div class="hit-scroll"><table class="hit-table"><thead><tr><th>Time</th><th>Estimate</th><th>Use</th><th>Move (ms)</th><th>Gain (dB)</th></tr></thead><tbody id="hits"></tbody></table></div>
+      <div class="hit-scroll"><table class="hit-table"><thead><tr><th>Time</th><th>Estimate</th><th>Match decision</th><th>Use</th><th>Move (ms)</th><th>Gain (dB)</th></tr></thead><tbody id="hits"></tbody></table></div>
       <div class="bar"><button id="apply-hits">Apply changes</button><button id="reset-hits">Reset hit edits</button></div>
     </details>
   </section>
@@ -274,6 +274,7 @@ nav.bar {margin:0 0 18px}
 <figure><figcaption class="freq">Spectrogram</figcaption><canvas class="chart spectrum" aria-label="Spectrogram"></canvas></figure>
 </section>
 </template>
+<script src="./drum-matcher.js"></script>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
@@ -1175,30 +1176,62 @@ function drumSpectralBands(samples,start=0){
   return result;
 }
 function classifyHits(channels) {
-  const mono = soloChannel(channels);
-  const starts = onset(mono,0,mono.length);
-  if (starts.length > 5000) throw Error('More than 5,000 candidate hits. Use a shorter or cleaner drum stem.');
-  const legacy = fixture || !bankSamples.length;
-  const candidates = legacy ? Object.entries(kit).map(([kind,item])=>({id:kind,kind,fp:drumFingerprint(item.mono)})) : bankSamples;
-  if(!candidates.length) throw Error('First import a licensed real drum sample ZIP into the private library.');
+  const mono=soloChannel(channels);
+  const starts=onset(mono,0,mono.length);
+  if(starts.length>5000)throw Error('Over 5,000 potential onsets; use a shorter, cleaner drum stem.');
+  const legacy=fixture||!bankSamples.length;
+  const candidates=legacy
+    ?Object.entries(kit).map(([kind,item])=>({id:kind,kind,fp:drumFingerprint(item.mono)}))
+    :bankSamples;
+  if(!candidates.length)throw Error('Import licensed drum samples before analysis.');
+  if(!legacy){
+    if(!globalThis.JVDrumMatcher)throw Error('Advanced matching engine failed to load. Refresh the Audio Lab.');
+    // Analyze each recorded one-shot only once, even when the stem has hundreds of hits.
+    for(const sample of candidates){
+      if(!sample.sig){
+        if(!sample.fp)sample.fp=drumFingerprint(sample.mono);
+        sample.sig=JVDrumMatcher.analyze(sample.mono,0,sample.fp);
+      }
+    }
+  }
   return starts.map((at,index)=>{
-    const fp=drumFingerprint(mono,at);
-    const ranked=candidates.map(sample=>({sample,distance:fingerprintDistance(sample.fp,fp)}))
-      .sort((a,b)=>a.distance-b.distance);
-    const winner=ranked[0], second=ranked.find(x=>x.sample.kind!==winner.sample.kind);
-    const gap=(second?.distance??1.5)-winner.distance;
-    // A conservative relative and absolute gate: do not pretend that the nearest
-    // sound from a tiny library is necessarily the right sound.
-    const accepted=legacy
-      ? (candidates.length===CORE_DRUMS.length && winner.distance<.58 && gap>.055)
-      : (winner.distance<.44 && (gap>.075 || winner.distance<.22));
-    const confidence=Math.max(0,Math.min(1,1-winner.distance/.65));
-    const kind=accepted?winner.sample.kind:'Uncertain';
-    const window=Math.max(1,Math.min(Math.round(DRUM_RATE*.18),(starts[index+1]??mono.length)-at));
-    return {at,length:window,estimate:kind,distance:winner.distance,margin:gap,
+    const until=starts[index+1]??mono.length;
+    const window=Math.max(1,Math.min(Math.round(DRUM_RATE*.18),until-at));
+    let winner,accepted,confidence,gap,kind,ranked,reason,score;
+    if(legacy){
+      // Demo/manual fixtures retain their existing deterministic baseline.
+      const fp=drumFingerprint(mono,at);
+      ranked=candidates.map(sample=>({sample,distance:fingerprintDistance(sample.fp,fp)}))
+        .sort((x,y)=>x.distance-y.distance);
+      winner=ranked[0];
+      const second=ranked.find(x=>x.sample.kind!==winner.sample.kind);
+      gap=(second?.distance??1.5)-winner.distance;
+      accepted=candidates.length===CORE_DRUMS.length&&winner.distance<.58&&gap>.055;
+      confidence=Math.max(0,Math.min(1,1-winner.distance/.65));
+      kind=accepted?winner.sample.kind:'Uncertain';
+      score=winner.distance;
+      reason=accepted?'Demo reference: approximate acoustic match':'Demo reference: uncertain, keep original';
+    }else{
+      // Prevent the next hit's transient contaminating the current hit signature.
+      const segment=mono.subarray(at,Math.min(mono.length,at+10560,until));
+      const fp=drumFingerprint(segment,0);
+      const sig=JVDrumMatcher.analyze(segment,0,fp);
+      const choice=JVDrumMatcher.select(sig,candidates);
+      winner=choice.winner;
+      accepted=choice.accepted;
+      confidence=choice.confidence;
+      gap=choice.margin;
+      kind=choice.kind;
+      ranked=choice.ranking.map(x=>({sample:x.sample,distance:x.total}));
+      score=winner?.total??null;
+      reason=choice.reason;
+    }
+    return {at,length:window,estimate:kind,distance:score,margin:gap,
       confidence,matched:accepted,choice:accepted?winner.sample.id:'Source',
-      sampleName:winner.sample.name||winner.sample.id,
-      alternatives:ranked.slice(0,5).map(x=>x.sample.id),move:0,gain:0};
+      reason,matcher:legacy?'demo-v0.5':'multi-feature-v1.0',
+      sampleName:winner?.sample.name||winner?.sample.id||null,
+      alternatives:ranked.slice(0,5).map(x=>x.sample.id),
+      move:0,gain:0};
   });
 }
 
@@ -1308,6 +1341,10 @@ function showHits() {
     const row = document.createElement('tr');
     row.insertCell().textContent = (event.at/DRUM_RATE).toFixed(3)+' s';
     row.insertCell().textContent = event.estimate;
+    const decision=row.insertCell();
+    decision.textContent=event.reason||'No decision recorded';
+    decision.title=event.reason||'';
+    decision.style.maxWidth='260px';
     const select = document.createElement('select');
     select.setAttribute('aria-label','Replacement at '+event.at/DRUM_RATE+' seconds');
     for (const value of ['Source',...(event.alternatives||Object.keys(kit))]) {
