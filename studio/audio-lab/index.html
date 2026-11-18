@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Jay Vale Audio Lab — Source-Locked Drum Matching v0.5</title>
+<title>Jay Vale Audio Lab — Cloud-connected Drum Matching v0.6</title>
 <style>
 :root{color-scheme:dark;--bg:#101316;--panel:#191e23;--ink:#eef1f2;--muted:#b4bec7;--line:#37434c;--a:#70d8d1;--b:#ffc482}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Instrument Sans",system-ui,sans-serif}
@@ -68,13 +68,31 @@ nav.bar {margin:0 0 18px}
 <section id="drum-workspace" hidden>
   <section class="panel">
     <h2>1. Upload one drum stem — automatic matching</h2>
-    <p class="muted">Drop a WAV, MP3, FLAC or single-stem ZIP, up to 240 seconds. The app locates drum onsets and cautiously compares them with a locally indexed library of <strong>real recorded one-shots</strong>. It will <strong>not replace your sound</strong> unless you explicitly choose experimental replacement.</p>
+    <p class="muted">Drop a WAV, MP3, FLAC or single-stem ZIP, up to 240 seconds. The app locates drum onsets and cautiously compares them with <strong>licensed recorded one-shots from Cloudflare or your local bank</strong>. It will <strong>not replace your sound</strong> unless you explicitly choose experimental replacement.</p>
     <div class="bar">
       <label>Drum stem or ZIP<input type="file" id="drum-input" accept=".zip,application/zip,audio/*,.wav,.mp3,.m4a,.flac"></label>
       <button id="drum-demo">Load synthesized test demo</button>
     </div>
     <output id="source-name" role="status">No drum stem selected.</output>
-    <details id="real-bank-setup" open>
+    <details id="cloud-library" open>
+  <summary>Private Cloudflare instrument library — 309 licensed recordings</summary>
+  <p class="muted">Connect the real sound collection without saving a permanent key in the website. Your READ_TOKEN stays in your password manager; the browser sends only a one-time cryptographic proof, then uses a 15-minute read-only session held in memory. Do not enter ADMIN_TOKEN.</p>
+  <div class="bar">
+    <label>Read-only Cloudflare connection key
+      <input id="cloud-read-key" type="password" autocomplete="off" spellcheck="false" placeholder="READ_TOKEN from your password manager" style="min-width:min(300px,80vw)">
+    </label>
+    <button id="cloud-connect" class="primary">Connect private library</button>
+    <button id="cloud-disconnect" disabled>Disconnect</button>
+  </div>
+  <output id="cloud-status" class="status" role="status">Not connected. Your cloud library remains private.</output>
+  <output id="cloud-summary" class="muted" role="status"></output>
+  <div class="bar">
+    <button id="cloud-load-drums" disabled>Load cloud drum samples for matching</button>
+  </div>
+  <output id="cloud-load-status" class="status" role="status">Connect first, then load a balanced selection of licensed kick, snare, clap, hat, tom and percussion sounds. Audio stays in this browser's memory.</output>
+  <p class="muted">If your session expires, reconnect. The browser does not save your key, session token or downloaded cloud samples. Your existing local-bank option remains available below.</p>
+</details>
+    <details id="real-bank-setup">
       <summary>Real recorded drum libraries — automatic setup (free)</summary>
       <p class="muted"><strong>Works on Android and desktop browsers.</strong> Install a lightweight browser-ready selection of real recorded samples from both <strong>Virtuosity Drums</strong> (CC0) and <strong>Salamander Drumkit</strong> (CC BY-SA 3.0) once. Upload a drum stem and the Audio Lab chooses recorded sounds automatically. The browser selection is <strong>not</strong> the complete 1.5 GB archives; those require the optional desktop installer.</p>
       <div class="bar"><button id="official-install" class="primary">Install free recorded samples (mobile / browser)</button></div>
@@ -1853,6 +1871,153 @@ drumBankReady=(async()=>{
     else $('bank-status').textContent='No private library installed yet. Import a real recorded sample pack ZIP once.';
   }catch(error){$('bank-status').textContent='Private library not available: '+error.message;}
 })();
+
+
+// Cloudflare read-only bridge v0.6.
+// No permanent token or private file is embedded in this static web page.
+// Pairing uses HMAC over a single-use challenge; only a 15-minute scoped token is kept in memory.
+const CLOUD_LIBRARY_BASE='https://jay-vale-sound-library.helgacoupe.workers.dev';
+const CLOUD_PROOF_CONTEXT='jay-vale-audio-lab/v1/proof/';
+let cloudSessionToken=null,cloudSessionExpiry=0,cloudLoaded=false,previousLocalBank=null,cloudBusy=false;
+function cloudTokenValid(){return !!cloudSessionToken&&Date.now()<cloudSessionExpiry-15000;}
+function base64url(bytes){
+  let chars='';for(const c of bytes)chars+=String.fromCharCode(c);
+  return btoa(chars).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+async function cloudCall(path,options={},requireSession=true){
+  if(requireSession&&!cloudTokenValid())throw Error('Cloud library session expired. Reconnect with your read-only key.');
+  const headers={'accept':'application/json',...(requireSession?{'authorization':'Bearer '+cloudSessionToken}:{}),...(options.headers||{})};
+  const response=await fetch(CLOUD_LIBRARY_BASE+path,{
+    cache:'no-store',credentials:'omit',mode:'cors',referrerPolicy:'no-referrer',
+    ...options,headers
+  });
+  if(!response.ok){
+    if(response.status===401&&requireSession){cloudSessionToken=null;cloudSessionExpiry=0;$('cloud-load-drums').disabled=true;}
+    throw Error('Cloudflare '+response.status+(response.status===401?' — connect again with your READ_TOKEN':''));
+  }
+  return response;
+}
+function cloudKind(item){
+  if(item.family==='percussion'){
+    if(item.instrument==='cymbal')return 'Crash';
+    return 'Percussion';
+  }
+  return ({kick:'Kick',kick808:'Kick',snare:'Snare',clap:'Clap',hat:'Hat',hat_closed:'Hat',
+    hat_open:'Hat',tom:'Tom',ride:'Ride',crash:'Crash',cymbal:'Crash',rimshot:'Percussion',
+    drum_machine:'Percussion',perc808:'Percussion',acoustic_kit:'Percussion'})[item.instrument]||'Percussion';
+}
+function disconnectCloud(){
+  cloudSessionToken=null;cloudSessionExpiry=0;
+  $('cloud-connect').disabled=false;
+  $('cloud-disconnect').disabled=true;
+  $('cloud-load-drums').disabled=true;
+  $('cloud-read-key').value='';
+  $('cloud-summary').textContent='';
+  $('cloud-status').textContent='Disconnected. No session token is saved.';
+  if(cloudLoaded){
+    bankSamples=previousLocalBank||[];
+    cloudLoaded=false;previousLocalBank=null;
+    updateDrumControls();
+    if(drumSource&&!working){invalidateRebuild();$('drum-status').textContent='Cloud session ended. Reload local samples or reconnect and load cloud samples.';}
+  }
+}
+$('cloud-disconnect').onclick=()=>disconnectCloud();
+$('cloud-connect').onclick=async()=>{
+  if(cloudBusy)return;
+  cloudBusy=true;$('cloud-connect').disabled=true;$('cloud-status').textContent='Establishing a private read-only connection…';
+  let readKey=$('cloud-read-key').value.trim();
+  $('cloud-read-key').value=''; // do not persist the password or put it in any request
+  try{
+    if(!/^.{32,}$/.test(readKey))throw Error('Enter your existing read-only READ_TOKEN (at least 32 characters). Never enter ADMIN_TOKEN.');
+    const challengeData=await (await cloudCall('/v1/session/challenge',{},false)).json();
+    if(typeof challengeData.challenge!=='string')throw Error('Invalid challenge response');
+    const encoder=new TextEncoder();
+    const key=await crypto.subtle.importKey('raw',encoder.encode(readKey),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+    readKey='';
+    const signature=new Uint8Array(await crypto.subtle.sign('HMAC',key,encoder.encode(CLOUD_PROOF_CONTEXT+challengeData.challenge)));
+    const proof=base64url(signature);
+    const response=await cloudCall('/v1/session/open',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({challenge:challengeData.challenge,proof})},false);
+    const auth=await response.json();
+    if(auth.scope!=='library:read'||typeof auth.access_token!=='string'||auth.expires_in>900)throw Error('Unexpected Cloudflare authorization');
+    cloudSessionToken=auth.access_token;cloudSessionExpiry=Date.now()+auth.expires_in*1000;
+    const cat=await (await cloudCall('/v1/catalog')).json();
+    const families=(cat.families||[]).filter(x=>x.actual_samples>0);
+    const count=families.reduce((total,item)=>total+Number(item.actual_samples||0),0);
+    $('cloud-status').textContent='Connected securely. Read-only access lasts up to 15 minutes.';
+    $('cloud-summary').textContent=count+' indexed recordings across '+families.length+' instrument families: '+families.map(f=>f.id+' '+f.actual_samples).join(' · ');
+    $('cloud-load-drums').disabled=false;
+    $('cloud-disconnect').disabled=false;
+  }catch(error){
+    cloudSessionToken=null;cloudSessionExpiry=0;
+    $('cloud-status').textContent='Connection not established: '+error.message+'. Your key has not been saved.';
+    $('cloud-load-drums').disabled=true;
+  }finally{readKey='';cloudBusy=false;$('cloud-connect').disabled=false;}
+};
+$('cloud-load-drums').onclick=async()=>{
+  if(cloudBusy)return;cloudBusy=true;
+  $('cloud-load-drums').disabled=true;
+  try{
+    await drumBankReady;
+    const lists=await Promise.all(['drums','percussion'].map(family=>
+      cloudCall('/v1/library/samples?family='+family+'&limit=150').then(r=>r.json())));
+    const groups=new Map(DRUMS.map(kind=>[kind,[]]));
+    for(const row of lists.flatMap(x=>x.items||[])){
+      if(!row.id||!row.original_filename||!row.duration_ms||row.duration_ms>2000||row.bytes>3000000)continue;
+      const kind=cloudKind(row);
+      if(groups.has(kind))groups.get(kind).push(row);
+    }
+    const chosen=[];
+    // Balanced sample selection avoids filling the pilot bank with 808 kicks only.
+    for(let round=0;chosen.length<72&&round<50;round++){
+      let found=false;
+      for(const kind of DRUMS){
+        const item=groups.get(kind)?.[round];
+        if(item){chosen.push({...item,kind});found=true;if(chosen.length>=72)break;}
+      }
+      if(!found)break;
+    }
+    if(chosen.length<10)throw Error('Not enough short drum recordings in the private catalogue');
+    const imported=[],errors=[];
+    let at=0,finished=0;
+    await Promise.all(Array.from({length:3},async()=>{
+      while(at<chosen.length){
+        const entry=chosen[at++];
+        try{
+          const res=await cloudCall('/v1/samples/'+encodeURIComponent(entry.id));
+          const data=await res.arrayBuffer();
+          if(data.byteLength!==entry.bytes)throw Error('Cloud recording byte size mismatch');
+          const decoded=await decodeDrum(new File([data],entry.original_filename,{type:'audio/wav'}),2);
+          const mono=soloChannel(decoded.channels);
+          const start=onset(mono,0,mono.length)[0]??0;
+          const trimmed=mono.slice(start);
+          imported.push({id:'cloud-'+entry.id,kind:entry.kind,name:entry.original_filename,
+            source:'Cloudflare / '+entry.source_name,license:entry.license_spdx,
+            digest:decoded.digest,mono:trimmed,fp:drumFingerprint(trimmed)});
+        }catch(e){errors.push(entry.original_filename+': '+e.message);}
+        finally{finished++;$('cloud-load-status').textContent='Downloading and indexing '+finished+'/'+chosen.length+' licensed one-shots…';}
+      }
+    }));
+    if(imported.length<10)throw Error('Only '+imported.length+' recordings were decoded. '+(errors[0]||''));
+    if(!cloudLoaded)previousLocalBank=bankSamples;
+    cloudLoaded=true;bankSamples=imported;
+    $('cloud-load-status').textContent='Cloud drum bank ready: '+imported.length+' real recorded samples · '+DRUMS.filter(k=>imported.some(x=>x.kind===k)).map(k=>k+' '+imported.filter(x=>x.kind===k).length).join(' · ')+(errors.length?' · '+errors.length+' skipped':'');
+    updateDrumControls();
+    if(drumSource&&!fixture){
+      drumEvents=classifyHits(drumSource.channels);
+      initialEvents=structuredClone(drumEvents);
+      showHits();refreshRender();
+    }
+  }catch(error){$('cloud-load-status').textContent='Cloud drum bank not loaded: '+error.message;}
+  finally{cloudBusy=false;$('cloud-load-drums').disabled=!cloudTokenValid();}
+};
+// Anonymous connectivity check never discloses sample bytes or read-only secrets.
+void (async()=>{try{
+  const response=await cloudCall('/health',{},false);
+  const health=await response.json();
+  if(health.online&&health.r2_integrity?.verified){
+    $('cloud-summary').textContent='Cloudflare online · '+health.sample_count+' unique indexed recordings · R2/D1 verified. Connect to browse privately.';
+  }
+}catch{$('cloud-summary').textContent='Cloudflare connectivity unavailable. The local sample-bank option remains available.';}})();
 
 // Automatic browser sampler. On static HTTPS hosting, fetch verified individual FLAC
 // recordings from both openly licensed upstream repositories; no Python or manual picking.
