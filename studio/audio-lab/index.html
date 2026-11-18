@@ -1263,14 +1263,16 @@ function renderDrums() {
   const preserve=$('drum-fidelity-mode').value==='preserve';
   const strength=preserve?Number($('drum-layer').value)/100:1;
   const source=channels.map(ch=>ch.slice());
-  const stems=Object.fromEntries(EXPORT_DRUM_GROUPS.map(kind=>[kind,channels.map(()=>new Float32Array(length))]));
+  // Allocate only groups that receive a compatible sample layer.
+  // Long stereo stems otherwise allocate hundreds of MB for silent groups.
+  const stems={};
   for(const event of drumEvents){
     if(event.choice==='Source'||(preserve&&!event.matched&&!event.manual))continue;
     const item=resolveDrumSample(event.choice);
     if(!item)continue;
     const group=EXPORT_DRUM_GROUPS.includes(item.kind)?item.kind:'Other';
-    if(!stems[group])continue;
-    const sample=item.mono,replacements=stems[group];
+    const sample=item.mono;
+    const replacements=stems[group]||(stems[group]=channels.map(()=>new Float32Array(length)));
     const target=event.at+Math.round(event.move*DRUM_RATE/1000);
     const referencePeak=peakBetween(mono,event.at,event.at+event.length);
     const samplePeak=peakBetween(sample,0,sample.length);
