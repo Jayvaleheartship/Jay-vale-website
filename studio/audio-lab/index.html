@@ -1412,44 +1412,76 @@ function exportDrums() {
 
 $('compare-tab').onclick = () => showWorkspace('compare');
 $('drum-tab').onclick = () => showWorkspace('drum');
-$('drum-demo').onclick = () => drumTask(async () => {
-  loadDemo();
-  drumEvents = classifyHits(drumSource.channels);
-  initialEvents = structuredClone(drumEvents);
-  showHits();
-  refreshRender();
-});
-$('drum-input').onchange = event => {
-  const file = event.target.files[0];
-  event.target.value = '';
-  if (!file) return;
-  drumTask(async () => {
-    $('drum-status').textContent = 'Reading the drum stem…';
-    await drumBankReady;
-    const sourceFile=/\.zip$/i.test(file.name)?await unpackDrumStem(file):file;
-    const decoded = await decodeDrum(sourceFile,240);
-    invalidateRebuild();
-    if (fixture) {
-      for (const kind of CORE_DRUMS) {
-        if (kit[kind] && !kit[kind].digest) {
-          delete kit[kind];
-          $('kit-status-'+kind).textContent = 'No sample selected.';
-        }
+async function prepareDrumTrial(decoded){
+  invalidateRebuild();
+  if(fixture){
+    for(const kind of CORE_DRUMS){
+      if(kit[kind]&&!kit[kind].digest){
+        delete kit[kind];$('kit-status-'+kind).textContent='No sample selected.';
       }
     }
-    fixture = false;
-    drumSource = decoded;
-    $('source-name').textContent = decoded.name;
-    $('kit').open = false;
-    setDrumAudio('drum-original', wavBytes(drumSource.channels));
-    if(bankSamples.length){
-      $('drum-status').textContent='Automatically matching detected hits to '+bankSamples.length+' real recorded samples…';
-      drumEvents=classifyHits(drumSource.channels);
-      initialEvents=structuredClone(drumEvents);
-      showHits();refreshRender();
-    }else $('drum-status').textContent='Stem imported. Add a private real drum sample library ZIP once; no drum-by-drum selection needed.';
+  }
+  fixture=false;
+  drumSource=decoded;
+  $('source-name').textContent=decoded.name;
+  $('kit').open=false;
+  setDrumAudio('drum-original',wavBytes(drumSource.channels));
+  updateTrialMetrics();
+  setTrialStage(1,'Stem ready · '+(drumSource.channels[0].length/DRUM_RATE).toFixed(2)+' s · '+(bankSamples.length?bankSamples.length+' recorded samples available.':'load a recorded sample bank for matching.'));
+  if(bankSamples.length){
+    setTrialStage(2,'Analyzing transients and comparing '+bankSamples.length+' recorded one-shots…');
+    $('drum-status').textContent='Analyzing with '+bankSamples.length+' recorded samples…';
+    drumEvents=classifyHits(drumSource.channels);
+    initialEvents=structuredClone(drumEvents);
+    showHits();refreshRender();
+  }else{
+    $('drum-status').textContent='Stem loaded. Connect the Cloudflare library or install a licensed local bank, then select Analyze.';
+    updateDrumControls();
+  }
+}
+function loadTrialFile(file){
+  if(!file)return;
+  void drumTask(async()=>{
+    if(!/\.(wav|mp3|flac|m4a|zip)$/i.test(file.name))throw Error('Unsupported format. Choose WAV, MP3, FLAC, M4A or ZIP.');
+    if(file.size>150000000&&/\.zip$/i.test(file.name))throw Error('ZIP exceeds the 150 MB limit.');
+    setTrialStage(0,'Reading '+file.name+' and validating the audio…');
+    $('drum-status').textContent='Importing '+file.name+'…';
+    await drumBankReady;
+    const single=/\.zip$/i.test(file.name)?await unpackDrumStem(file):file;
+    const decoded=await decodeDrum(single,240);
+    await prepareDrumTrial(decoded);
   });
+}
+$('drum-demo').onclick=()=>drumTask(async()=>{
+  setTrialStage(2,'Analyzing the built-in synthetic drum fixture…');
+  loadDemo();
+  drumEvents=classifyHits(drumSource.channels);
+  initialEvents=structuredClone(drumEvents);
+  showHits();refreshRender();
+});
+$('drum-input').onchange=event=>{
+  const file=event.target.files?.[0];event.target.value='';
+  loadTrialFile(file);
 };
+const trialDrop=$('trial-drop');
+for(const type of ['dragenter','dragover']){
+  trialDrop.addEventListener(type,event=>{
+    event.preventDefault();if(!working)trialDrop.dataset.dragging='true';
+  });
+}
+for(const type of ['dragleave','dragend']){
+  trialDrop.addEventListener(type,()=>{trialDrop.dataset.dragging='false';});
+}
+trialDrop.addEventListener('drop',event=>{
+  event.preventDefault();trialDrop.dataset.dragging='false';
+  if(working)return;
+  if(event.dataTransfer.files.length!==1){
+    setTrialStage(0,'Drop exactly one audio file or ZIP containing one audio stem.',true);
+    return;
+  }
+  loadTrialFile(event.dataTransfer.files[0]);
+});
+
 for (const kind of CORE_DRUMS) {
   const label = document.createElement('label');
   label.textContent = kind;
@@ -1477,6 +1509,7 @@ for (const kind of CORE_DRUMS) {
   };
 }
 $('drum-run').onclick = () => drumTask(async () => {
+  setTrialStage(2,'Reanalyzing drum onsets and recorded sample candidates…');
   $('drum-status').textContent = 'Detecting and rebuilding hits…';
   drumEvents = classifyHits(drumSource.channels);
   initialEvents = structuredClone(drumEvents);
@@ -1500,6 +1533,29 @@ $('drum-layer').oninput=()=>{$('drum-layer-label').textContent=$('drum-layer').v
 $('drum-layer').onchange=()=>{if(drumSource&&drumEvents&&!working)drumTask(async()=>refreshRender());};
 $('drum-fidelity-mode').onchange=()=>{if(drumSource&&drumEvents&&!working)drumTask(async()=>refreshRender());};
 $('drum-export').onclick = () => drumTask(async () => exportDrums());
+
+$('trial-export-wav').onclick=()=>drumTask(async()=>{
+  if(!drumOutput)throw Error('Analyze a stem before exporting WAV.');
+  setTrialStage(4,'Preparing rebuilt 24-bit WAV…');
+  const name=safeTrialFilename(drumSource.name)+'-reconstructed-24bit-48k.wav';
+  saveTrialBlob(new Blob([stemWav24(drumOutput.mix,drumOutput.mix[0].length)],{type:'audio/wav'}),name);
+  $('trial-export-status').textContent='Downloaded '+name+' · 24-bit PCM / 48 kHz.';
+  setTrialStage(4,'Rebuilt WAV downloaded. Compare it with your original and record listening feedback.');
+});
+$('trial-export-reference').onclick=()=>drumTask(async()=>{
+  if(!drumSource)throw Error('Load a stem before downloading the original.');
+  const name=safeTrialFilename(drumSource.name)+'-source-24bit-48k.wav';
+  saveTrialBlob(new Blob([stemWav24(drumSource.channels,drumSource.channels[0].length)],{type:'audio/wav'}),name);
+  $('trial-export-status').textContent='Downloaded '+name+' · preserved decoded source.';
+  setTrialStage(4,'Original reference WAV downloaded for a fair A/B review.');
+});
+$('trial-export-report').onclick=()=>drumTask(async()=>{
+  const filename=safeTrialFilename(drumSource?.name)+'-match-report.json';
+  saveTrialBlob(new Blob([JSON.stringify(makeTrialReport(),null,2)],{type:'application/json'}),filename);
+  $('trial-export-status').textContent='Downloaded '+filename+' · includes recorded sample sources, licenses, onsets and confidence values.';
+  setTrialStage(4,'Match report downloaded. Review the identified drum sounds.');
+});
+
 $('send-to-compare').onclick = () => {
   if (working || detectorBusy || variants.A.loading || variants.B.loading) {
     $('drum-status').textContent = 'Wait for the current comparison or detector check to finish.';
