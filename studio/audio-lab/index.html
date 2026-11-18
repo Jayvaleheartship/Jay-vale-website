@@ -155,9 +155,9 @@ nav.bar {margin:0 0 18px}
     <h2>3. Review detected samples and A/B audio</h2>
     <div class="trial-metrics" id="trial-metrics" aria-live="polite">
       <div><strong id="trial-total-hits">0</strong><span>Detected onsets</span></div>
-      <div><strong id="trial-matched-hits">0</strong><span>Confident matches</span></div>
+      <div><strong id="trial-matched-hits">0</strong><span>Candidates accepted by prototype</span></div>
       <div><strong id="trial-original-hits">0</strong><span>Left unchanged</span></div>
-      <div><strong id="trial-bank-count">0</strong><span>Samples in matching bank</span></div>
+      <div><strong id="trial-bank-count">0</strong><span>Recorded samples in bank</span></div>
     </div>
     <output id="trial-match-summary" role="status">No drum analysis yet.</output>
     <div class="pair">
@@ -911,8 +911,8 @@ function updateTrialMetrics(){
   for(const e of accepted)byKind[e.estimate]=(byKind[e.estimate]||0)+1;
   const avg=accepted.length?accepted.reduce((sum,e)=>sum+(Number(e.confidence)||0),0)/accepted.length:0;
   $('trial-match-summary').textContent=events.length
-    ?'Confident candidates: '+(Object.entries(byKind).map(([name,n])=>name+' '+n).join(' · ')||'none')+
-     ' · Mean candidate confidence: '+(avg*100).toFixed(0)+'% · '+unmodified+' hits retained without added sample layer. Matching is approximate, not proof of original instrument identity.'
+    ?'Accepted candidates: '+(Object.entries(byKind).map(([name,n])=>name+' '+n).join(' · ')||'none')+
+     ' · Mean prototype score: '+(avg*100).toFixed(0)+'% · '+unmodified+' hits retained without added sample layer. '+(fixture?'Built-in synthetic test sounds, not real recordings. ':'')+'Matching is approximate, not proof of original instrument identity.'
     :'No onsets analyzed. Load recorded samples and choose a stem.';
 }
 function safeTrialFilename(name){
