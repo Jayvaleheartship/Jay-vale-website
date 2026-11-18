@@ -1,0 +1,115 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+
+const base=new URL('../../../studio/audio-lab/',import.meta.url);
+const matcherSource=fs.readFileSync(new URL('drum-matcher.js',base),'utf8');
+const html=fs.readFileSync(new URL('index.html',base),'utf8');
+const inline=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+assert.ok(inline,'Inline Audio Lab engine required');
+const scope={};
+vm.runInNewContext(matcherSource,{globalThis:scope,Float32Array,Math});
+const matcher=scope.JVDrumMatcher;
+assert.equal(matcher.version,'1.0.0');
+
+function extract(start,end){
+  const i=inline.indexOf(start),j=inline.indexOf(end,i+start.length);
+  assert.ok(i>=0&&j>i,'Unable to extract '+start);
+  return inline.slice(i,j);
+}
+const fp = new Function('DRUM_RATE',
+  extract('function drumFingerprint(','function classifyHits(').replace(
+    /function fingerprintDistance\(a,b\)[\s\S]*?(?=\/\/ Frequency response)/,
+    '') +'; return drumFingerprint;'
+)(48000);
+
+function synth(hz,kind='bass',amp=.75,decay=15){
+ const count=12000,a=new Float32Array(count);
+ let seed=78945;
+ for(let i=0;i<count;i++){
+  const t=i/48000;
+  seed=(Math.imul(seed,1664525)+1013904223)>>>0;
+  const noise=(seed/2147483648-1);
+  const raw=kind==='bass'?Math.sin(2*Math.PI*hz*t):
+    kind==='snare'?Math.sin(2*Math.PI*180*t)*.25+noise*.75:noise;
+  a[i]=amp*raw*Math.exp(-t*decay)*Math.min(1,t/.002);
+ }
+ return a;
+}
+function signature(audio){return matcher.analyze(audio,0,fp(audio));}
+function sample(id,kind,data){return {id,kind,mono:data,fp:fp(data),sig:signature(data)};}
+test('matcher JavaScript parses and is loaded by published Audio Lab',()=>{
+ new Function(inline);
+ assert.match(html,/<script src="\.\/drum-matcher\.js"><\/script>/);
+ assert.match(inline,/JVDrumMatcher\.select/);
+ assert.match(html,/<th>Match decision<\/th>/);
+});
+test('bass pitch autocorrelation distinguishes 55/82/140 Hz without octave alias',()=>{
+ for(const hz of [46,55,60,82,105,140]){
+  const got=signature(synth(hz)).bassPitchHz;
+  assert.ok(got&&Math.abs(got-hz)/hz<.035,hz+' Hz detected as '+got);
+ }
+ assert.equal(signature(synth(0,'noise',.7,70)).bassPitchHz,null);
+});
+test('exact same kind of hit is accepted and nearest-match score is zero',()=>{
+ const kick=sample('kick55','Kick',synth(55));
+ const snare=sample('snare','Snare',synth(0,'snare',.7,30));
+ const result=matcher.select(kick.sig,[snare,kick]);
+ assert.equal(result.accepted,true);
+ assert.equal(result.winner.sample.id,'kick55');
+ assert.equal(result.reason.includes('Very close'),true);
+ assert.ok(Math.abs(result.winner.total)<1e-6);
+});
+test('pitch mismatch with high-tonality 808 is rejected, retaining original',()=>{
+ const bass=sample('kick55','Kick',synth(55));
+ const input=signature(synth(82));
+ const result=matcher.select(input,[bass]);
+ assert.equal(result.accepted,false);
+ assert.equal(result.kind,'Uncertain');
+ assert.ok(result.winner.pitchSemitones>2);
+});
+test('wrong sounding library candidates are rejected rather than forced replacements',()=>{
+ const input=signature(synth(0,'noise',.7,55));
+ const onlyKick=sample('kick','Kick',synth(55));
+ const result=matcher.select(input,[onlyKick]);
+ assert.equal(result.accepted,false);
+ assert.equal(result.kind,'Uncertain');
+});
+test('ambiguous cross-instrument category ties are conservatively rejected',()=>{
+ const q=signature(synth(55));
+ const altered={...q,fp:[...q.fp],envelope:[...q.envelope]};
+ altered.fp[0]=Math.min(1,altered.fp[0]+.2);
+ altered.fp[1]=Math.max(0,altered.fp[1]-.05);
+ const candidates=[{id:'a',kind:'Kick',sig:altered},{id:'b',kind:'Tom',sig:altered}];
+ const result=matcher.select(q,candidates);
+ assert.ok(result.winner.total>.115&&result.winner.total<.26,'score '+result.winner.total);
+ assert.equal(result.accepted,false);
+ assert.match(result.reason,/Ambiguous/);
+});
+test('silent stem never produces a confident match',()=>{
+ const silent=signature(new Float32Array(12000));
+ const bank=[sample('real','Kick',synth(55))];
+ assert.equal(silent.silent,true);
+ const r=matcher.select(silent,bank);
+ assert.equal(r.accepted,false);
+});
+test('integration: actual classifier uses v1 for real bank and keeps unknown original',()=>{
+ const source=extract('function soloChannel(','function demoSound(')
+  +extract('function onset(','function drumShape(')
+  +extract('function drumFingerprint(','function peakBetween(');
+ const make=new Function('DRUM_RATE','CORE_DRUMS','fixture','bankSamples','kit','JVDrumMatcher',source+';return classifyHits;');
+ const bank=[sample('real-kick','Kick',synth(55))];
+ const classify=make(48000,['Kick','Snare','Clap','Hat'],false,bank,{},matcher);
+ const same=new Float32Array(36000);same.set(synth(55),2400);
+ const matched=classify([same]);
+ assert.ok(matched.length>=1,'should detect at least one 808 onset');
+ assert.equal(matched[0].matcher,'multi-feature-v1.0');
+ assert.equal(matched[0].matched,true);
+ const different=new Float32Array(36000);different.set(synth(0,'noise',.7,70),2400);
+ const rejected=classify([different]);
+ assert.ok(rejected.length>=1);
+ assert.equal(rejected[0].matched,false);
+ assert.equal(rejected[0].choice,'Source');
+ assert.ok(rejected[0].reason.length>10);
+});
