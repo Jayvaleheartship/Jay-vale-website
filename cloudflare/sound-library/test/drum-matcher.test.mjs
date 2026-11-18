@@ -190,6 +190,7 @@ test('source-locked render preserves every original frame when matches are rejec
   const output=render();
   assert.equal(output.preserve,true);
   assert.equal(output.exportGain,1);
+  assert.deepEqual(Object.keys(output.stems),[],'No empty 193-second groups should be allocated');
   assert.deepEqual(Array.from(output.mix[0]),Array.from(main));
   assert.deepEqual(Array.from(output.source[0]),Array.from(main));
 });
@@ -210,6 +211,7 @@ test('source-locked accepted layer is added only at original hit timeline withou
   assert.equal(output.mix[0].length,main.length);
   assert.deepEqual(Array.from(output.source[0]),Array.from(main));
   assert.equal(output.exportGain,1);
+  assert.deepEqual(Object.keys(output.stems),['Kick'],'Only active recorded groups should consume group memory');
   assert.ok(output.mix[0].some((v,i)=>i>=9600&&i<16000&&v!==main[i]),'additive layer expected at onset');
   for(let i=0;i<9600;i++)assert.equal(output.mix[0][i],main[i]);
   for(let i=20000;i<48000;i++)assert.equal(output.mix[0][i],main[i]);
