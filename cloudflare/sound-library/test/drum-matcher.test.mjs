@@ -113,3 +113,24 @@ test('integration: actual classifier uses v1 for real bank and keeps unknown ori
  assert.equal(rejected[0].choice,'Source');
  assert.ok(rejected[0].reason.length>10);
 });
+
+test('closed/open hi-hat articulation is ranked and incompatible long/short articulation rejected',()=>{
+ const quick=signature(synth(0,'noise',.7,80));
+ assert.ok(quick.decayMs<55,'short high-hat input');
+ const open={id:'open',kind:'Hat',name:'open_hat.wav',sig:quick};
+ const closed={id:'closed',kind:'Hat',name:'closed_hat.wav',sig:quick};
+ const ranked=matcher.rank(quick,[open,closed]);
+ assert.equal(ranked[0].sample.id,'closed');
+ assert.ok(ranked[1].articulationPenalty>=.18);
+ assert.equal(matcher.select(quick,[open]).accepted,false);
+ assert.match(matcher.select(quick,[open]).reason,/Articulation/);
+ assert.equal(matcher.select(quick,[closed]).accepted,true);
+});
+test('imported 808 names become pitch-aware kick candidates, while 808 snare remains snare',()=>{
+ const kindCode=extract('function identifyDrumKind(name){','async function unpackDrumStem(zip){');
+ const kind=new Function(kindCode+';return identifyDrumKind;')();
+ assert.equal(kind('bass/808-sub.wav'),'Kick');
+ assert.equal(kind('drums/TR808 Snare.wav'),'Snare');
+ assert.equal(kind('drums/open-hi-hat.wav'),'Hat');
+ assert.ok(inline.includes("['drums','percussion','bass']"),'Cloud sample loader includes 808 bass family');
+});
