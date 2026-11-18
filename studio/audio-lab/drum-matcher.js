@@ -74,6 +74,56 @@
     const clarity=limit(best,0,1);
     return clarity>=.72?{hz:downRate/bestLag,clarity}:{hz:null,clarity};
   }
+
+  // Stage-5 drum onset detector. RMS + high-frequency novelty, preserving the
+  // absolute sample timeline. Separate-channel energy prevents L/R cancellation.
+  // It does not claim to unmix two instruments that begin on the same sample.
+  function detectOnsets(channels,options={}){
+    if(!Array.isArray(channels)) channels=[channels];
+    if(!channels.length||!channels[0]||!channels[0].length)return [];
+    const length=channels[0].length;
+    if(channels.some(ch=>ch.length!==length))throw Error('Channel lengths differ');
+    const rate=Number(options.sampleRate)||RATE,hop=Math.max(64,Math.round(rate*.005));
+    const minGap=Math.max(20,Math.min(90,Number(options.minSpacingMs)||32));
+    const n=Math.ceil(length/hop),rms=new Float32Array(n),hf=new Float32Array(n);
+    let maxRms=0,maxHf=0;
+    const previous=new Float32Array(channels.length);
+    for(let i=0;i<n;i++){
+      const start=i*hop,end=Math.min(length,start+hop);let amp=0,high=0;
+      for(let c=0;c<channels.length;c++){
+        const data=channels[c];let prev=previous[c];
+        for(let k=start;k<end;k++){
+          const current=data[k]||0;amp+=current*current;
+          const delta=current-prev;high+=delta*delta;prev=current;
+        }
+        previous[c]=prev;
+      }
+      const scalar=1/((end-start)*channels.length);
+      rms[i]=Math.sqrt(amp*scalar);hf[i]=Math.sqrt(high*scalar);
+      maxRms=Math.max(maxRms,rms[i]);maxHf=Math.max(maxHf,hf[i]);
+    }
+    if(maxRms<.002)return [];
+    const floor=Math.max(.002,maxRms*.035),hfFloor=Math.max(.001,maxHf*.045);
+    const events=[],gapFrames=Math.max(1,Math.round((rate*minGap/1000)/hop));
+    for(let i=0;i<n;i++){
+      if(rms[i]<floor)continue;
+      let baseline=0,highBaseline=0,count=0;
+      for(let p=Math.max(0,i-5);p<i;p++){baseline+=rms[p];highBaseline+=hf[p];count++;}
+      if(count){baseline/=count;highBaseline/=count;}
+      const energyRise=rms[i]-baseline,highRise=hf[i]-highBaseline;
+      const kickAttack=energyRise>=floor*.68 && rms[i]>=Math.max(floor,baseline*1.65);
+      const crispAttack=highRise>=hfFloor*.75 && hf[i]>=Math.max(hfFloor,highBaseline*1.75);
+      const front=i===0||rms[i]>=rms[i-1]*1.12||hf[i]>=hf[i-1]*1.20;
+      if(!front||(!kickAttack&&!crispAttack))continue;
+      const strength=Math.max(energyRise/Math.max(floor,baseline),highRise/Math.max(hfFloor,highBaseline));
+      const at=i*hop;
+      if(events.length&&i-events.at(-1).frame<gapFrames){
+        if(strength>events.at(-1).strength*1.5&&i-events.at(-1).frame<Math.ceil(.011*rate/hop))
+          events[events.length-1]={at,frame:i,strength};
+      }else events.push({at,frame:i,strength});
+    }
+    return events.map(x=>x.at);
+  }
   function analyze(samples,start=0,fp=null) {
     if(!samples||!Number.isInteger(start)||start<0||start>=samples.length)throw Error('Invalid audio analysis region');
     const length=Math.min(MAX_FRAMES,samples.length-start);
@@ -178,5 +228,5 @@
     return {accepted,kind:accepted?best.sample.kind:'Uncertain',winner:best,ranking,
       reason,margin,confidence};
   }
-  root.JVDrumMatcher=Object.freeze({version:'1.0.0',analyze,score,rank,select,spectralDistance});
+  root.JVDrumMatcher=Object.freeze({version:'1.1.0',analyze,score,rank,select,spectralDistance,detectOnsets});
 })(globalThis);
