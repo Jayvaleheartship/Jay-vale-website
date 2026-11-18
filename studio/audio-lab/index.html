@@ -887,6 +887,63 @@ let bankSamples = [], drumBankReady = Promise.resolve();
 let drumSource, drumEvents, initialEvents, drumOutput, fixture = false;
 let currentMode = 'compare', working = false;
 
+const TRIAL_STEPS=['Upload stem','Load sample bank','Analyze matches','Listen A/B','Export WAV'];
+let trialStep=0;
+function setTrialStage(step,message,problem=false){
+  trialStep=Math.min(4,Math.max(0,step));
+  $('trial-stage').textContent=message||TRIAL_STEPS[trialStep];
+  $('trial-error').hidden=!problem;
+  $('trial-error').textContent=problem?'Something needs attention: '+message:'';
+  [...$('trial-steps').children].forEach((item,index)=>{
+    item.dataset.state=problem&&index===trialStep?'error':index<trialStep?'done':index===trialStep?'active':'waiting';
+    if(index===trialStep)item.setAttribute('aria-current','step');
+    else item.removeAttribute('aria-current');
+  });
+}
+function updateTrialMetrics(){
+  const events=drumEvents||[],chosen=events.filter(e=>e.choice!=='Source'&&(e.matched||e.manual));
+  const accepted=events.filter(e=>e.matched),unmodified=events.length-chosen.length;
+  $('trial-total-hits').textContent=String(events.length);
+  $('trial-matched-hits').textContent=String(accepted.length);
+  $('trial-original-hits').textContent=String(unmodified);
+  $('trial-bank-count').textContent=String(bankSamples.length);
+  const byKind={};
+  for(const e of accepted)byKind[e.estimate]=(byKind[e.estimate]||0)+1;
+  const avg=accepted.length?accepted.reduce((sum,e)=>sum+(Number(e.confidence)||0),0)/accepted.length:0;
+  $('trial-match-summary').textContent=events.length
+    ?'Confident candidates: '+(Object.entries(byKind).map(([name,n])=>name+' '+n).join(' · ')||'none')+
+     ' · Mean candidate confidence: '+(avg*100).toFixed(0)+'% · '+unmodified+' hits retained without added sample layer. Matching is approximate, not proof of original instrument identity.'
+    :'No onsets analyzed. Load recorded samples and choose a stem.';
+}
+function safeTrialFilename(name){
+  return (name||'Jay_Vale_Drum').replace(/\.[^.]+$/,'').replace(/[^a-z0-9_-]+/gi,'-').slice(0,65)||'Jay_Vale_Drum';
+}
+function saveTrialBlob(blob,filename){
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  link.href=url;link.download=filename;link.style.display='none';
+  document.body.append(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+function makeTrialReport(){
+  if(!drumOutput||!drumSource||!drumEvents)throw Error('Analyze a drum stem before exporting a report.');
+  return {
+    schema:'jay-vale-first-trial-v1',created_at:new Date().toISOString(),sample_rate:DRUM_RATE,
+    source:{filename:drumSource.name,sha256:drumSource.digest||null,demo:fixture,
+      channels:drumSource.channels.length,duration_seconds:drumSource.channels[0].length/DRUM_RATE},
+    processing:{method:drumOutput.preserve?'source-locked':'experimental replacement',
+      recorded_layer_strength:drumOutput.layerStrength,export_gain:drumOutput.exportGain,
+      component_difference_db:drumOutput.differenceDb},
+    analysis:{onsets:drumEvents.length,confident_candidates:drumEvents.filter(e=>e.matched).length,
+      applied_layers:drumEvents.filter(e=>e.choice!=='Source'&&(e.matched||e.manual)).length,
+      bank_recordings:bankSamples.length},
+    selected_samples:bankSamples.map(x=>({id:x.id,name:x.name,kind:x.kind,license:x.license,source:x.source,sha256:x.digest||null})),
+    hits:drumEvents.map(e=>({...e,output_sample:e.at+Math.round(e.move*DRUM_RATE/1000)})),
+    note:'Conservative matching and source retention; no guarantee of original sample identity or human provenance.'
+  };
+}
+
+
 function showWorkspace(mode) {
   pause();
   $('drum-original').pause();
@@ -907,6 +964,7 @@ function updateDrumControls() {
   $('drum-run').disabled = working || !drumSource || (!bankSamples.length && !Object.keys(kit).length);
   $('drum-result').hidden = !drumOutput;
   for (const id of ['drum-input', 'bank-input', 'drum-demo', 'apply-hits', 'drum-export', 'reset-hits']) $(id).disabled = working;
+  for (const id of ['trial-export-wav','trial-export-reference','trial-export-report'])$(id).disabled = working || !drumOutput;
   $('send-to-compare').disabled = working || detectorBusy;
   for (const field of $('kit-fields').querySelectorAll('input')) field.disabled = working;
 }
@@ -919,6 +977,7 @@ async function drumTask(task) {
     await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
     await task();
   } catch (error) {
+    setTrialStage(trialStep,error.message,true);
     $('drum-status').textContent = error.message;
   } finally {
     working = false;
@@ -966,6 +1025,8 @@ function setDrumAudio(id, bytes) {
 
 function invalidateRebuild() {
   drumEvents = initialEvents = drumOutput = null;
+  updateTrialMetrics();
+  $('trial-export-status').textContent='Analyze a stem to enable the exports.';
   setDrumAudio('drum-render', null);
   $('drum-status').textContent = '';
 }
@@ -1230,6 +1291,9 @@ function renderDrums() {
 
 function refreshRender() {
   drumOutput = renderDrums();
+  updateTrialMetrics();
+  setTrialStage(3,'Preview ready: review matches and listen to the original versus the rebuilt audio.');
+  $('trial-export-status').textContent='WAV (24-bit / 48 kHz), source reference, Bitwig ZIP and JSON report are available.';
   setDrumAudio('drum-render', wavBytes(drumOutput.mix));
   const replaced = drumEvents.filter(event => event.choice !== 'Source' && (!drumOutput.preserve || event.matched || event.manual)).length;
   const total=drumEvents.length;
