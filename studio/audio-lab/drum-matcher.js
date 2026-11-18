@@ -126,9 +126,32 @@
       spectral,envelope,attack,decay,pitchSemitones,pitchPenalty
     };
   }
+  function articulationOf(sample){
+    const name=String(sample.name||'').toLowerCase();
+    const stated=String(sample.articulation||'').toLowerCase();
+    // Prefer explicit filename labels; imported D1 rows often default to "normal".
+    if(/(?:^|[_\s-])(?:open.?hat|open.?hh|oh8|ohh)(?:$|[_\s.-])/.test(name)||stated==='open')return 'open';
+    if(/(?:^|[_\s-])(?:closed.?hat|closed.?hh|ch8|chh)(?:$|[_\s.-])/.test(name)||stated==='closed')return 'closed';
+    if(/(?:^|[_\s-])(?:rimshot|rim.?shot|sidestick|cross.?stick)(?:$|[_\s.-])/.test(name)||stated==='rim')return 'rim';
+    if(/(?:^|[_\s-])brush(?:$|[_\s.-])/.test(name)||stated==='brush')return 'brush';
+    return 'unknown';
+  }
+  function articulationPenalty(query,sample){
+    const articulation=articulationOf(sample);
+    if(sample.kind==='Hat'){
+      if(articulation==='open'&&query.decayMs<55)return .21;
+      if(articulation==='closed'&&query.decayMs>150)return .20;
+    }
+    if(sample.kind==='Snare'&&articulation==='brush'&&query.attackMs<=5&&query.decayMs<50)return .12;
+    return 0;
+  }
   function rank(query,candidates){
-    return candidates.map(sample=>({sample,...score(query,sample.sig)}))
-      .sort((a,b)=>a.total-b.total||String(a.sample.id).localeCompare(String(b.sample.id)));
+    return candidates.map(sample=>{
+      const match=score(query,sample.sig);
+      const artPenalty=articulationPenalty(query,sample);
+      return {sample,...match,total:match.total+artPenalty,articulationPenalty:artPenalty,
+        articulation:articulationOf(sample)};
+    }).sort((a,b)=>a.total-b.total||String(a.sample.id).localeCompare(String(b.sample.id)));
   }
   function select(query,candidates,options={}){
     if(!candidates.length||query.silent)return {
@@ -145,6 +168,7 @@
     let reason='Close source-spectrum, transient and decay match';
     let accepted=true;
     if(!Number.isFinite(best.total)||best.total>absolute){accepted=false;reason='Recorded candidates differ too much from source';}
+    else if(best.articulationPenalty>=.18){accepted=false;reason='Articulation conflict (open/closed hat); keep original';}
     else if(best.pitchSemitones!=null&&best.pitchSemitones>2){accepted=false;reason='Clear bass fundamental differs by more than two semitones';}
     else if(margin!=null&&margin<separation&&best.total>veryClose){accepted=false;reason='Ambiguous instrument family; keep original';}
     else if(best.total>veryClose && best.spectral>.32){accepted=false;reason='Spectral shape mismatch; keep original';}
