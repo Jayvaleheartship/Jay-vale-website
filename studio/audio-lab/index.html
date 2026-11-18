@@ -2095,6 +2095,7 @@ function identifyDrumKind(name){
   if(/(ride|flatride)/.test(s))return 'Ride';
   if(/(crash|china|cymbal|splash)/.test(s))return 'Crash';
   if(/(perc|cowbell|shaker|conga|bongo|tambourine|claves|woodblock)/.test(s))return 'Percussion';
+  if(/(?:^|[\/\s])(808|sub\s?bass|subkick)(?:[\/\s.]|$)/.test(s))return 'Kick';
   return null;
 }
 async function unpackDrumStem(zip){
@@ -2127,7 +2128,7 @@ async function installDrumBank(file,persist=true){
     const origin = entry.name.startsWith('Virtuosity/')?'Virtuosity Drums':entry.name.startsWith('Salamander/')?'Salamander Drumkit':'User-supplied';
     const license = origin==='Virtuosity Drums'?'CC0-1.0':origin==='Salamander Drumkit'?'CC-BY-SA-3.0':'user library / requires verification';
     bank.push({id:'real-'+i,kind,name:entry.leaf,source:origin+' / '+entry.name,license,digest:decoded.digest,
-      mono:trimmed,fp:drumFingerprint(trimmed)});
+      mono:trimmed,fp:drumFingerprint(trimmed),articulation:null});
     if(i%4===0)await new Promise(resolve=>setTimeout(resolve,0));
   }
   bankSamples=bank;
@@ -2285,7 +2286,7 @@ $('cloud-load-drums').onclick=async()=>{
           const trimmed=mono.slice(start);
           imported.push({id:'cloud-'+entry.id,kind:entry.kind,name:entry.original_filename,
             source:'Cloudflare / '+entry.source_name,license:entry.license_spdx,
-            digest:decoded.digest,mono:trimmed,fp:drumFingerprint(trimmed)});
+            digest:decoded.digest,mono:trimmed,fp:drumFingerprint(trimmed),articulation:entry.articulation||null});
         }catch(e){errors.push(entry.original_filename+': '+e.message);}
         finally{finished++;$('cloud-load-status').textContent='Downloading and indexing '+finished+'/'+chosen.length+' licensed one-shots…';}
       }
