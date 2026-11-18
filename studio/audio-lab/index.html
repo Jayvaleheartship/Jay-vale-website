@@ -1712,7 +1712,7 @@ async function readStemProject(file) {
   if (!file.size || file.size>STEM_MAX_ZIP) throw Error('Choose a nonempty ZIP up to 150 MB.');
   const bytes=new Uint8Array(await file.arrayBuffer());
   const {entries,skipped}=stemZipDirectory(bytes);
-  const audioEntries=entries.filter(item=>/\.(wav|flac)$/i.test(item.leaf));
+  const audioEntries=entries.filter(item=>/\.(wav|flac|mp3|m4a)$/i.test(item.leaf));
   if (audioEntries.length>STEM_LIMIT) throw Error('Use a ZIP with up to 24 audio entries for this pilot.');
   const offsets=new Map();
   const extras=[];
@@ -1769,7 +1769,7 @@ async function readStemProject(file) {
       known.add(hash);
     } catch (error) { skipped.push(entry.name+': '+error.message); }
   }
-  if (!tracks.length) throw Error('No usable WAV or FLAC tracks. '+skipped.slice(0,4).join(' · '));
+  if (!tracks.length) throw Error('No usable WAV, FLAC, MP3 or M4A tracks. '+skipped.slice(0,4).join(' · '));
   return {name:file.name,tracks,skipped,tempoMap,extras};
 }
 
@@ -1822,6 +1822,46 @@ function showStemRows() {
     return row;
   }));
 }
+
+function updateStemHandoffChoices(){
+  const select=$('stem-to-drum');
+  select.replaceChildren(...stemProject.tracks.map((track,i)=>{
+    const option=new Option(track.name+' · '+(track.channels[0].length/DRUM_RATE).toFixed(1)+' s',String(i));
+    if(track.channels[0].length>DRUM_RATE*240)option.disabled=true;
+    return option;
+  }));
+  const suggested=stemProject.tracks.findIndex(track=>
+    /(drum|beat|rhythm|perc|kick)/i.test(track.name)&&track.channels[0].length<=DRUM_RATE*240);
+  const firstAllowed=stemProject.tracks.findIndex(track=>track.channels[0].length<=DRUM_RATE*240);
+  const index=suggested>=0?suggested:firstAllowed;
+  if(index>=0)select.value=String(index);
+  $('stem-start-drum').disabled=index<0;
+  $('stem-handoff-status').textContent=index>=0
+    ?'Choose the drum stem above and open it directly in the reconstruction trial.'
+    :'No track is within the 240-second reconstruction limit. Export or trim the stems first.';
+}
+$('stem-start-drum').onclick=()=>stemTask(async()=>{
+  if(!stemProject)throw Error('Import a stem ZIP first.');
+  const index=Number($('stem-to-drum').value),track=stemProject.tracks[index];
+  if(!track)throw Error('Choose a valid stem.');
+  const delay=Math.round(track.offset*DRUM_RATE/1000);
+  const frames=track.channels[0].length+delay;
+  if(frames>DRUM_RATE*240)throw Error('Selected track exceeds 240 seconds including its offset. Shorten or trim it first.');
+  $('stem-handoff-status').textContent='Sending '+track.name+' to drum reconstruction…';
+  await drumBankReady;
+  // Preserve common start-of-project alignment without mixing in other tracks.
+  const channels=track.channels.map(ch=>{
+    const out=new Float32Array(frames);
+    out.set(ch,delay);
+    return out;
+  });
+  showWorkspace('drum');
+  setTrialStage(0,'Importing '+track.name+' from the stem ZIP…');
+  await drumTask(async()=>prepareDrumTrial({
+    name:track.name+' (from '+stemProject.name+')',digest:track.hash,channels
+  }));
+  $('stem-handoff-status').textContent='Transferred '+track.name+' to Rebuild drums. Source remains unmodified.';
+});
 
 function invalidateStemPreview() {
   setStemPlayer('stem-player',null);
@@ -1887,7 +1927,7 @@ async function stemTask(task) {
   const fields=Array.from($('stem-workspace').querySelectorAll('button,input,select'));
   for(const field of fields) field.disabled=true;
   try { await task(); }
-  catch(error) { $('stem-status').textContent=error.message; $('stem-action').textContent=error.message; }
+  catch(error) { $('stem-status').textContent=error.message; $('stem-action').textContent=error.message; $('stem-handoff-status').textContent='Action not completed: '+error.message; }
   finally {
     for(const field of fields) field.disabled=false;
     stemBusy=false;
@@ -1908,6 +1948,7 @@ async function importStems(file) {
     return item;
   }));
   showStemRows();
+  updateStemHandoffChoices();
   invalidateStemPreview();
   $('stem-status').textContent=imported.name+' · '+imported.tracks.length+' tracks ready'+
     (imported.skipped.length ? ' · '+imported.skipped.length+' skipped entries or warnings' : '');
