@@ -935,7 +935,7 @@ function makeTrialReport(){
     processing:{method:drumOutput.preserve?'source-locked':'experimental replacement',
       recorded_layer_strength:drumOutput.layerStrength,export_gain:drumOutput.exportGain,
       component_difference_db:drumOutput.differenceDb},
-    analysis:{onsets:drumEvents.length,confident_candidates:drumEvents.filter(e=>e.matched).length,
+    analysis:{onset_detector:fixture||!bankSamples.length?'legacy-demo':'adaptive-stereo-energy-5ms-32ms-spacing',onsets:drumEvents.length,confident_candidates:drumEvents.filter(e=>e.matched).length,
       applied_layers:drumEvents.filter(e=>e.choice!=='Source'&&(e.matched||e.manual)).length,
       bank_recordings:bankSamples.length},
     selected_samples:bankSamples.map(x=>({id:x.id,name:x.name,kind:x.kind,license:x.license,source:x.source,sha256:x.digest||null})),
@@ -1049,8 +1049,17 @@ async function decodeDrum(file, seconds) {
 
 function soloChannel(channels) {
   if (channels.length === 1) return channels[0];
-  const right = channels[1];
-  return Float32Array.from(channels[0], (value, i) => (value + right[i]) * .5);
+  const left=channels[0],right=channels[1];
+  // Near-opposite-phase stereo must not cancel out the hit being analyzed.
+  let cross=0,leftEnergy=0,rightEnergy=0;
+  for(let i=0;i<left.length;i+=64){
+    const l=left[i]||0,r=right[i]||0;
+    cross+=l*r;leftEnergy+=l*l;rightEnergy+=r*r;
+  }
+  if(leftEnergy>1e-10&&rightEnergy>1e-10&&cross/Math.sqrt(leftEnergy*rightEnergy)<-.85){
+    return leftEnergy>=rightEnergy?left:right;
+  }
+  return Float32Array.from(left, (value, i) => (value + right[i]) * .5);
 }
 
 function demoSound(kind, take) {
@@ -1178,9 +1187,9 @@ function drumSpectralBands(samples,start=0){
 }
 function classifyHits(channels) {
   const mono=soloChannel(channels);
-  const starts=onset(mono,0,mono.length);
-  if(starts.length>5000)throw Error('Over 5,000 potential onsets; use a shorter, cleaner drum stem.');
   const legacy=fixture||!bankSamples.length;
+  const starts=legacy?onset(mono,0,mono.length):JVDrumMatcher.detectOnsets(channels,{sampleRate:DRUM_RATE,minSpacingMs:32});
+  if(starts.length>5000)throw Error('Over 5,000 potential onsets; use a shorter, cleaner drum stem.');
   const candidates=legacy
     ?Object.entries(kit).map(([kind,item])=>({id:kind,kind,fp:drumFingerprint(item.mono)}))
     :bankSamples;
@@ -1229,7 +1238,7 @@ function classifyHits(channels) {
     }
     return {at,length:window,estimate:kind,distance:score,margin:gap,
       confidence,matched:accepted,choice:accepted?winner.sample.id:'Source',
-      reason,matcher:legacy?'demo-v0.5':'multi-feature-v1.0',
+      reason,matcher:legacy?'demo-v0.5':'multi-feature-v1.1-adaptive-onsets',
       sampleName:winner?.sample.name||winner?.sample.id||null,
       alternatives:ranked.slice(0,5).map(x=>x.sample.id),
       move:0,gain:0};
