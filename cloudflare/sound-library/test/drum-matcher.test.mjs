@@ -11,7 +11,7 @@ assert.ok(inline,'Inline Audio Lab engine required');
 const scope={};
 vm.runInNewContext(matcherSource,{globalThis:scope,Float32Array,Math});
 const matcher=scope.JVDrumMatcher;
-assert.equal(matcher.version,'1.0.0');
+assert.equal(matcher.version,'1.1.0');
 
 function extract(start,end){
   const i=inline.indexOf(start),j=inline.indexOf(end,i+start.length);
@@ -104,7 +104,7 @@ test('integration: actual classifier uses v1 for real bank and keeps unknown ori
  const same=new Float32Array(36000);same.set(synth(55),2400);
  const matched=classify([same]);
  assert.ok(matched.length>=1,'should detect at least one 808 onset');
- assert.equal(matched[0].matcher,'multi-feature-v1.0');
+ assert.equal(matched[0].matcher,'multi-feature-v1.1-adaptive-onsets');
  assert.equal(matched[0].matched,true);
  const different=new Float32Array(36000);different.set(synth(0,'noise',.7,70),2400);
  const rejected=classify([different]);
@@ -133,4 +133,84 @@ test('imported 808 names become pitch-aware kick candidates, while 808 snare rem
  assert.equal(kind('drums/TR808 Snare.wav'),'Snare');
  assert.equal(kind('drums/open-hi-hat.wav'),'Hat');
  assert.ok(inline.includes("['drums','percussion','bass']"),'Cloud sample loader includes 808 bass family');
+});
+
+
+function placeHits(hits,sound,frames=96000){
+  const out=new Float32Array(frames);
+  for(const [index,seconds] of hits.entries()){
+    const start=Math.round(seconds*48000),gain=index%2?.55:1;
+    for(let i=0;i<sound.length&&start+i<frames;i++)out[start+i]+=sound[i]*gain;
+  }
+  return out;
+}
+function checkTiming(found,expected,toleranceSamples=240){
+  assert.equal(found.length,expected.length,'expected '+expected.length+' separate attacks, found '+found.join(', '));
+  for(let i=0;i<expected.length;i++)
+    assert.ok(Math.abs(found[i]-Math.round(expected[i]*48000))<=toleranceSamples,
+      'onset '+i+' expected '+expected[i]+'s got '+(found[i]/48000)+'s');
+}
+test('adaptive detector retains kick, hi-hat and repeated pitched 808 timelines within 5ms',()=>{
+  checkTiming(matcher.detectOnsets([placeHits([.2,.4,.8],synth(65))]),[.2,.4,.8]);
+  checkTiming(matcher.detectOnsets([placeHits([.2,.35,.5,.65,.8],synth(0,'noise',.8,90))]),[.2,.35,.5,.65,.8]);
+  checkTiming(matcher.detectOnsets([placeHits([.2,.45,.9],synth(55,'bass',.8,8))]),[.2,.45,.9]);
+});
+test('adaptive detector resolves 40ms flams instead of legacy 60ms refractory swallowing them',()=>{
+  const sound=synth(0,'noise',.8,80);
+  checkTiming(matcher.detectOnsets([placeHits([.2,.24,.6],sound)]),[.2,.24,.6]);
+});
+test('stereo anti-phase signals still give timed hits and no phantom onsets',()=>{
+  const lead=placeHits([.2,.4],synth(55));
+  const right=Float32Array.from(lead,x=>-x);
+  checkTiming(matcher.detectOnsets([lead,right]),[.2,.4]);
+  assert.deepEqual(Array.from(matcher.detectOnsets([new Float32Array(48000)])),[]);
+});
+test('simple overlapping kick and hat still reveal nearby distinct attacks',()=>{
+  const kick=placeHits([.2,.4,.8],synth(60));
+  const hats=placeHits([.2,.44,.8],synth(0,'noise',.8,90));
+  const mixed=Float32Array.from(kick,(v,i)=>v+hats[i]);
+  checkTiming(matcher.detectOnsets([mixed]),[.2,.4,.44,.8]);
+});
+test('onset detector rejects unequal channel lengths instead of silently corrupting timestamps',()=>{
+  assert.throws(()=>matcher.detectOnsets([new Float32Array(100),new Float32Array(101)]),/Channel lengths/);
+});
+test('source-locked render preserves every original frame when matches are rejected',()=>{
+  const source=extract('function soloChannel(','function demoSound(');
+  const renderCode=extract('function peakBetween(','function refreshRender(');
+  const main=new Float32Array(48000);
+  main.set(synth(55),9600);
+  const bank=[sample('clean-kick','Kick',synth(55))];
+  const render=new Function('drumSource','drumEvents','bankSamples','kit','EXPORT_DRUM_GROUPS','$',
+    source+renderCode+';return renderDrums;')(
+      {channels:[main]},
+      [{at:9600,length:8640,move:0,gain:0,choice:'Source',matched:false,manual:false}],
+      bank,{},['Kick','Snare','Clap','Hat','Other'],
+      id=>({'drum-fidelity-mode':{value:'preserve'},'drum-layer':{value:'50'}}[id])
+    );
+  const output=render();
+  assert.equal(output.preserve,true);
+  assert.equal(output.exportGain,1);
+  assert.deepEqual(Array.from(output.mix[0]),Array.from(main));
+  assert.deepEqual(Array.from(output.source[0]),Array.from(main));
+});
+test('source-locked accepted layer is added only at original hit timeline without shifting reference',()=>{
+  const source=extract('function soloChannel(','function demoSound(');
+  const renderCode=extract('function peakBetween(','function refreshRender(');
+  const main=new Float32Array(48000);
+  main.set(synth(55),9600);
+  const bank=[sample('clean-kick','Kick',synth(55))];
+  const render=new Function('drumSource','drumEvents','bankSamples','kit','EXPORT_DRUM_GROUPS','$',
+    source+renderCode+';return renderDrums;')(
+      {channels:[main]},
+      [{at:9600,length:8640,move:0,gain:0,choice:'clean-kick',matched:true,manual:false}],
+      bank,{},['Kick','Snare','Clap','Hat','Other'],
+      id=>({'drum-fidelity-mode':{value:'preserve'},'drum-layer':{value:'35'}}[id])
+    );
+  const output=render();
+  assert.equal(output.mix[0].length,main.length);
+  assert.deepEqual(Array.from(output.source[0]),Array.from(main));
+  assert.equal(output.exportGain,1);
+  assert.ok(output.mix[0].some((v,i)=>i>=9600&&i<16000&&v!==main[i]),'additive layer expected at onset');
+  for(let i=0;i<9600;i++)assert.equal(output.mix[0][i],main[i]);
+  for(let i=20000;i<48000;i++)assert.equal(output.mix[0][i],main[i]);
 });
