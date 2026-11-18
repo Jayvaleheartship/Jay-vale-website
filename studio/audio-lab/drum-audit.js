@@ -107,7 +107,7 @@
       maxOut=Math.max(maxOut,Math.abs(o));
       if(Math.abs(o)>=.999&&Math.abs(s)<.999)clipAdded++;
     }
-    const componentDb=10*Math.log10(Math.max(EPS,deltaEnergy)/Math.max(EPS,originalEnergy));
+    const componentDb=deltaEnergy<=EPS?null:10*Math.log10(Math.max(EPS,deltaEnergy)/Math.max(EPS,originalEnergy));
     for(const e of applied){
       const at=Math.floor(e.at||0);
       if(at<0||at>=len){checks.push({index:e.index,timeSec:round(at/rate,3),status:'fail',flags:['Hit outside source timeline']});if(!e.manual)autoRevertIndices.push(e.index);continue;}
@@ -122,7 +122,7 @@
     const globalFlags=[];
     if(nonFinite)globalFlags.push('Non-finite PCM samples');
     if(preserve&&clipAdded)globalFlags.push('New clipping samples');
-    if(preserve&&componentDb> -9&&applied.length)globalFlags.push('Added audio is unusually strong');
+    if(preserve&&componentDb!==null&&componentDb> -9&&applied.length)globalFlags.push('Added audio is unusually strong');
     const status=globalFlags.length||failCount?'fail':warnCount?'warn':applied.length?'pass':'original-only';
     return {status,frameAligned:true,reason:status==='original-only'?'No recorded layers applied; original retained':null,
       sourceChannels:source.length,sourceFrames:len,durationSeconds:round(len/rate,3),
