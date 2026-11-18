@@ -160,6 +160,15 @@ nav.bar {margin:0 0 18px}
       <div><strong id="trial-bank-count">0</strong><span>Recorded samples in bank</span></div>
     </div>
     <output id="trial-match-summary" role="status">No drum analysis yet.</output>
+    <section aria-label="Automatic reconstruction quality control" id="drum-quality-section">
+      <h3>Automatic reconstruction self-check</h3>
+      <p class="muted">Each applied recorded hit is checked against its original for attack, duration/decay, three broad frequency bands, waveform agreement and loudness. Frame alignment and clipping are checked across the whole track. Unsafe automatic layers are reverted to the original before export. This is a consistency check, not a 95% similarity or listening guarantee.</p>
+      <output id="trial-quality-status" class="status" role="status">Run a drum analysis to see a measured self-check.</output>
+      <details id="trial-quality-details"><summary>Hit-by-hit sound / duration measurements</summary>
+        <div class="hit-scroll"><table class="hit-table"><thead><tr><th>Time</th><th>Result</th><th>Level Δ</th><th>Timbre Δ</th><th>Attack Δ</th><th>Duration Δ</th><th>Why</th></tr></thead><tbody id="trial-quality-hits"></tbody></table></div>
+        <p class="muted">Duration is shown only if the transient ends inside the isolated measurement window. Overlapping hits and processed recordings limit accuracy. Delta values are measurements, not perceptual percentages.</p>
+      </details>
+    </section>
     <div class="pair">
       <label>Original<audio id="drum-original" controls preload="metadata"></audio></label>
       <label>Source-locked preview<audio id="drum-render" controls preload="metadata"></audio></label>
@@ -275,6 +284,7 @@ nav.bar {margin:0 0 18px}
 </section>
 </template>
 <script src="./drum-matcher.js"></script>
+<script src="./drum-audit.js"></script>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
@@ -934,7 +944,9 @@ function makeTrialReport(){
       channels:drumSource.channels.length,duration_seconds:drumSource.channels[0].length/DRUM_RATE},
     processing:{method:drumOutput.preserve?'source-locked':'experimental replacement',
       recorded_layer_strength:drumOutput.layerStrength,export_gain:drumOutput.exportGain,
-      component_difference_db:drumOutput.differenceDb},
+      component_difference_db:drumOutput.differenceDb,
+      quality_audit:drumOutput.quality||null,
+      auto_reverted_count:drumOutput.autoRevertedCount||0},
     analysis:{onset_detector:fixture||!bankSamples.length?'legacy-demo':'adaptive-stereo-energy-5ms-32ms-spacing',onsets:drumEvents.length,confident_candidates:drumEvents.filter(e=>e.matched).length,
       applied_layers:drumEvents.filter(e=>e.choice!=='Source'&&(e.matched||e.manual)).length,
       bank_recordings:bankSamples.length},
@@ -1027,6 +1039,8 @@ function setDrumAudio(id, bytes) {
 
 function invalidateRebuild() {
   drumEvents = initialEvents = drumOutput = null;
+  $('trial-quality-status').textContent='Run a drum analysis to see a measured self-check.';
+  $('trial-quality-hits').replaceChildren();
   updateTrialMetrics();
   $('trial-export-status').textContent='Analyze a stem to enable the exports.';
   setDrumAudio('drum-render', null);
@@ -1335,17 +1349,57 @@ function renderDrums() {
 }
 
 function refreshRender() {
-  drumOutput = renderDrums();
+  if(!globalThis.JVDrumAudit)throw Error('Reconstruction self-check module is missing; no unchecked export is permitted.');
+  let audit=null,autoReverted=0,autoReasons=[];
+  // Two bounded passes: audit recorded layers -> discard unsafe automatic
+  // layers -> re-render using retained original. Manual edits remain visible.
+  for(let attempt=0;attempt<2;attempt++){
+    drumOutput=renderDrums();
+    audit=JVDrumAudit.run(drumSource.channels,drumOutput.mix,drumEvents,
+      {sampleRate:DRUM_RATE,preserve:drumOutput.preserve});
+    if(attempt!==0||!drumOutput.preserve)break;
+    const rollback=new Set(audit.autoRevertIndices||[]);
+    if(audit.globalFlags?.length)drumEvents.forEach((e,i)=>{
+      if(e.choice!=='Source'&&!e.manual)rollback.add(i);
+    });
+    if(!rollback.size)break;
+    for(const i of rollback){
+      const hit=drumEvents[i];
+      if(!hit||hit.choice==='Source'||hit.manual)continue;
+      hit.reason=(hit.reason||'Sample candidate')+'; SELF-CHECK: unsafe layer reverted to original';
+      hit.choice='Source';hit.matched=false;
+      autoReverted++;autoReasons.push({timeSec:Number((hit.at/DRUM_RATE).toFixed(3)),reason:hit.reason});
+    }
+  }
+  drumOutput.quality={...audit,autoRevertedCount:autoReverted,autoRevertReasons:autoReasons};
+  drumOutput.autoRevertedCount=autoReverted;
   updateTrialMetrics();
-  setTrialStage(3,'Preview ready: review matches and listen to the original versus the rebuilt audio.');
-  $('trial-export-status').textContent='WAV (24-bit / 48 kHz), source reference, Bitwig ZIP and JSON report are available.';
+  const summary=$('trial-quality-status');
+  const quality=drumOutput.quality;
+  const caution=quality.status==='fail'?'FAILED — review required':quality.status==='warn'?'Warnings — listen carefully':quality.status==='original-only'?'Original only — no sample additions to validate':'PASS — measured constraints met';
+  summary.textContent=`${caution}. Applied layers: ${quality.appliedCount}; auto-reverted: ${autoReverted}; failed hit checks: ${quality.failCount}; warnings: ${quality.warnCount}. Alignment: ${quality.frameAligned?'exact frame counts':'mismatch'}. Added clipping: ${quality.newClipSamples??'?'} samples. Residual energy: ${quality.componentDb??'unknown'} dB relative to source. ${(quality.globalFlags||[]).join('; ')}`;
+  const display=(v,unit='')=>v===null||v===undefined?'—':String(v)+unit;
+  $('trial-quality-hits').replaceChildren(...quality.checks.slice(0,300).map(hit=>{
+    const row=document.createElement('tr');
+    for(const val of [display(hit.timeSec,' s'),hit.status,display(hit.gainDb,' dB'),
+      display(hit.timbreDistance),display(hit.attackDeltaMs,' ms'),display(hit.durationDeltaMs,' ms'),
+      [...(hit.flags||[]),...(hit.warnings||[])].join('; ')||'Within measured limits']){
+      row.insertCell().textContent=val;
+    }
+    return row;
+  }));
+  setTrialStage(3,'Preview and automatic hit-by-hit self-check ready. Review warnings and listen A/B.');
+  $('trial-export-status').textContent=quality.status==='fail'
+    ?'Self-check found unresolved problems. Reconstructed export is blocked until these are resolved; the original remains available.'
+    :'WAV (24-bit / 48 kHz), source reference, Bitwig ZIP and JSON report are available.';
   setDrumAudio('drum-render', wavBytes(drumOutput.mix));
   const replaced = drumEvents.filter(event => event.choice !== 'Source' && (!drumOutput.preserve || event.matched || event.manual)).length;
   const total=drumEvents.length;
   const difference=Number.isFinite(drumOutput.differenceDb)?drumOutput.differenceDb.toFixed(1)+' dB':'unavailable';
   $('drum-status').textContent = drumOutput.preserve
-    ?`Source-locked preview: ${replaced} of ${total} onsets received subtle ${fixture?'synthesized demo':'recorded'} layers; ${total-replaced} received no extra layer. Added-component energy: ${difference} relative to retained audio. The original sound is the foundation, not a new recording.`
-    :`Experimental replacement: ${replaced} of ${total} onsets replaced, ${total-replaced} retained. Replacements may not sound like the input.`;
+    ?`Source-locked preview: ${replaced} of ${total} onsets received subtle ${fixture?'synthesized demo':'recorded'} layers; ${total-replaced} received no extra layer. Added-component energy: ${difference} relative to retained audio. Auto-reverted ${autoReverted} unsafe layers.`
+    :`Experimental replacement: ${replaced} of ${total} onsets replaced; ${total-replaced} retained. Changes can be audible; self-check results are shown above.`;
+  if(autoReverted)showHits();
 }
 
 function showHits() {
@@ -1431,12 +1485,18 @@ function zipArchive(entries) {
   return new Blob([...files,...directory,end],{type:'application/zip'});
 }
 
+function assertSafeDrumExport(){
+  if(!drumOutput?.quality)throw Error('Run the reconstruction self-check before exporting.');
+  if(drumOutput.quality.status==='fail')throw Error('Self-check failed. Review or reset edited hits before exporting the reconstructed version.');
+}
 function exportDrums() {
+  assertSafeDrumExport();
   const {mix, source, stems, exportGain} = drumOutput;
   const manifest = {
     version:'drum-source-locked-0.5', preset:drumOutput.preserve?'source-locked-accent':'experimental-replacement',
     preserveSource:drumOutput.preserve,recordedLayerStrength:drumOutput.layerStrength,componentDifferenceDb:drumOutput.differenceDb,
     sampleRate:DRUM_RATE, originSample:0,
+    qualityAudit:drumOutput.quality?{status:drumOutput.quality.status,appliedCount:drumOutput.quality.appliedCount,failCount:drumOutput.quality.failCount,warnCount:drumOutput.quality.warnCount,newClipSamples:drumOutput.quality.newClipSamples,componentDb:drumOutput.quality.componentDb,autoRevertedCount:drumOutput.autoRevertedCount||0}:null,
     frameCount:mix[0].length, channels:mix.length, exportGain, tailPolicy:'clip to source duration',
     source:{name:drumSource.name, sha256:drumSource.digest ?? null, synthesizedDemo:fixture},
     realSampleBank:bankSamples.map(item=>({id:item.id,name:item.name,kind:item.kind,sha256:item.digest,license:item.license||'user supplied; not verified',source:item.source||'user supplied'})),
@@ -1616,6 +1676,7 @@ $('drum-export').onclick = () => drumTask(async () => exportDrums());
 
 $('trial-export-wav').onclick=()=>drumTask(async()=>{
   if(!drumOutput)throw Error('Analyze a stem before exporting WAV.');
+  assertSafeDrumExport();
   setTrialStage(4,'Preparing rebuilt 24-bit WAV…');
   const name=safeTrialFilename(drumSource.name)+'-reconstructed-24bit-48k.wav';
   saveTrialBlob(new Blob([stemWav24(drumOutput.mix,drumOutput.mix[0].length)],{type:'audio/wav'}),name);
@@ -1646,6 +1707,7 @@ $('send-to-compare').onclick = () => {
   $('case-name').value = 'Drum reconstruction';
   $('detector-type').value = 'music';
   const original = drumSource.original || new File([wavBytes(drumSource.channels)], 'Drum reference demo.wav',{type:'audio/wav'});
+  assertSafeDrumExport();
   const rebuilt = new File([wavBytes(drumOutput.mix)], 'Rebuilt drum track.wav',{type:'audio/wav'});
   showWorkspace('compare');
   $('comparison-tools').open = true;
