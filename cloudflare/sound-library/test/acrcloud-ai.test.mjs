@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {
-  aiDetectionConfigured, aiDetectionStatus, submitAiDetection,
+  aiDetectionConfigured, aiDetectionStatus, submitAiDetection,submitLargeAiDetection,
   pollAiDetection, deleteAiDetection
 } from '../src/acrcloud-ai.js';
 
@@ -108,6 +108,74 @@ test('mismatched region is blocked before provider upload', async () => {
     });
 });
 
+test('presigned streaming upload verifies container, avoids Bearer token on S3, then submits metadata', async () => {
+  const called = [];
+  const request = new Request('https://worker.test/v1/ai-detection/stream', {
+    method:'POST',body: new File(['RIFFexample'],'track.wav',{type:'audio/wav'}),
+    headers:{'x-confirm-provider-upload':'yes','x-audio-size':'11',
+      'x-audio-filename':'track.wav','content-type':'audio/wav'}
+  });
+  await mockFetch(async (url,options) => {
+    const address=String(url);called.push(address);
+    if(address.includes('api-v2.acrcloud.com')){
+      assert.equal(options.headers.authorization,'Bearer '+env.ACRCLOUD_ACCESS_TOKEN);
+      return Response.json({data:{id:12345,region:'eu-west-1',engine:5}});
+    }
+    if(address.includes('/presigned-upload')){
+      assert.equal(options.headers.get('authorization'),'Bearer '+env.ACRCLOUD_ACCESS_TOKEN);
+      return Response.json({data:{
+        presigned_url:'https://my-bucket.s3.eu-west-1.amazonaws.com/fs/queue/abc.wav?X-Amz-Signature=dummy',
+        key:'fs/queue/abc.wav',headers:{'content-type':'audio/wav'}
+      }});
+    }
+    if(address.includes('amazonaws.com')){
+      assert.equal(options.method,'PUT');
+      assert.equal(options.headers.has('authorization'),false);
+      assert.equal(options.headers.get('content-type'),'audio/wav');
+      return new Response('',{status:200});
+    }
+    assert.equal(options.method,'POST');
+    const submission=JSON.parse(options.body);
+    assert.deepEqual(submission,{data_type:'audio',key:'fs/queue/abc.wav',filename:'track.wav'});
+    return Response.json({data:{file_id:sampleId,state:0}},{status:201});
+  },async()=>{
+    const response=await submitLargeAiDetection(request,env);
+    assert.equal(response.status,202);
+    assert.equal((await response.json()).upload_method,'presigned_stream');
+  });
+  assert.equal(called.length,4);
+});
+
+test('presigned upload rejects non-S3 URL and never sends any audio to that host',async()=>{
+  let calls=0;
+  const request = new Request('https://worker.test/v1/ai-detection/stream',{
+    method:'POST',body:new File(['RIFFexample'],'track.wav',{type:'audio/wav'}),
+    headers:{'x-confirm-provider-upload':'yes','x-audio-size':'11','x-audio-filename':'track.wav'}
+  });
+  await mockFetch(async(url)=>{
+    calls++;
+    if(String(url).includes('api-v2.acrcloud.com'))
+      return Response.json({data:{id:12345,region:'eu-west-1',engine:5}});
+    return Response.json({data:{presigned_url:'https://evil.example.net/receive',
+      key:'fs/queue/test.wav'}});
+  },async()=>{
+    const response=await submitLargeAiDetection(request,env);
+    assert.equal(response.status,502);
+    assert.match((await response.json()).error,/untrusted upload destination/);
+  });
+  assert.equal(calls,2);
+});
+
+test('large upload refuses 100 MiB before contacting any provider',async()=>{
+  const request=new Request('https://worker.test/v1/ai-detection/stream',{
+    method:'POST',body:new File(['x'],'track.wav'),
+    headers:{'x-confirm-provider-upload':'yes',
+      'x-audio-size':String(100*1024*1024),'x-audio-filename':'track.wav'}
+  });
+  const response=await submitLargeAiDetection(request,env);
+  assert.equal(response.status,413);
+});
+
 test('poll preserves exact provider model output including stem, segments and source scores', async () => {
   const detector = [
     {stem:'original',ai_probability:97.61,prediction:'ai_generated',likely_source:'Suno',model_id:'model-v1',
@@ -163,4 +231,7 @@ test('UI documents provenance and does not embed any ACRCloud access token', asy
   assert.doesNotThrow(()=>new Function(scripts[0][1]));
   assert.doesNotMatch(page,/ACRCLOUD_ACCESS_TOKEN\s*=/);
   assert.doesNotMatch(page,/localStorage/);
+  const worker=await readFile(new URL('../src/index.js',import.meta.url),'utf8');
+  assert.match(worker,/await aiDetectionStatus\(env\)/);
+  assert.match(worker,/submitLargeAiDetection\(req,env\)/);
 });
