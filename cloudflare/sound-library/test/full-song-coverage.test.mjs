@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-const source=fs.readFileSync(new URL('./full-song-coverage.js',import.meta.url),'utf8');
+const source=fs.readFileSync(new URL('../../../studio/audio-lab/full-song-coverage.js',import.meta.url),'utf8');
 const root={};vm.runInNewContext(source,{globalThis:root,Math,Number,Set,RegExp});
 const m=root.JVFullSongCoverage;
 const recorded={sha256:'f'.repeat(64),sourceUrl:'https://example.org/recorded.wav',licenseSpdx:'CC0-1.0',originType:'recorded_acoustic_instrument',recordingOriginVerified:true,originEvidence:'Artist has confirmed recording provenance'};
