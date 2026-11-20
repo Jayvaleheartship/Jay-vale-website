@@ -62,6 +62,7 @@ nav.bar {margin:0 0 18px}
       <button id="stem-demo">Try demo ZIP</button>
     </div>
     <output id="stem-status" class="status" role="status">Choose a ZIP up to 150 MB.</output>
+    <output id="stem-reconstruction-provenance" class="status" role="status">No full-song reconstruction verified. Source and rebuilt layers are accounted for separately.</output>
     <details id="stem-warnings" hidden><summary>Import warnings</summary><ul id="stem-warning-list"></ul></details>
   </section>
   <section id="stem-results" class="panel" hidden>
@@ -285,6 +286,8 @@ nav.bar {margin:0 0 18px}
 </template>
 <script src="./drum-matcher.js"></script>
 <script src="./drum-audit.js"></script>
+<script src="./full-song-project.js"></script>
+<script src="./full-song-coverage.js"></script>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
@@ -1939,6 +1942,22 @@ function stemMix(project) {
   return {selected,reference,frames,mix,offset,gain};
 }
 
+function updateStemCoverage() {
+  const status=$('stem-reconstruction-provenance');
+  if(!stemProject){status.textContent='No full-song project imported.';return;}
+  const items=stemProject.tracks.filter(track=>track.use==='mix');
+  if(!items.length){status.textContent='No source stems currently selected.';return;}
+  const stems=items.map(track=>{
+    const family=JVFullSongProject.stemInfo(track.name).family;
+    return {filename:track.name,family,layerInventoryReviewed:false,residualAccountedFor:false,sourceAudioFraction:1,layers:[]};
+  });
+  const audit=JVFullSongCoverage.auditProject({stems,finalMix:{decodedFrameAligned:false,noClipping:false,listeningApproved:false}});
+  status.textContent='RECONSTRUCTION AUDIT: '+audit.instrumentalStemsTechnicalComplete+'/'+audit.instrumentalStems+
+    ' selected instrumental stems independently rebuilt; '+audit.voiceStemsSeparate+
+    ' vocal stem(s) routed separately. ALL imported tracks are currently original/source-retained.'+
+    ' A ZIP preview and aligned export are not reconstructed recordings. 95% target requires an independent source audit and listening review.';
+}
+
 function showStemRows() {
   $('stem-rows').replaceChildren(...stemProject.tracks.map(track=>{
     const row=document.createElement('tr');
@@ -1950,7 +1969,7 @@ function showStemRows() {
     choice.setAttribute('aria-label','Use '+track.name);
     for(const [value,label] of [['mix','Mix'],['reference','Reference'],['omit','Omit']]) choice.add(new Option(label,value));
     choice.value=track.use;
-    choice.onchange=()=>{track.use=choice.value; invalidateStemPreview();};
+    choice.onchange=()=>{track.use=choice.value; invalidateStemPreview();updateStemCoverage();};
     row.insertCell().append(choice);
     const shift=document.createElement('input');
     shift.type='number'; shift.min=0; shift.max=60000; shift.step='any'; shift.value=track.offset;
@@ -2095,6 +2114,7 @@ async function importStems(file) {
   }));
   showStemRows();
   updateStemHandoffChoices();
+  updateStemCoverage();
   invalidateStemPreview();
   $('stem-status').textContent=imported.name+' · '+imported.tracks.length+' tracks ready'+
     (imported.skipped.length ? ' · '+imported.skipped.length+' skipped entries or warnings' : '');
