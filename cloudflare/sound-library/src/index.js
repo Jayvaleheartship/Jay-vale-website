@@ -1,4 +1,5 @@
 import {verifyCloudBridge,readCloudBridgeHealth} from './bridge-selftest.js';
+import {aiDetectionStatus,submitAiDetection,pollAiDetection,deleteAiDetection} from './acrcloud-ai.js';
 import {newChallenge,openReadSession,verifyReadSession,pruneLabChallenges} from './session-auth.js';
 import {auditStorage,auditedHealth} from './storage-audit.js';
 import {seedCC0} from './cc0-seeder.js';
@@ -19,7 +20,7 @@ async function readable(request,env){return authorized(request,env.READ_TOKEN)||
 function configured(env){return !!(env.SAMPLES&&env.DB&&typeof env.READ_TOKEN==='string'&&env.READ_TOKEN.length>=32&&typeof env.ADMIN_TOKEN==='string'&&env.ADMIN_TOKEN.length>=32&&env.READ_TOKEN!==env.ADMIN_TOKEN);}
 function corsHeaders(req,env){
  const origin=req.headers.get('origin');
- if(origin&&origin===env.ALLOWED_ORIGIN)return {'access-control-allow-origin':origin,'access-control-allow-methods':'GET,POST,OPTIONS','access-control-allow-headers':'authorization,content-type','vary':'Origin'};
+ if(origin&&origin===env.ALLOWED_ORIGIN)return {'access-control-allow-origin':origin,'access-control-allow-methods':'GET,POST,OPTIONS','access-control-allow-headers':'authorization,content-type,x-confirm-provider-upload','vary':'Origin'};
  return {};
 }
 function wrap(response,request,env){
@@ -192,6 +193,16 @@ export default {
    if(path==='/v1/library/samples'&&req.method==='GET')return wrap(await listLibrarySamples(req,env),req,env);
    if(path==='/v1/catalog'&&req.method==='GET')return wrap(await readable(req,env)?json(await catalogueInventory(env)):error('Unauthorized',401),req,env);
    if(path==='/v1/status'&&req.method==='GET')return wrap(await readable(req,env)?json(await totals(env)):error('Unauthorized',401),req,env);
+   // Explicitly authorized AI Music Detection: no provider credentials in the browser.
+   if(path==='/v1/ai-detection/status'&&req.method==='GET')
+     return wrap(await readable(req,env)?aiDetectionStatus(env):error('Unauthorized',401),req,env);
+   if(path==='/v1/ai-detection'&&req.method==='POST')
+     return wrap(await readable(req,env)?await submitAiDetection(req,env):error('Unauthorized',401),req,env);
+   const aiId=path.match(/^\/v1\/ai-detection\/([0-9a-fA-F-]{36})$/);
+   if(aiId&&req.method==='GET')
+     return wrap(await readable(req,env)?await pollAiDetection(env,aiId[1]):error('Unauthorized',401),req,env);
+   if(aiId&&req.method==='DELETE')
+     return wrap(await readable(req,env)?await deleteAiDetection(env,aiId[1]):error('Unauthorized',401),req,env);
    if(path==='/v1/match'&&req.method==='GET')return wrap(await matches(req,env),req,env);
    if(path==='/v1/admin/samples'&&req.method==='POST')return wrap(await upload(req,env),req,env);
    const m=path.match(/^\/v1\/samples\/([0-9a-fA-F-]{36})$/);
