@@ -62,10 +62,11 @@ export async function inspectAiContainer(env) {
     return {verified: false, enabled: false,
       message: 'ACRCloud container ID or region does not match private configuration.'};
   }
-  // ACRCloud documents both engine 5 and a separate AI detection flag.
+  // ACRCloud documents AI Detection as an enablement flag, independent
+  // of the normal File Scanning recognition engine (1–4).
   const engine = Number(container.engine);
   const aiFlag = container.ai_detection ?? container.policy?.ai_detection;
-  const enabled = engine === 5 || aiFlag === true || Number(aiFlag) === 1;
+  const enabled = aiFlag === true || Number(aiFlag) === 1;
   return {verified: true, enabled, engine, region: container.region,
     message: enabled ? 'ACRCloud AI Music Detection is enabled.'
       : 'ACRCloud container exists, but AI Music Detection is not enabled.'};
