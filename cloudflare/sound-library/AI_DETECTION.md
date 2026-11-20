@@ -13,14 +13,14 @@ The UI lives at studio/audio-lab/ai-detection.html and is separate from reconstr
 In Cloudflare Worker jay-vale-sound-library, configure these values as server-side secrets, never in GitHub or browser:
 
 - ACRCLOUD_ACCESS_TOKEN: token with ACRCloud File Scanning API access.
-- ACRCLOUD_CONTAINER_ID: an AI Music Detection-enabled ACRCloud File Scanning container (engine 5).
+- ACRCLOUD_CONTAINER_ID: an AI Music Detection-enabled ACRCloud File Scanning container (check policy.ai_detection=1; the standard engine number is independent).
 - ACRCLOUD_REGION: eu-west-1, us-west-2, or ap-southeast-1, matching that container.
 
 For example use npx wrangler secret put followed by each of those names from the cloudflare/sound-library directory. Enter secrets only in a trusted private terminal. Never paste them in chat.
 
 The page uses the existing HMAC-protected READ_TOKEN to create a 15-minute session. Never enter ADMIN_TOKEN into a browser page. After provisioning, explicitly deploy the Cloudflare Worker: publishing static files alone does not activate the new API endpoints.
 
-For any customer-facing offering, verify the ACRCloud contract allows redistribution or integration; this integration is intended for the owner's authenticated internal research. Paid scans can incur costs.
+An existing ACRCloud registration email was found in the linked mailbox, but account activation and an enabled AI detection container are not confirmed. The user must finish the private sign-in profile; never place activation links or credentials in project files.\n\nFor any customer-facing offering, verify the ACRCloud contract allows redistribution or integration; this integration is intended for the owner's authenticated internal research. Paid scans can incur costs.
 
 ## API endpoints
 
@@ -31,14 +31,14 @@ All routes require an authorized short-lived bearer session:
 - GET /v1/ai-detection/:uuid — provider state and unchanged results.ai_detection entries.
 - DELETE /v1/ai-detection/:uuid — delete the provider's stored result.
 
-The Worker allows MP3, WAV, M4A, FLAC and OGG up to 50 MiB. ACRCloud documents a 900-second duration limit. The Worker uses an allowlisted ACRCloud regional hostname and never forwards provider tokens or raw error payloads to the browser.
+The Worker supports validated direct MP3, WAV, M4A, FLAC and OGG uploads up to 50 MiB. Experimental presigned streaming is disabled by default until the endpoint contract is verified with ACRCloud. ACRCloud documents a 900-second duration limit. The Worker verifies the AI detection flag and region through ACRCloud's Console API before accepting paid scans. It uses an allowlisted ACRCloud regional hostname and never forwards provider tokens or raw error payloads to the browser.
 
 ## Workflow
 
 1. Open AI Detection Lab from the Audio Lab page and connect using READ_TOKEN.
 2. Choose audio and its comparison label: original, rebuilt, vocals, instrumental, other.
 3. Explicitly approve external provider submission; submit.
-4. Inspect full mix/vocal/accompaniment scores and segments if ACRCloud returns them.
+4. Inspect time-window scores from ACRCloud; the selected audio label identifies mix/vocals/accompaniment when analyzed as separate uploads.
 5. Repeat with another variant and compare provider scores without recalibration.
 6. Export JSON, and optionally delete the provider result.
 
