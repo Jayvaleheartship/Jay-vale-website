@@ -42,6 +42,14 @@ Updated 18 November 2026 after Audio Lab v0.8 matching engine CI and live record
 - [x] GitHub Actions CI 19/19 tests passed; private Cloudflare library still reports 309 indexed R2/D1 samples, no missing files.
 - [ ] Real-user-song matching accuracy is NOT verified by a self-generated bank calibration loop. Measure false accepts/false rejects, timing and listening quality with `2 Drums.mp3` in Tasks 5, 8 and 9.
 
+## ACRCloud account screenshot and result-display correction — 20 November 2026
+
+- [x] Owner's ACRCloud screenshot verifies an enabled, completed AI Music Detection scan on reconstructed Jay Vale Interlude MP3 (193 seconds). ACRCloud console reports `stem=Original`, prediction `AI Generated Music`, likely source `Suno`, AI probability `99.22%`. This is a user-observed live console result, **not** an authenticated API test.
+- [x] Confirmed current ACRCloud metadata schema has outer `ai_detection[]` entries labeled `original`, `vocals` or `accompaniment`, plus optional nested `segments[]`. Reworked the UI to show each provider stem and detailed segments without inferring unreturned vocal/accompaniment scores.
+- [x] Original-versus-reconstruction comparison now uses only the actual `stem=original` score and does not substitute a different stem or compute an invented mean.
+- [ ] ACRCloud Console access token and numeric File Scanning container ID remain unknown. They must be obtained through the authenticated console and entered as private Cloudflare Worker settings. Never post tokens in chat or commit them.
+- [ ] Run real API request and compare with console's 99.22% reference result. Live browser deployment and cross-check remain unverified.
+
 ## AI detection engineering and test verification — 20 November 2026
 
 - [x] Cross-checked against ACRCloud public File Scanning and AI Music Detection documentation. Activation uses container `policy.ai_detection=1`, not a hypothetical engine 5.
