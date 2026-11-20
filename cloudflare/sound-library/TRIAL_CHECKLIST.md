@@ -89,6 +89,18 @@ Updated 18 November 2026 after Audio Lab v0.8 production verification, Task 5 of
 - [ ] **9. Objective evaluation — HIGH.** Spectral similarity, transient timing, tempo, loudness, artifact metrics; AI classifiers supplementary only.
 - [ ] **10. Bitwig / ACE Studio connections — LATER.** Local-only bridge for licensed Bitwig sounds and a practical exported-stem flow.
 
+## Full-song reconstruction workstream — 20 November 2026
+
+**Design accepted as a proposed next phase; not built or deployed.** See [FULL_SONG_RECONSTRUCTION_PLAN.md](FULL_SONG_RECONSTRUCTION_PLAN.md). A full uploaded stem ZIP is the input to the first complete-song test. Existing tasks 5, 6, 8 and 9 remain prerequisites; do not conflate the previous self-sampled drum pilot with independent instrument reconstruction.
+
+- [ ] **11. Persistent whole-song ZIP projects.** Validate and decode complete aligned stems, immutable original hash inventory, fixed timeline, mono/stereo analysis, reusable `projects/<project_id>/` path, resumable manifests and private storage policy.
+- [ ] **12. Layer discovery across every stem.** Drums/bass/polyphonic pitched instruments/vocals/effects classification, note/onset articulation analysis, uncertain/unknown labels and editable review.
+- [ ] **13. Demand-driven sample gap queue and legal sourcing.** Search current 309-recording R2 bank first, generate missing instrument/pitch/velocity/articulation list, review CC0/license for each new source, deduplicate by hash, import only through authorized admin backend, reconcile D1/R2 and monitor 9.5GB soft cap.
+- [ ] **14. Full-stem sample reconstruction and original-time mixdown.** Reuse measured drum system, implement polyphonic multisample matching, source/hybrid fallback, preserve vocals and stereo effects as appropriate; export independent stems, MIDI-like events and full WAV/master without changing timing.
+- [ ] **15. Full-song source-reference self-audit and A/B listening.** Event/stem/master spectral, pitch, attack/decay, alignment, clipping, distortion, residuals and transparent provenance shares; measure and listen to actual user material, log bad segments, auto-revert unsafe choices.
+- [ ] **16. External music/voice detector evaluation.** Test exported originals/hybrids/rebuilds only with genuine provider output; record model, content type, result, uncertainty and file hashes. An AI detector score is not proof of human authorship.
+- [x] **Planning record only:** new detailed spec committed on development branch. No tests claimed for unbuilt work; no production branch merge, Cloudflare write or Netlify deploy.
+
 ## Verify before moving to the next item
 
 Cloud Worker health: https://jay-vale-sound-library.helgacoupe.workers.dev/health
