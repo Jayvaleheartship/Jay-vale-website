@@ -81,7 +81,7 @@ export async function aiDetectionStatus(env) {
     provider_ready: check.enabled,
     engine: check.engine ?? null,
     region: check.region ?? null,
-    upload_max_bytes: MAX_STREAM_BYTES,
+    upload_max_bytes: env.ACRCLOUD_ENABLE_EXPERIMENTAL_STREAM === 'true' ? MAX_STREAM_BYTES : MAX_AUDIO_BYTES,
     direct_upload_max_bytes: MAX_AUDIO_BYTES,
     provider_max_duration_seconds: 900,
     interpretation: 'Provider model output, not proof of origin',
@@ -187,6 +187,10 @@ export async function submitAiDetection(request, env) {
  * This route is experimental until verified with a live ACRCloud container.
  */
 export async function submitLargeAiDetection(request, env) {
+  // The presigned-upload contract is not yet verified against this provider
+  // account. Keep the experimental path disabled instead of risking audio loss.
+  if (env.ACRCLOUD_ENABLE_EXPERIMENTAL_STREAM !== 'true')
+    return fail('Large-file streaming is not validated or enabled. Use a smaller original file.', 503);
   if (!aiDetectionConfigured(env)) return fail('ACRCloud API is not configured', 503);
   if (request.headers.get('x-confirm-provider-upload') !== 'yes')
     return fail('Confirm the external provider upload before submission');
