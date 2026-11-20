@@ -108,6 +108,15 @@ test('mismatched region is blocked before provider upload', async () => {
     });
 });
 
+test('streaming upload remains disabled without verified provider contract',async()=>{
+  const request = new Request('https://worker.test/v1/ai-detection/stream',{
+    method:'POST',body:new File(['audio'],'track.wav'),
+    headers:{'x-confirm-provider-upload':'yes','x-audio-size':'5','x-audio-filename':'track.wav'}
+  });
+  const response = await submitLargeAiDetection(request,env);
+  assert.equal(response.status,503);
+});
+
 test('presigned streaming upload verifies container, avoids Bearer token on S3, then submits metadata', async () => {
   const called = [];
   const request = new Request('https://worker.test/v1/ai-detection/stream', {
@@ -139,7 +148,7 @@ test('presigned streaming upload verifies container, avoids Bearer token on S3, 
     assert.deepEqual(submission,{data_type:'audio',key:'fs/queue/abc.wav',filename:'track.wav'});
     return Response.json({data:{file_id:sampleId,state:0}},{status:201});
   },async()=>{
-    const response=await submitLargeAiDetection(request,env);
+    const response=await submitLargeAiDetection(request,{...env,ACRCLOUD_ENABLE_EXPERIMENTAL_STREAM:'true'});
     assert.equal(response.status,202);
     assert.equal((await response.json()).upload_method,'presigned_stream');
   });
@@ -159,7 +168,7 @@ test('presigned upload rejects non-S3 URL and never sends any audio to that host
     return Response.json({data:{presigned_url:'https://evil.example.net/receive',
       key:'fs/queue/test.wav'}});
   },async()=>{
-    const response=await submitLargeAiDetection(request,env);
+    const response=await submitLargeAiDetection(request,{...env,ACRCLOUD_ENABLE_EXPERIMENTAL_STREAM:'true'});
     assert.equal(response.status,502);
     assert.match((await response.json()).error,/untrusted upload destination/);
   });
