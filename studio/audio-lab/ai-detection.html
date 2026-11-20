@@ -113,11 +113,11 @@ footer{padding-bottom:25px;font-size:12px;color:var(--muted)}
 const ROOT='https://jay-vale-sound-library.helgacoupe.workers.dev';
 const PROOF_CONTEXT='jay-vale-audio-lab/v1/proof/';
 const $=id=>document.getElementById(id);
-let accessToken=null, expiry=0, activeFileId=null, activeReport=null, activeName='', activeLabel='', busy=false,previewUrl=null;
+let accessToken=null, expiry=0, providerReady=false, activeFileId=null, activeReport=null, activeName='', activeLabel='', busy=false,previewUrl=null;
 const comparisons=[];
 function status(id,message,isError=false){const element=$(id);element.textContent=message;element.dataset.error=isError?'true':'false';}
 function connected(){return Boolean(accessToken&&Date.now()<expiry-15000);}
-function actionState(){ $('disconnect').disabled=!accessToken; $('scan').disabled=busy||!connected()||!$('audio').files[0]||!$('agree').checked; $('check').disabled=busy||!connected()||!activeFileId; }
+function actionState(){ $('disconnect').disabled=!accessToken; $('scan').disabled=busy||!connected()||!providerReady||!$('audio').files[0]||!$('agree').checked; $('check').disabled=busy||!connected()||!activeFileId; }
 function toB64URL(bytes){let s='';for(const b of bytes)s+=String.fromCharCode(b);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 async function call(path,options={},requiresAuth=true){
   if(requiresAuth&&!connected())throw Error('Session expired. Reconnect using your READ_TOKEN.');
@@ -145,21 +145,26 @@ $('connect').onclick=async()=>{
     if(auth.scope!=='library:read'||!auth.access_token||auth.expires_in>900)throw Error('Unexpected session response');
     accessToken=auth.access_token;expiry=Date.now()+auth.expires_in*1000;
     const provider=await call('/v1/ai-detection/status');
-    status('connection',provider.configured?'Connected. ACRCloud server configuration found.':'Connected to library. ACRCloud provider credentials still need server configuration.',!provider.configured);
-  }catch(e){accessToken=null;expiry=0;status('connection',e.message,true);}
+    providerReady=provider.provider_ready===true;
+    status('connection',providerReady?'Connected. Verified AI detection container: '+provider.region+' / engine '+provider.engine+'.':('Connected to library. '+provider.message),!providerReady);
+  }catch(e){accessToken=null;expiry=0;providerReady=false;status('connection',e.message,true);}
   finally{key='';busy=false;$('connect').disabled=false;actionState();}
 };
-$('disconnect').onclick=()=>{accessToken=null;expiry=0;status('connection','Disconnected. Session token discarded.');actionState();};
+$('disconnect').onclick=()=>{accessToken=null;expiry=0;providerReady=false;status('connection','Disconnected. Session token discarded.');actionState();};
 $('audio').onchange=()=>{
   if(previewUrl)URL.revokeObjectURL(previewUrl);
   const file=$('audio').files[0]; $('preview').hidden=!file;
   if(file){previewUrl=URL.createObjectURL(file);$('preview').src=previewUrl;status('scan-status',file.name+' ('+(file.size/1024/1024).toFixed(1)+' MiB) ready for private upload.');}
+  $('preview').onloadedmetadata=()=>{
+    const duration=$('preview').duration;
+    if(Number.isFinite(duration)&&duration>900)status('scan-status','Recording exceeds the 15-minute provider limit. Prepare a shorter segment before submitting.',true);
+  };
   else{previewUrl=null;$('preview').removeAttribute('src');}
   actionState();
 };
 $('agree').onchange=actionState;
 function el(tag,text,className){const node=document.createElement(tag);if(text!==undefined)node.textContent=String(text);if(className)node.className=className;return node;}
-function pct(value){const v=Number(value);return Number.isFinite(v)?Math.max(0,Math.min(100,v)).toFixed(2)+'%':'Not provided';}
+function pct(value){if(value===null||value===undefined||value==='')return 'Not provided';const v=Number(value);return Number.isFinite(v)?Math.max(0,Math.min(100,v)).toFixed(2)+'%':'Not provided';}
 function numberValue(value){return Number.isFinite(Number(value))?Number(value):0;}
 function addStat(container,title,value){const box=el('div',undefined,'stat');box.append(el('strong',value),el('span',title));container.append(box);}
 function addMeter(container,label,value){
@@ -209,7 +214,8 @@ function recordComparison(){
   const entries=activeReport?.model_results||[];
   const original=entries.find(x=>x.stem==='original')||entries[0];
   if(!original)return;
-  comparisons.push({name:activeName,label:activeLabel,probability:original.ai_probability,prediction:original.prediction,source:original.likely_source,model:original.model_id});
+  if(comparisons.some(x=>x.scanId===activeFileId))return;
+  comparisons.push({scanId:activeFileId,name:activeName,label:activeLabel,probability:original.ai_probability,prediction:original.prediction,source:original.likely_source,model:original.model_id});
   const body=$('comparison');body.replaceChildren();
   for(const item of comparisons){
     const tr=el('tr');
