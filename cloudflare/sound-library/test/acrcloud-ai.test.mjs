@@ -35,7 +35,7 @@ test('only accepted ACRCloud region and server-side secrets enable detection', a
   assert.equal(aiDetectionConfigured({...env, ACRCLOUD_CONTAINER_ID:'../secret'}), false);
   await mockFetch(async (url) => {
     assert.equal(url, 'https://api-v2.acrcloud.com/api/fs-containers/12345');
-    return Response.json({data:{id:12345,region:'eu-west-1',engine:5}});
+    return Response.json({data:{id:12345,region:'eu-west-1',engine:1,policy:{ai_detection:1}}});
   }, async () => {
     const status = await (await aiDetectionStatus(env)).json();
     assert.equal(status.configured, true);
@@ -119,7 +119,7 @@ test('presigned streaming upload verifies container, avoids Bearer token on S3, 
     const address=String(url);called.push(address);
     if(address.includes('api-v2.acrcloud.com')){
       assert.equal(options.headers.authorization,'Bearer '+env.ACRCLOUD_ACCESS_TOKEN);
-      return Response.json({data:{id:12345,region:'eu-west-1',engine:5}});
+      return Response.json({data:{id:12345,region:'eu-west-1',engine:1,policy:{ai_detection:1}}});
     }
     if(address.includes('/presigned-upload')){
       assert.equal(options.headers.get('authorization'),'Bearer '+env.ACRCLOUD_ACCESS_TOKEN);
@@ -155,7 +155,7 @@ test('presigned upload rejects non-S3 URL and never sends any audio to that host
   await mockFetch(async(url)=>{
     calls++;
     if(String(url).includes('api-v2.acrcloud.com'))
-      return Response.json({data:{id:12345,region:'eu-west-1',engine:5}});
+      return Response.json({data:{id:12345,region:'eu-west-1',engine:1,policy:{ai_detection:1}}});
     return Response.json({data:{presigned_url:'https://evil.example.net/receive',
       key:'fs/queue/test.wav'}});
   },async()=>{
