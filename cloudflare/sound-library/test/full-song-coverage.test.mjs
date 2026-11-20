@@ -23,3 +23,12 @@ test('vocals are a separate workflow, never automatically called human',()=>{con
 test('one stereo failure blocks instrument success',()=>{const s=stem();s.layers[0].quality.stereoPass=false;assert.equal(m.auditStem(s).technicalComplete,false)});
 test('no clipping and frame alignment are mandatory for whole mix',()=>{let p=project();p.finalMix.noClipping=false;assert.equal(m.auditProject(p).technicalComplete,false);p=project();p.finalMix.decodedFrameAligned=false;assert.equal(m.auditProject(p).technicalComplete,false)});
 test('unaccounted effects residual blocks reconstruction',()=>{const s=stem();s.residualAccountedFor=false;assert.equal(m.auditStem(s).technicalComplete,false)});
+test('stem ZIP importer displays full-song source-only status and does not silently claim a rebuild',()=>{
+  const html=fs.readFileSync(new URL('../../../studio/audio-lab/index.html',import.meta.url),'utf8');
+  assert.match(html,/<script src="\.\/full-song-coverage\.js"><\/script>/);
+  assert.match(html,/<script src="\.\/full-song-project\.js"><\/script>/);
+  assert.match(html,/stem-reconstruction-provenance/);
+  assert.match(html,/RECONSTRUCTION AUDIT:/);
+  assert.match(html,/ALL imported tracks are currently original\/source-retained/);
+  assert.match(html,/updateStemCoverage\(\);/);
+});
