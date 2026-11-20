@@ -33,9 +33,16 @@ test('only accepted ACRCloud region and server-side secrets enable detection', a
   assert.equal(aiDetectionConfigured({...env, ACRCLOUD_REGION:'evil.tld'}), false);
   assert.equal(aiDetectionConfigured({...env, ACRCLOUD_ACCESS_TOKEN:'bad'}), false);
   assert.equal(aiDetectionConfigured({...env, ACRCLOUD_CONTAINER_ID:'../secret'}), false);
-  const status = await (await aiDetectionStatus(env)).json();
-  assert.equal(status.configured, true);
-  assert.equal(status.provider_max_duration_seconds, 900);
+  await mockFetch(async (url) => {
+    assert.equal(url, 'https://api-v2.acrcloud.com/api/fs-containers/12345');
+    return Response.json({data:{id:12345,region:'eu-west-1',engine:5}});
+  }, async () => {
+    const status = await (await aiDetectionStatus(env)).json();
+    assert.equal(status.configured, true);
+    assert.equal(status.provider_verified, true);
+    assert.equal(status.provider_ready, true);
+    assert.equal(status.provider_max_duration_seconds, 900);
+  });
 });
 
 test('missing provider configuration fails closed without an upstream request', async () => {
@@ -60,6 +67,10 @@ test('upload rejects zero-byte files', async () => {
 
 test('upload submits to an allowlisted ACRCloud host and returns provider ID', async () => {
   await mockFetch(async (url, options) => {
+    if (url === 'https://api-v2.acrcloud.com/api/fs-containers/12345') {
+      return Response.json({data:{id:12345,region:'eu-west-1',engine:1,
+        policy:{ai_detection:1}}});
+    }
     assert.equal(url, 'https://api-eu-west-1.acrcloud.com/api/fs-containers/12345/files');
     assert.equal(options.method, 'POST');
     assert.equal(options.headers.get('authorization'), 'Bearer '+env.ACRCLOUD_ACCESS_TOKEN);
@@ -71,6 +82,30 @@ test('upload submits to an allowlisted ACRCloud host and returns provider ID', a
     assert.equal(response.status, 202);
     assert.equal((await response.json()).file_id, sampleId);
   });
+});
+
+test('disabled AI detector is refused even with valid provider token', async () => {
+  let calls = 0;
+  await mockFetch(async (url) => {
+    calls++;
+    assert.equal(url, 'https://api-v2.acrcloud.com/api/fs-containers/12345');
+    return Response.json({data:{id:12345,region:'eu-west-1',engine:1,
+      policy:{ai_detection:0}}});
+  }, async () => {
+    const result = await submitAiDetection(req(), env);
+    assert.equal(result.status, 503);
+    assert.match((await result.json()).error, /not enabled/);
+  });
+  assert.equal(calls,1);
+});
+
+test('mismatched region is blocked before provider upload', async () => {
+  await mockFetch(async () => Response.json({data:{id:12345,region:'us-west-2',engine:5}}),
+    async () => {
+      const status = await (await aiDetectionStatus(env)).json();
+      assert.equal(status.provider_ready,false);
+      assert.equal(status.provider_verified,false);
+    });
 });
 
 test('poll preserves exact provider model output including stem, segments and source scores', async () => {
