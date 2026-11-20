@@ -84,7 +84,7 @@ footer{padding-bottom:25px;font-size:12px;color:var(--muted)}
       <audio id="preview" controls hidden style="width:100%;margin:12px 0"></audio>
       <label class="check"><input type="checkbox" id="agree"><span>I authorize sending this audio to my configured ACRCloud account for analysis. Provider charges may apply.</span></label>
       <div class="row"><button class="primary" id="scan" disabled>Scan with ACRCloud</button><button id="check" disabled>Check existing scan</button></div>
-      <div id="scan-status" class="status" role="status">Choose an audio recording. Max 50 MiB; ACRCloud limit 15 minutes.</div>
+      <div id="scan-status" class="status" role="status">Choose an audio recording. Max 95 MiB; ACRCloud limit 15 minutes. Large files use a presigned streaming upload.</div>
     </section>
   </div>
 
@@ -117,7 +117,13 @@ let accessToken=null, expiry=0, providerReady=false, activeFileId=null, activeRe
 const comparisons=[];
 function status(id,message,isError=false){const element=$(id);element.textContent=message;element.dataset.error=isError?'true':'false';}
 function connected(){return Boolean(accessToken&&Date.now()<expiry-15000);}
-function actionState(){ $('disconnect').disabled=!accessToken; $('scan').disabled=busy||!connected()||!providerReady||!$('audio').files[0]||!$('agree').checked; $('check').disabled=busy||!connected()||!activeFileId; }
+function actionState(){
+  const file=$('audio').files[0];
+  const tooLong=Number.isFinite($('preview').duration)&&$('preview').duration>900;
+  $('disconnect').disabled=!accessToken;
+  $('scan').disabled=busy||!connected()||!providerReady||!file||!$('agree').checked||file.size>95*1024*1024||tooLong;
+  $('check').disabled=busy||!connected()||!activeFileId;
+}
 function toB64URL(bytes){let s='';for(const b of bytes)s+=String.fromCharCode(b);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 async function call(path,options={},requiresAuth=true){
   if(requiresAuth&&!connected())throw Error('Session expired. Reconnect using your READ_TOKEN.');
@@ -154,10 +160,15 @@ $('disconnect').onclick=()=>{accessToken=null;expiry=0;providerReady=false;statu
 $('audio').onchange=()=>{
   if(previewUrl)URL.revokeObjectURL(previewUrl);
   const file=$('audio').files[0]; $('preview').hidden=!file;
-  if(file){previewUrl=URL.createObjectURL(file);$('preview').src=previewUrl;status('scan-status',file.name+' ('+(file.size/1024/1024).toFixed(1)+' MiB) ready for private upload.');}
+  if(file){
+    previewUrl=URL.createObjectURL(file);$('preview').src=previewUrl;
+    if(file.size>95*1024*1024)status('scan-status','File exceeds 95 MiB. Prepare a lossless FLAC copy or select a shorter segment.',true);
+    else status('scan-status',file.name+' ('+(file.size/1024/1024).toFixed(1)+' MiB) ready for '+(file.size>50*1024*1024?'streaming':'direct')+' provider upload.');
+  }
   $('preview').onloadedmetadata=()=>{
     const duration=$('preview').duration;
     if(Number.isFinite(duration)&&duration>900)status('scan-status','Recording exceeds the 15-minute provider limit. Prepare a shorter segment before submitting.',true);
+    actionState();
   };
   else{previewUrl=null;$('preview').removeAttribute('src');}
   actionState();
@@ -241,8 +252,19 @@ $('scan').onclick=async()=>{
   $('result-panel').hidden=true;
   try{
     status('scan-status','Uploading to your configured ACRCloud account…');
-    const form=new FormData();form.append('file',file,file.name);
-    const submission=await call('/v1/ai-detection',{method:'POST',body:form,headers:{'x-confirm-provider-upload':'yes'}});
+    let path='/v1/ai-detection';
+    let options;
+    if(file.size>50*1024*1024){
+      path='/v1/ai-detection/stream';
+      options={method:'POST',body:file,headers:{
+        'x-confirm-provider-upload':'yes','x-audio-size':String(file.size),
+        'x-audio-filename':encodeURIComponent(file.name),
+        'content-type':file.type||'application/octet-stream'}};
+    }else{
+      const form=new FormData();form.append('file',file,file.name);
+      options={method:'POST',body:form,headers:{'x-confirm-provider-upload':'yes'}};
+    }
+    const submission=await call(path,options);
     if(!submission.file_id)throw Error('Provider did not return a scan ID.');
     activeFileId=submission.file_id;
     status('scan-status','Upload accepted. Analyzing audio with ACRCloud…');
