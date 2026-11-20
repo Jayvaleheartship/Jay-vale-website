@@ -42,6 +42,18 @@ Updated 18 November 2026 after Audio Lab v0.8 matching engine CI and live record
 - [x] GitHub Actions CI 19/19 tests passed; private Cloudflare library still reports 309 indexed R2/D1 samples, no missing files.
 - [ ] Real-user-song matching accuracy is NOT verified by a self-generated bank calibration loop. Measure false accepts/false rejects, timing and listening quality with `2 Drums.mp3` in Tasks 5, 8 and 9.
 
+## AI detection provider integration — 20 November 2026 (development branch)
+
+- [x] Implemented server-side ACRCloud File Scanning adapter and private AI Detection Lab UI on feature/acrcloud-ai-detection.
+- [x] Preserves the real provider's model scores, source probabilities, stem-specific and segment-specific predictions without recalibration.
+- [x] HMAC read-session authentication reused; provider token remains private in Cloudflare Worker secrets; external upload needs explicit user confirmation.
+- [x] Comparative original/reconstructed/vocal/instrumental scans, JSON export and provider-result deletion implemented.
+- [x] GitHub Actions workflow run 44709341508 **passed** for branch commit 6cf032bd35fdb0bb4fe13997ea25bb3ad833f242. This confirms Node CI tests, not live ACRCloud accuracy or functionality.
+- [ ] **Not deployed**: current work is on a dedicated GitHub feature branch to avoid spending Netlify deployment credits unnecessarily.
+- [ ] Configure provider credentials and AI detection-enabled File Scanning container privately. No ACRCloud API access or live provider result verified yet.
+- [ ] Deploy Worker and finish a user-owned real-track scan, then cross-check the exact model output against ACRCloud; test deletion and provider billing.
+- [ ] Rate limits and scan-specific authorization before any multi-user release. See AI_DETECTION.md.
+
 ## First-trial tasks (ordered)
 
 - [x] **1. Fix and verify sample importer — COMPLETE.** Live Worker v0.5 verified 173/173 source entries processed; 134 distinct WAV recordings in D1, 39 duplicate source entries. R2 integrity audit confirmed 134/134 corresponding objects and exact sizes, 0 missing files, 0 size mismatches and 0 unindexed objects, with last scheduled batch reporting 0 errors. Verified at `2026-11-17T20:30:33.623Z` (UTC).
@@ -54,6 +66,7 @@ Updated 18 November 2026 after Audio Lab v0.8 matching engine CI and live record
 - [ ] **8. Run first real A/B trial — CRITICAL.** Use the existing 2 Drums.mp3 ZIP, compare loudness-matched original and reconstruction. Document human listening feedback.
 - [ ] **9. Objective evaluation — HIGH.** Spectral similarity, transient timing, tempo, loudness, artifact metrics; AI classifiers supplementary only.
 - [ ] **10. Bitwig / ACE Studio connections — LATER.** Local-only bridge for licensed Bitwig sounds and a practical exported-stem flow.
+- [ ] **11. AI Detection Lab — CODE COMPLETE, LIVE VERIFICATION PENDING.** Independent UI and secure ACRCloud API adapter implemented on feature/acrcloud-ai-detection, branch CI green. Requires ACRCloud credentials, enabled FS container, Cloudflare Worker deployment and real-track result parity test. A separate original model would require a properly benchmarked training project.
 
 ## Verify before moving to the next item
 
