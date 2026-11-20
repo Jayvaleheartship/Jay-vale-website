@@ -181,7 +181,7 @@ test('large upload refuses 100 MiB before contacting any provider',async()=>{
     headers:{'x-confirm-provider-upload':'yes',
       'x-audio-size':String(100*1024*1024),'x-audio-filename':'track.wav'}
   });
-  const response=await submitLargeAiDetection(request,env);
+  const response=await submitLargeAiDetection(request,{...env,ACRCLOUD_ENABLE_EXPERIMENTAL_STREAM:'true'});
   assert.equal(response.status,413);
 });
 
