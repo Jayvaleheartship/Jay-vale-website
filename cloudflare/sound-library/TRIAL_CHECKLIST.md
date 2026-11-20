@@ -42,6 +42,19 @@ Updated 18 November 2026 after Audio Lab v0.8 matching engine CI and live record
 - [x] GitHub Actions CI 19/19 tests passed; private Cloudflare library still reports 309 indexed R2/D1 samples, no missing files.
 - [ ] Real-user-song matching accuracy is NOT verified by a self-generated bank calibration loop. Measure false accepts/false rejects, timing and listening quality with `2 Drums.mp3` in Tasks 5, 8 and 9.
 
+## AI detection engineering and test verification — 20 November 2026
+
+- [x] Cross-checked against ACRCloud public File Scanning and AI Music Detection documentation. Activation uses container `policy.ai_detection=1`, not a hypothetical engine 5.
+- [x] Updated the UI to display documented AI-detection time windows (`start`, `end`, `prediction`, `likely_source`, `ai_probability`, and source probabilities); separate uploads label original master, vocals, and instrumental. It does not fabricate a whole-track probability when a file has multiple windows.
+- [x] Added a protected Console API container/region/AI flag check before scans; invalid or unavailable configuration blocks provider uploads.
+- [x] Corrected accidental missing-score-as-zero output and duplicate scan comparison rows; video-like audio duration and input size checked before submission.
+- [x] Developed an experimental presigned large-file streaming route with SSRF guards, but kept it **disabled** by default because the provider endpoint is not independently verified. Current public-oriented UI accepts up to 50 MiB direct audio files only.
+- [x] Final committed code through `abf34be7c218f603a300790e49593e53a51c0721` verified by GitHub Actions workflow `44720596097` with **success**, including Node tests and static JavaScript syntax; earlier failed runs were diagnosed and corrected.
+- [x] Registered dedicated ACRCloud private-browser setup profile `prof_80125b10ac744859`; no saved ACRCloud sign-in has been verified.
+- [ ] Complete ACRCloud sign-in/activation, verify trial entitlement and provision container with AI detection.
+- [ ] Set three private server-side Cloudflare secrets, deploy Worker and run real ACRCloud A/B tests.
+- [ ] Cross-check real provider result parity, credits, retention, deletion and rate limiting; production release remains blocked.
+
 ## AI detection provider integration — 20 November 2026 (development branch)
 
 - [x] Implemented server-side ACRCloud File Scanning adapter and private AI Detection Lab UI on feature/acrcloud-ai-detection.
