@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Jay Vale Audio Lab | AI Detection</title>
+<style>
+:root{color-scheme:dark;--bg:#0c1116;--panel:#18212a;--line:#354450;--muted:#b5c3cc;--ink:#edf4f5;--teal:#75dad1;--warm:#ffca89}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top right,#142e36 0%,var(--bg) 55%);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header,main,footer{max-width:1080px;margin:auto;padding-left:22px;padding-right:22px}
+header{padding-top:30px;padding-bottom:21px;border-bottom:1px solid var(--line)}
+main{padding-top:24px;padding-bottom:36px}
+h1{font-size:clamp(30px,5vw,49px);line-height:1.12;margin:8px 0;letter-spacing:-.05em}
+h2{font-size:19px;letter-spacing:-.02em;margin:0 0 9px}
+h3{font-size:16px;margin:0 0 9px}
+p{margin:8px 0 13px}.muted,small{color:var(--muted)}
+.brand{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal)}
+.nav{color:var(--teal);text-decoration:none;font-weight:600}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:19px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+button,input,select{font:inherit;color:var(--ink);background:#0e171e;border:1px solid #52616d;border-radius:9px;padding:10px}
+button{cursor:pointer;min-height:42px}
+button.primary{background:#156c68;border-color:#419d96;color:#fff;font-weight:700}
+button:disabled{opacity:.4;cursor:not-allowed}
+input[type="file"],input[type="password"],select{width:100%}
+label{display:block;font-size:13px;color:var(--muted);margin:8px 0}
+label input,label select{display:block;margin-top:6px}
+label.check{display:flex;gap:10px;align-items:flex-start;font-size:14px}
+label.check input{width:auto;margin-top:4px}
+.status{border-left:3px solid var(--teal);padding:8px 12px;background:#12262a;color:var(--ink);margin:12px 0}
+.status[data-error="true"]{border-color:#ff956d;background:#39221f}
+.stat{border:1px solid var(--line);border-radius:12px;padding:13px;min-width:130px;flex:1}
+.stat strong{display:block;font-size:27px;line-height:1.25;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.progress{height:10px;background:#0d141b;border:1px solid var(--line);border-radius:40px;overflow:hidden}
+.progress>span{display:block;height:100%;background:linear-gradient(90deg,#328d91,#7cdbcb);width:0%}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600}
+.scroll{overflow-x:auto}
+.segment{display:flex;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding:9px 0}
+.segment strong{min-width:85px;font-variant-numeric:tabular-nums}
+.meter{height:10px;background:#0e171d;border-radius:10px;overflow:hidden;flex:1}
+.meter>span{height:100%;display:block;background:#75dad1}
+.detail{padding:10px 0;border-bottom:1px solid var(--line)}
+.detail:last-child,.segment:last-child{border-bottom:0}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:3px 9px;font-size:12px;color:var(--muted)}
+footer{padding-bottom:25px;font-size:12px;color:var(--muted)}
+@media(max-width:730px){.grid{grid-template-columns:1fr}.panel{padding:14px}th,td{padding:8px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Heartship Records · Jay Vale</div>
+  <h1>AI Detection Lab</h1>
+  <p class="muted">Analyze original masters, rebuilt tracks, vocals and instrumentals using the authorized ACRCloud File Scanning detector. We preserve the provider's scores without editing them.</p>
+  <a class="nav" href="./">← Return to Audio Lab</a>
+</header>
+<main>
+  <div class="grid">
+    <section class="panel">
+      <h2>1 · Private access</h2>
+      <p class="muted">Connect using your existing Audio Lab READ_TOKEN. Your permanent key is used locally to prove ownership; it is not transmitted or stored.</p>
+      <label>READ_TOKEN<input id="secret" type="password" autocomplete="off" spellcheck="false" placeholder="Private read key"></label>
+      <div class="row"><button class="primary" id="connect">Connect securely</button><button id="disconnect" disabled>Disconnect</button></div>
+      <div id="connection" class="status" role="status">Not connected. No provider requests can be made.</div>
+      <small>Requires the owner to configure the ACRCloud File Scanning provider in the private Cloudflare Worker.</small>
+    </section>
+    <section class="panel">
+      <h2>2 · Select audio</h2>
+      <label>Recording<input type="file" id="audio" accept=".mp3,.wav,.m4a,.flac,.ogg,audio/*"></label>
+      <label>Comparison label
+        <select id="label">
+          <option value="Original mix">Original mix</option>
+          <option value="Reconstructed mix">Reconstructed mix</option>
+          <option value="Vocals">Vocals</option>
+          <option value="Instrumental">Instrumental</option>
+          <option value="Other">Other</option>
+        </select>
+      </label>
+      <audio id="preview" controls hidden style="width:100%;margin:12px 0"></audio>
+      <label class="check"><input type="checkbox" id="agree"><span>I authorize sending this audio to my configured ACRCloud account for analysis. Provider charges may apply.</span></label>
+      <div class="row"><button class="primary" id="scan" disabled>Scan with ACRCloud</button><button id="check" disabled>Check existing scan</button></div>
+      <div id="scan-status" class="status" role="status">Choose an audio recording. Max 50 MiB for validated direct upload; ACRCloud limit 15 minutes. Larger uploads remain experimental.</div>
+    </section>
+  </div>
+
+  <section class="panel" id="result-panel" hidden>
+    <h2>3 · Provider results</h2>
+    <p class="muted">The classifications and numerical scores below are returned directly by ACRCloud, not computed or modified by Jay Vale Audio Lab.</p>
+    <div class="row" id="summary"></div>
+    <div id="component-results"></div>
+    <div class="row" style="margin-top:16px"><button id="export">Export results JSON</button><button id="delete">Delete scan from provider</button></div>
+  </section>
+
+  <section class="panel">
+    <h2>4 · Side-by-side comparison</h2>
+    <p class="muted">Scan the original and reconstructed recordings separately to compare the returned model classifications. Results are kept in this tab only and disappear when you close it.</p>
+    <div class="scroll"><table><thead><tr><th>Recording</th><th>Original-mix AI score</th><th>Prediction</th><th>Likely source</th><th>Model</th></tr></thead><tbody id="comparison"><tr><td colspan="5">No completed scans yet.</td></tr></tbody></table></div>
+  </section>
+  <section class="panel">
+    <h2>How to interpret the result</h2>
+    <p>A score is evidence from the current model, not proof of how a recording was made. ACRCloud can return separate <strong>original</strong>, <strong>vocals</strong> and <strong>accompaniment</strong> scores, source probabilities and time segments. It does not disclose which exact spectral artifact or watermark caused a classification.</p>
+    <p class="muted">This application is an independent interface using ACRCloud's authorized API. It is not affiliated with or endorsed by ACRCloud. This module does not modify audio, conceal provenance or invent detection scores.</p>
+  </section>
+</main>
+<footer>Jay Vale Audio Lab · Private detection research · Audio is submitted only after explicit confirmation.</footer>
+<script>
+'use strict';
+const ROOT='https://jay-vale-sound-library.helgacoupe.workers.dev';
+const PROOF_CONTEXT='jay-vale-audio-lab/v1/proof/';
+const $=id=>document.getElementById(id);
+let accessToken=null, expiry=0, providerReady=false, activeFileId=null, activeReport=null, activeName='', activeLabel='', busy=false,previewUrl=null;
+const comparisons=[];
+function status(id,message,isError=false){const element=$(id);element.textContent=message;element.dataset.error=isError?'true':'false';}
+function connected(){return Boolean(accessToken&&Date.now()<expiry-15000);}
+function actionState(){
+  const file=$('audio').files[0];
+  const tooLong=Number.isFinite($('preview').duration)&&$('preview').duration>900;
+  $('disconnect').disabled=!accessToken;
+  $('scan').disabled=busy||!connected()||!providerReady||!file||!$('agree').checked||file.size>50*1024*1024||tooLong;
+  $('check').disabled=busy||!connected()||!activeFileId;
+}
+function toB64URL(bytes){let s='';for(const b of bytes)s+=String.fromCharCode(b);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+async function call(path,options={},requiresAuth=true){
+  if(requiresAuth&&!connected())throw Error('Session expired. Reconnect using your READ_TOKEN.');
+  const headers=new Headers(options.headers||{});
+  headers.set('accept','application/json');
+  if(requiresAuth)headers.set('authorization','Bearer '+accessToken);
+  const response=await fetch(ROOT+path,{cache:'no-store',credentials:'omit',mode:'cors',referrerPolicy:'no-referrer',...options,headers});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw Error(data.error||('Request failed ('+response.status+')'));
+  return data;
+}
+$('connect').onclick=async()=>{
+  if(busy)return;
+  busy=true;
+  let key=$('secret').value.trim(); $('secret').value='';
+  $('connect').disabled=true;
+  try{
+    if(key.length<32)throw Error('READ_TOKEN must be at least 32 characters. Never enter ADMIN_TOKEN.');
+    const challenge=await call('/v1/session/challenge',{},false);
+    const encoder=new TextEncoder();
+    const cryptoKey=await crypto.subtle.importKey('raw',encoder.encode(key),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+    key='';
+    const signature=new Uint8Array(await crypto.subtle.sign('HMAC',cryptoKey,encoder.encode(PROOF_CONTEXT+challenge.challenge)));
+    const auth=await call('/v1/session/open',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({challenge:challenge.challenge,proof:toB64URL(signature)})},false);
+    if(auth.scope!=='library:read'||!auth.access_token||auth.expires_in>900)throw Error('Unexpected session response');
+    accessToken=auth.access_token;expiry=Date.now()+auth.expires_in*1000;
+    const provider=await call('/v1/ai-detection/status');
+    providerReady=provider.provider_ready===true;
+    status('connection',providerReady?'Connected. Verified AI detection container: '+provider.region+' / engine '+provider.engine+'.':('Connected to library. '+provider.message),!providerReady);
+  }catch(e){accessToken=null;expiry=0;providerReady=false;status('connection',e.message,true);}
+  finally{key='';busy=false;$('connect').disabled=false;actionState();}
+};
+$('disconnect').onclick=()=>{accessToken=null;expiry=0;providerReady=false;status('connection','Disconnected. Session token discarded.');actionState();};
+$('audio').onchange=()=>{
+  if(previewUrl)URL.revokeObjectURL(previewUrl);
+  const file=$('audio').files[0]; $('preview').hidden=!file;
+  if(file){
+    previewUrl=URL.createObjectURL(file);$('preview').src=previewUrl;
+    if(file.size>50*1024*1024)status('scan-status','File exceeds validated 50 MiB upload limit. Prepare a lossless FLAC copy or select a shorter segment.',true);
+    else status('scan-status',file.name+' ('+(file.size/1024/1024).toFixed(1)+' MiB) ready for '+('direct')+' provider upload.');
+  }else{previewUrl=null;$('preview').removeAttribute('src');}
+  $('preview').onloadedmetadata=()=>{
+    const duration=$('preview').duration;
+    if(Number.isFinite(duration)&&duration>900)status('scan-status','Recording exceeds the 15-minute provider limit. Prepare a shorter segment before submitting.',true);
+    actionState();
+  };
+  actionState();
+};
+$('agree').onchange=actionState;
+function el(tag,text,className){const node=document.createElement(tag);if(text!==undefined)node.textContent=String(text);if(className)node.className=className;return node;}
+function pct(value){if(value===null||value===undefined||value==='')return 'Not provided';const v=Number(value);return Number.isFinite(v)?Math.max(0,Math.min(100,v)).toFixed(2)+'%':'Not provided';}
+function numberValue(value){return Number.isFinite(Number(value))?Number(value):0;}
+function addStat(container,title,value){const box=el('div',undefined,'stat');box.append(el('strong',value),el('span',title));container.append(box);}
+function addMeter(container,label,value){
+  const div=el('div',undefined,'segment');
+  div.append(el('strong',label));
+  const meter=el('div',undefined,'meter'),fill=el('span');
+  fill.style.width=Math.max(0,Math.min(100,numberValue(value)))+'%';
+  meter.append(fill);div.append(meter,el('span',pct(value)));container.append(div);
+}
+function renderReport(report){
+  const entries=Array.isArray(report.model_results)?report.model_results:[];
+  $('result-panel').hidden=false; $('summary').replaceChildren(); $('component-results').replaceChildren();
+  addStat($('summary'),'Recording',activeLabel);
+  addStat($('summary'),'Provider status',report.status);
+  addStat($('summary'),'Components',String(entries.length));
+  // Each ACRCloud result belongs to a reported stem (original/vocals/
+  // accompaniment) and can include segments within that stem.
+  const stemOrder={original:0,vocals:1,accompaniment:2};
+  const sorted=[...entries].sort((a,b)=>
+    (stemOrder[a.stem]??3)-(stemOrder[b.stem]??3));
+  for(const [i,part] of sorted.entries()){
+    const section=el('section',undefined,'detail');
+    const stem=part.stem||'unlabeled';
+    const interval=part.start!=null&&part.end!=null
+      ? ' · '+part.start+'–'+part.end+' s' : '';
+    section.append(el('h3',stem+' stem'+interval+' · '+(part.prediction||'Unclassified')));
+    const row=el('div',undefined,'row');
+    addStat(row,'AI probability',pct(part.ai_probability));
+    addStat(row,'Likely source',part.likely_source||'Unknown');
+    if(part.model_id!=null)addStat(row,'Model ID',part.model_id);
+    section.append(row);
+    if(Array.isArray(part.source_probabilities)&&part.source_probabilities.length){
+      section.append(el('h3','Source probabilities'));
+      for(const source of part.source_probabilities)addMeter(section,source.source||'unknown',source.probability);
+    }
+    if(Array.isArray(part.segments)&&part.segments.length){
+      section.append(el('h3','Detailed time segments'));
+      const scroll=el('div',undefined,'scroll');
+      const table=el('table'),head=el('thead'),heading=el('tr');
+      for(const column of ['Start','End','Prediction','Source','AI probability'])
+        heading.append(el('th',column));
+      head.append(heading);table.append(head);
+      const body=el('tbody');
+      for(const seg of part.segments){
+        const line=el('tr');
+        for(const value of [seg.start??'—',seg.end??'—',
+          seg.prediction||'—',seg.likely_source||'—',pct(seg.ai_probability)])
+          line.append(el('td',value));
+        body.append(line);
+      }
+      table.append(body);scroll.append(table);section.append(scroll);
+    }
+    $('component-results').append(section);
+  }
+  if(!entries.length)$('component-results').append(el('p','No AI-detection components returned.'));
+}
+function recordComparison(){
+  const entries=activeReport?.model_results||[];
+  if(!entries.length||comparisons.some(x=>x.scanId===activeFileId))return;
+  // Only use ACRCloud's original-stem aggregate; do not average segments,
+  // or substitute the vocal/accompaniment score for the original mix.
+  const original=entries.find(x=>x.stem==='original')||
+    (entries.length===1&&entries[0].stem==null?entries[0]:null);
+  comparisons.push({scanId:activeFileId,name:activeName,label:activeLabel,
+    probability:original?.ai_probability??null,
+    prediction:original?.prediction||'Original stem not returned',
+    source:original?.likely_source||'Not provided',
+    model:original?.model_id||'Not supplied'});
+  const body=$('comparison');body.replaceChildren();
+  for(const item of comparisons){
+    const tr=el('tr');
+    for(const value of [item.label+' · '+item.name,pct(item.probability),item.prediction||'—',item.source||'—',item.model||'—'])tr.append(el('td',value));
+    body.append(tr);
+  }
+}
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function inspect(id){
+  const report=await call('/v1/ai-detection/'+encodeURIComponent(id));
+  if(report.status==='ready'){
+    activeReport=report;renderReport(report);recordComparison();status('scan-status','Analysis completed. Provider result received without changing probabilities.');return true;
+  }
+  if(report.status==='failed'||report.status==='no_detection_results')throw Error('Provider finished without AI detection results (state '+report.state+'). Check that AI detection is enabled on your ACRCloud File Scanning container.');
+  status('scan-status','Provider is processing. You can check again manually.');return false;
+}
+$('scan').onclick=async()=>{
+  if(busy||!connected())return;
+  const file=$('audio').files[0];
+  if(!file||!$('agree').checked)return;
+  busy=true;actionState();
+  activeReport=null;activeFileId=null;activeName=file.name;activeLabel=$('label').value;
+  $('result-panel').hidden=true;
+  try{
+    status('scan-status','Uploading to your configured ACRCloud account…');
+    let path='/v1/ai-detection';
+    let options;
+    if(file.size>50*1024*1024){
+      path='/v1/ai-detection/stream';
+      options={method:'POST',body:file,headers:{
+        'x-confirm-provider-upload':'yes','x-audio-size':String(file.size),
+        'x-audio-filename':encodeURIComponent(file.name),
+        'content-type':file.type||'application/octet-stream'}};
+    }else{
+      const form=new FormData();form.append('file',file,file.name);
+      options={method:'POST',body:form,headers:{'x-confirm-provider-upload':'yes'}};
+    }
+    const submission=await call(path,options);
+    if(!submission.file_id)throw Error('Provider did not return a scan ID.');
+    activeFileId=submission.file_id;
+    status('scan-status','Upload accepted. Analyzing audio with ACRCloud…');
+    for(let attempt=0;attempt<24;attempt++){
+      if(attempt)await sleep(3500);
+      if(await inspect(activeFileId))break;
+      if(attempt===23)status('scan-status','Still processing. Use “Check existing scan” to continue.');
+    }
+  }catch(e){status('scan-status',e.message,true);}
+  finally{busy=false;actionState();}
+};
+$('check').onclick=async()=>{if(busy||!activeFileId)return;busy=true;actionState();try{await inspect(activeFileId);}catch(e){status('scan-status',e.message,true);}finally{busy=false;actionState();}};
+$('export').onclick=()=>{
+  if(!activeReport)return;
+  const file=new Blob([JSON.stringify({label:activeLabel,filename:activeName,analyzed_at:new Date().toISOString(),result:activeReport},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download='jay-vale-ai-detection.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
+};
+$('delete').onclick=async()=>{
+  if(!activeFileId||!connected())return;
+  $('delete').disabled=true;
+  try{await call('/v1/ai-detection/'+activeFileId,{method:'DELETE'});activeFileId=null;status('scan-status','Provider scan record deleted. Local comparison remains in this tab.');}
+  catch(e){status('scan-status',e.message,true);}
+  finally{$('delete').disabled=false;actionState();}
+};
+actionState();
+</script>
+</body>
+</html>

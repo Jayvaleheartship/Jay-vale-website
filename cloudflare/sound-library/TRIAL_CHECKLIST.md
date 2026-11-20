@@ -42,6 +42,39 @@ Updated 18 November 2026 after Audio Lab v0.8 matching engine CI and live record
 - [x] GitHub Actions CI 19/19 tests passed; private Cloudflare library still reports 309 indexed R2/D1 samples, no missing files.
 - [ ] Real-user-song matching accuracy is NOT verified by a self-generated bank calibration loop. Measure false accepts/false rejects, timing and listening quality with `2 Drums.mp3` in Tasks 5, 8 and 9.
 
+## ACRCloud account screenshot and result-display correction — 20 November 2026
+
+- [x] Owner's ACRCloud screenshot verifies an enabled, completed AI Music Detection scan on reconstructed Jay Vale Interlude MP3 (193 seconds). ACRCloud console reports `stem=Original`, prediction `AI Generated Music`, likely source `Suno`, AI probability `99.22%`. This is a user-observed live console result, **not** an authenticated API test.
+- [x] Confirmed current ACRCloud metadata schema has outer `ai_detection[]` entries labeled `original`, `vocals` or `accompaniment`, plus optional nested `segments[]`. Reworked the UI to show each provider stem and detailed segments without inferring unreturned vocal/accompaniment scores.
+- [x] Original-versus-reconstruction comparison now uses only the actual `stem=original` score and does not substitute a different stem or compute an invented mean.
+- [ ] ACRCloud Console access token and numeric File Scanning container ID remain unknown. They must be obtained through the authenticated console and entered as private Cloudflare Worker settings. Never post tokens in chat or commit them.
+- [ ] Run real API request and compare with console's 99.22% reference result. Live browser deployment and cross-check remain unverified.
+
+## AI detection engineering and test verification — 20 November 2026
+
+- [x] Cross-checked against ACRCloud public File Scanning and AI Music Detection documentation. Activation uses container `policy.ai_detection=1`, not a hypothetical engine 5.
+- [x] Updated the UI to display documented AI-detection time windows (`start`, `end`, `prediction`, `likely_source`, `ai_probability`, and source probabilities); separate uploads label original master, vocals, and instrumental. It does not fabricate a whole-track probability when a file has multiple windows.
+- [x] Added a protected Console API container/region/AI flag check before scans; invalid or unavailable configuration blocks provider uploads.
+- [x] Corrected accidental missing-score-as-zero output and duplicate scan comparison rows; video-like audio duration and input size checked before submission.
+- [x] Developed an experimental presigned large-file streaming route with SSRF guards, but kept it **disabled** by default because the provider endpoint is not independently verified. Current public-oriented UI accepts up to 50 MiB direct audio files only.
+- [x] Final committed code through `abf34be7c218f603a300790e49593e53a51c0721` verified by GitHub Actions workflow `44720596097` with **success**, including Node tests and static JavaScript syntax; earlier failed runs were diagnosed and corrected.
+- [x] Registered dedicated ACRCloud private-browser setup profile `prof_80125b10ac744859`; no saved ACRCloud sign-in has been verified.
+- [ ] Complete ACRCloud sign-in/activation, verify trial entitlement and provision container with AI detection.
+- [ ] Set three private server-side Cloudflare secrets, deploy Worker and run real ACRCloud A/B tests.
+- [ ] Cross-check real provider result parity, credits, retention, deletion and rate limiting; production release remains blocked.
+
+## AI detection provider integration — 20 November 2026 (development branch)
+
+- [x] Implemented server-side ACRCloud File Scanning adapter and private AI Detection Lab UI on feature/acrcloud-ai-detection.
+- [x] Preserves the real provider's model scores, source probabilities, stem-specific and segment-specific predictions without recalibration.
+- [x] HMAC read-session authentication reused; provider token remains private in Cloudflare Worker secrets; external upload needs explicit user confirmation.
+- [x] Comparative original/reconstructed/vocal/instrumental scans, JSON export and provider-result deletion implemented.
+- [x] GitHub Actions workflow run 44709341508 **passed** for branch commit 6cf032bd35fdb0bb4fe13997ea25bb3ad833f242. This confirms Node CI tests, not live ACRCloud accuracy or functionality.
+- [ ] **Not deployed**: current work is on a dedicated GitHub feature branch to avoid spending Netlify deployment credits unnecessarily.
+- [ ] Configure provider credentials and AI detection-enabled File Scanning container privately. No ACRCloud API access or live provider result verified yet.
+- [ ] Deploy Worker and finish a user-owned real-track scan, then cross-check the exact model output against ACRCloud; test deletion and provider billing.
+- [ ] Rate limits and scan-specific authorization before any multi-user release. See AI_DETECTION.md.
+
 ## First-trial tasks (ordered)
 
 - [x] **1. Fix and verify sample importer — COMPLETE.** Live Worker v0.5 verified 173/173 source entries processed; 134 distinct WAV recordings in D1, 39 duplicate source entries. R2 integrity audit confirmed 134/134 corresponding objects and exact sizes, 0 missing files, 0 size mismatches and 0 unindexed objects, with last scheduled batch reporting 0 errors. Verified at `2026-11-17T20:30:33.623Z` (UTC).
@@ -54,6 +87,7 @@ Updated 18 November 2026 after Audio Lab v0.8 matching engine CI and live record
 - [ ] **8. Run first real A/B trial — CRITICAL.** Use the existing 2 Drums.mp3 ZIP, compare loudness-matched original and reconstruction. Document human listening feedback.
 - [ ] **9. Objective evaluation — HIGH.** Spectral similarity, transient timing, tempo, loudness, artifact metrics; AI classifiers supplementary only.
 - [ ] **10. Bitwig / ACE Studio connections — LATER.** Local-only bridge for licensed Bitwig sounds and a practical exported-stem flow.
+- [ ] **11. AI Detection Lab — CODE COMPLETE, LIVE VERIFICATION PENDING.** Independent UI and secure ACRCloud API adapter implemented on feature/acrcloud-ai-detection, branch CI green. Requires ACRCloud credentials, enabled FS container, Cloudflare Worker deployment and real-track result parity test. A separate original model would require a properly benchmarked training project.
 
 ## Verify before moving to the next item
 
