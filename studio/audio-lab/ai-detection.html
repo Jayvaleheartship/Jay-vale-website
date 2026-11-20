@@ -191,31 +191,22 @@ function renderReport(report){
   addStat($('summary'),'Recording',activeLabel);
   addStat($('summary'),'Provider status',report.status);
   addStat($('summary'),'Components',String(entries.length));
-  const sorted=[...entries].sort((a,b)=>({original:0,vocals:1,accompaniment:2}[a.stem]??3)-({original:0,vocals:1,accompaniment:2}[b.stem]??3));
-  for(const part of sorted){
+  // ACRCloud documents one ai_detection entry per detected time window.
+  // The file label denotes whether the uploaded file was vocals, mix or accompaniment.
+  for(const [i,part] of entries.entries()){
     const section=el('section',undefined,'detail');
-    section.append(el('h3',(part.stem||'Audio')+' · '+(part.prediction||'Unclassified')));
+    const interval=(part.start==null||part.end==null)
+      ? 'Window '+(i+1)
+      : 'Time window '+part.start+'–'+part.end+' s';
+    section.append(el('h3',interval+' · '+(part.prediction||'Unclassified')));
     const row=el('div',undefined,'row');
     addStat(row,'AI probability',pct(part.ai_probability));
     addStat(row,'Likely source',part.likely_source||'Unknown');
-    addStat(row,'Model ID',part.model_id||'Not reported');
+    if(part.model_id!=null)addStat(row,'Model ID',part.model_id);
     section.append(row);
     if(Array.isArray(part.source_probabilities)&&part.source_probabilities.length){
       section.append(el('h3','Source probabilities'));
-      for(const s of part.source_probabilities)addMeter(section,s.source||'unknown',s.probability);
-    }
-    if(Array.isArray(part.segments)&&part.segments.length){
-      section.append(el('h3','Time segments'));
-      const tbl=el('div',undefined,'scroll'),table=el('table'),thead=el('thead'),tr=el('tr');
-      for(const col of ['Start','End','Prediction','Source','AI score'])tr.append(el('th',col));
-      thead.append(tr);table.append(thead);
-      const body=el('tbody');
-      for(const seg of part.segments){
-        const line=el('tr');
-        for(const value of [seg.start,seg.end,seg.prediction,seg.likely_source,pct(seg.ai_probability)])line.append(el('td',value??'—'));
-        body.append(line);
-      }
-      table.append(body);tbl.append(table);section.append(tbl);
+      for(const source of part.source_probabilities)addMeter(section,source.source||'unknown',source.probability);
     }
     $('component-results').append(section);
   }
@@ -223,10 +214,14 @@ function renderReport(report){
 }
 function recordComparison(){
   const entries=activeReport?.model_results||[];
-  const original=entries.find(x=>x.stem==='original')||entries[0];
-  if(!original)return;
-  if(comparisons.some(x=>x.scanId===activeFileId))return;
-  comparisons.push({scanId:activeFileId,name:activeName,label:activeLabel,probability:original.ai_probability,prediction:original.prediction,source:original.likely_source,model:original.model_id});
+  if(!entries.length||comparisons.some(x=>x.scanId===activeFileId))return;
+  // Never imply a time-window result is a whole-song score.
+  const unique=entries.length===1?entries[0]:null;
+  comparisons.push({scanId:activeFileId,name:activeName,label:activeLabel,
+    probability:unique?.ai_probability??null,
+    prediction:unique?.prediction||(entries.length+' separate time windows'),
+    source:unique?.likely_source||'Multiple windows',
+    model:unique?.model_id||'Not supplied'});
   const body=$('comparison');body.replaceChildren();
   for(const item of comparisons){
     const tr=el('tr');
