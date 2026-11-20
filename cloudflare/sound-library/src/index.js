@@ -195,7 +195,7 @@ export default {
    if(path==='/v1/status'&&req.method==='GET')return wrap(await readable(req,env)?json(await totals(env)):error('Unauthorized',401),req,env);
    // Explicitly authorized AI Music Detection: no provider credentials in the browser.
    if(path==='/v1/ai-detection/status'&&req.method==='GET')
-     return wrap(await readable(req,env)?aiDetectionStatus(env):error('Unauthorized',401),req,env);
+     return wrap(await readable(req,env)?await aiDetectionStatus(env):error('Unauthorized',401),req,env);
    if(path==='/v1/ai-detection'&&req.method==='POST')
      return wrap(await readable(req,env)?await submitAiDetection(req,env):error('Unauthorized',401),req,env);
    const aiId=path.match(/^\/v1\/ai-detection\/([0-9a-fA-F-]{36})$/);
