@@ -84,7 +84,7 @@ footer{padding-bottom:25px;font-size:12px;color:var(--muted)}
       <audio id="preview" controls hidden style="width:100%;margin:12px 0"></audio>
       <label class="check"><input type="checkbox" id="agree"><span>I authorize sending this audio to my configured ACRCloud account for analysis. Provider charges may apply.</span></label>
       <div class="row"><button class="primary" id="scan" disabled>Scan with ACRCloud</button><button id="check" disabled>Check existing scan</button></div>
-      <div id="scan-status" class="status" role="status">Choose an audio recording. Max 95 MiB; ACRCloud limit 15 minutes. Large files use a presigned streaming upload.</div>
+      <div id="scan-status" class="status" role="status">Choose an audio recording. Max 50 MiB for validated direct upload; ACRCloud limit 15 minutes. Larger uploads remain experimental.</div>
     </section>
   </div>
 
@@ -121,7 +121,7 @@ function actionState(){
   const file=$('audio').files[0];
   const tooLong=Number.isFinite($('preview').duration)&&$('preview').duration>900;
   $('disconnect').disabled=!accessToken;
-  $('scan').disabled=busy||!connected()||!providerReady||!file||!$('agree').checked||file.size>95*1024*1024||tooLong;
+  $('scan').disabled=busy||!connected()||!providerReady||!file||!$('agree').checked||file.size>50*1024*1024||tooLong;
   $('check').disabled=busy||!connected()||!activeFileId;
 }
 function toB64URL(bytes){let s='';for(const b of bytes)s+=String.fromCharCode(b);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
@@ -162,8 +162,8 @@ $('audio').onchange=()=>{
   const file=$('audio').files[0]; $('preview').hidden=!file;
   if(file){
     previewUrl=URL.createObjectURL(file);$('preview').src=previewUrl;
-    if(file.size>95*1024*1024)status('scan-status','File exceeds 95 MiB. Prepare a lossless FLAC copy or select a shorter segment.',true);
-    else status('scan-status',file.name+' ('+(file.size/1024/1024).toFixed(1)+' MiB) ready for '+(file.size>50*1024*1024?'streaming':'direct')+' provider upload.');
+    if(file.size>50*1024*1024)status('scan-status','File exceeds validated 50 MiB upload limit. Prepare a lossless FLAC copy or select a shorter segment.',true);
+    else status('scan-status',file.name+' ('+(file.size/1024/1024).toFixed(1)+' MiB) ready for '+('direct')+' provider upload.');
   }
   $('preview').onloadedmetadata=()=>{
     const duration=$('preview').duration;
