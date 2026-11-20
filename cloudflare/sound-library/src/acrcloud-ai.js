@@ -8,6 +8,8 @@
 const REGIONS = new Set(['eu-west-1', 'us-west-2', 'ap-southeast-1']);
 const AUDIO_EXTENSIONS = new Set(['mp3', 'wav', 'm4a', 'flac', 'ogg']);
 const MAX_AUDIO_BYTES = 50 * 1024 * 1024;
+const MAX_STREAM_BYTES = 95 * 1024 * 1024;
+const AUDIO_TYPES = {mp3:'audio/mpeg',wav:'audio/wav',m4a:'audio/mp4',flac:'audio/flac',ogg:'audio/ogg'};
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -78,7 +80,8 @@ export async function aiDetectionStatus(env) {
     provider_ready: check.enabled,
     engine: check.engine ?? null,
     region: check.region ?? null,
-    upload_max_bytes: MAX_AUDIO_BYTES,
+    upload_max_bytes: MAX_STREAM_BYTES,
+    direct_upload_max_bytes: MAX_AUDIO_BYTES,
     provider_max_duration_seconds: 900,
     interpretation: 'Provider model output, not proof of origin',
     message: check.message
@@ -172,6 +175,88 @@ export async function submitAiDetection(request, env) {
   }
   return json({file_id: id, state: Number(record?.state ?? 0),
     status: 'submitted', provider: 'ACRCloud'}, 202);
+}
+
+/**
+ * Large lossless WAV/FLAC files can exceed small multipart request limits.
+ * Streaming directly from the authenticated browser request to ACRCloud's
+ * provider-signed S3 object avoids buffering the full audio in Worker memory.
+ * The S3 URL and key are never sent back to the browser.
+ *
+ * This route is experimental until verified with a live ACRCloud container.
+ */
+export async function submitLargeAiDetection(request, env) {
+  if (!aiDetectionConfigured(env)) return fail('ACRCloud API is not configured', 503);
+  if (request.headers.get('x-confirm-provider-upload') !== 'yes')
+    return fail('Confirm the external provider upload before submission');
+  const declaredSize = Number(request.headers.get('x-audio-size'));
+  if (!Number.isSafeInteger(declaredSize) || declaredSize < 1 ||
+      declaredSize > MAX_STREAM_BYTES)
+    return fail('Streamed audio must be between 1 byte and 95 MiB', 413);
+  const transportSize = request.headers.get('content-length');
+  if (transportSize !== null && Number(transportSize) !== declaredSize)
+    return fail('Audio transfer size differs from the declared size', 400);
+  let filename;
+  try {filename = decodeURIComponent(request.headers.get('x-audio-filename') || '');}
+  catch {return fail('Invalid encoded filename');}
+  filename = filename.replace(/[/\\\r\n"]/g, '_').slice(0, 180);
+  const extension = filename.split('.').pop().toLowerCase();
+  if (!AUDIO_EXTENSIONS.has(extension) || !request.body)
+    return fail('Provide a valid MP3, WAV, M4A, FLAC or OGG file body');
+  const containerCheck = await inspectAiContainer(env);
+  if (!containerCheck.verified || !containerCheck.enabled)
+    return fail(containerCheck.message, 503);
+
+  const requestedType = AUDIO_TYPES[extension];
+  const presigned = await providerCall(env, '/presigned-upload?filename=' +
+    encodeURIComponent(filename) + '&content_type=' + encodeURIComponent(requestedType));
+  if (!presigned.ok) return presigned.response;
+  const data = presigned.data?.data;
+  if (!data || typeof data.presigned_url !== 'string' ||
+      typeof data.key !== 'string' || !/^fs\/queue\/[A-Za-z0-9._/-]+$/.test(data.key))
+    return fail('ACRCloud returned an invalid presigned upload response', 502);
+  let url;
+  try {url = new URL(data.presigned_url);}
+  catch {return fail('ACRCloud supplied an invalid upload address', 502);}
+  // Never stream user-controlled content to an arbitrary target.
+  const s3Host = /(^|\.)s3([.-][a-z0-9-]+)?\.amazonaws\.com$/i.test(url.hostname);
+  if (url.protocol !== 'https:' || url.username || url.password || !s3Host ||
+      url.port !== '' || url.hash !== '')
+    return fail('ACRCloud supplied an untrusted upload destination', 502);
+
+  let headers;
+  try {
+    headers = new Headers(data.headers || {});
+    for (const key of headers.keys()) {
+      if (!/^(content-type|x-amz-[a-z0-9-]+)$/i.test(key))
+        return fail('ACRCloud requested an unsafe storage header', 502);
+    }
+    if (!headers.has('content-type')) headers.set('content-type', requestedType);
+  } catch {
+    return fail('ACRCloud supplied invalid storage headers', 502);
+  }
+  let storageResponse;
+  try {
+    storageResponse = await fetch(url.toString(),{
+      method:'PUT',body:request.body,headers,redirect:'error'
+    });
+  } catch {
+    return fail('Unable to stream the audio to ACRCloud storage', 502);
+  }
+  if (!storageResponse.ok) return fail('ACRCloud storage did not accept the audio', 502);
+
+  const submitted = await providerCall(env, '/files', {
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify({data_type:'audio',key:data.key,filename})
+  });
+  if (!submitted.ok) return submitted.response;
+  const row = submitted.data?.data;
+  const id = row?.file_id || row?.id;
+  if (typeof id !== 'string' || !/^[0-9a-f-]{36}$/i.test(id))
+    return fail('ACRCloud accepted the file but returned no usable scan ID', 502);
+  return json({file_id:id,state:Number(row?.state ?? 0),
+    status:'submitted',provider:'ACRCloud',upload_method:'presigned_stream'},202);
 }
 
 export async function pollAiDetection(env, id) {
