@@ -27,16 +27,61 @@ export function aiDetectionConfigured(env) {
   );
 }
 
-export function aiDetectionStatus(env) {
+/**
+ * A configured token does not imply that AI detection is enabled. Verify the
+ * container via ACRCloud's official Console API before accepting paid scans.
+ * The Console API hostname is fixed and cannot be changed by user settings.
+ */
+export async function inspectAiContainer(env) {
+  if (!aiDetectionConfigured(env)) {
+    return {verified: false, enabled: false,
+      message: 'Configure ACRCLOUD_ACCESS_TOKEN, ACRCLOUD_CONTAINER_ID and ACRCLOUD_REGION privately.'};
+  }
+  let response;
+  try {
+    response = await fetch('https://api-v2.acrcloud.com/api/fs-containers/' +
+      env.ACRCLOUD_CONTAINER_ID, {
+        method: 'GET', redirect: 'error',
+        headers: {authorization: 'Bearer ' + env.ACRCLOUD_ACCESS_TOKEN,
+          accept: 'application/json'}
+      });
+  } catch {
+    return {verified: false, enabled: false, message: 'Could not contact ACRCloud Console API.'};
+  }
+  if (!response.ok) {
+    return {verified: false, enabled: false,
+      message: 'Could not validate ACRCloud container (provider status ' + response.status + ').'};
+  }
+  let container;
+  try {container = (await response.json())?.data;}
+  catch {return {verified: false, enabled: false, message: 'Unexpected ACRCloud container response.'};}
+  if (!container || String(container.id) !== String(env.ACRCLOUD_CONTAINER_ID) ||
+      container.region !== env.ACRCLOUD_REGION) {
+    return {verified: false, enabled: false,
+      message: 'ACRCloud container ID or region does not match private configuration.'};
+  }
+  // ACRCloud documents both engine 5 and a separate AI detection flag.
+  const engine = Number(container.engine);
+  const aiFlag = container.ai_detection ?? container.policy?.ai_detection;
+  const enabled = engine === 5 || aiFlag === true || Number(aiFlag) === 1;
+  return {verified: true, enabled, engine, region: container.region,
+    message: enabled ? 'ACRCloud AI Music Detection is enabled.'
+      : 'ACRCloud container exists, but AI Music Detection is not enabled.'};
+}
+
+export async function aiDetectionStatus(env) {
+  const check = await inspectAiContainer(env);
   return json({
     provider: 'ACRCloud File Scanning AI Music Detection',
     configured: aiDetectionConfigured(env),
+    provider_verified: check.verified,
+    provider_ready: check.enabled,
+    engine: check.engine ?? null,
+    region: check.region ?? null,
     upload_max_bytes: MAX_AUDIO_BYTES,
     provider_max_duration_seconds: 900,
     interpretation: 'Provider model output, not proof of origin',
-    message: aiDetectionConfigured(env)
-      ? 'Authorized provider settings present; live submission is not automatically verified.'
-      : 'Set server-side ACRCLOUD_ACCESS_TOKEN, ACRCLOUD_CONTAINER_ID and ACRCLOUD_REGION.'
+    message: check.message
   });
 }
 
@@ -105,6 +150,10 @@ export async function submitAiDetection(request, env) {
   if (!AUDIO_EXTENSIONS.has(extension)) {
     return fail('Supported formats: MP3, WAV, M4A, FLAC and OGG');
   }
+  const containerCheck = await inspectAiContainer(env);
+  if (!containerCheck.verified || !containerCheck.enabled) {
+    return fail(containerCheck.message, 503);
+  }
 
   const providerForm = new FormData();
   providerForm.set('data_type', 'audio');
@@ -130,8 +179,8 @@ export async function pollAiDetection(env, id) {
   const upstream = await providerCall(env, '/files/' + id);
   if (!upstream.ok) return upstream.response;
   const data = upstream.data?.data;
-  const record = Array.isArray(data) ? data.find(x => x?.id === id) || data[0] : data;
-  if (!record || typeof record !== 'object') {
+  const record = Array.isArray(data) ? data.find(x => x?.id === id) : data;
+  if (!record || typeof record !== 'object' || record.id !== id) {
     return fail('ACRCloud has not returned a scan record', 502);
   }
   const state = Number(record.state ?? 0);
@@ -143,7 +192,8 @@ export async function pollAiDetection(env, id) {
   // Do not invent, normalize, smooth or recalibrate provider predictions.
   return json({
     file_id: id, status, state,
-    duration: Number.isFinite(Number(record.duration)) ? Number(record.duration) : null,
+    duration: record.duration != null && Number.isFinite(Number(record.duration))
+      ? Number(record.duration) : null,
     model_results: detections,
     provider: 'ACRCloud',
     warning: 'Scores are provider probabilities, not a guarantee of human or AI origin.'
