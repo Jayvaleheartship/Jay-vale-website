@@ -123,6 +123,9 @@ test('UI documents provenance and does not embed any ACRCloud access token', asy
   assert.match(page,/AI Detection Lab/);
   assert.match(page,/provider's scores without editing them/);
   assert.match(page,/x-confirm-provider-upload/);
+  const scripts=[...page.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)];
+  assert.equal(scripts.length,1);
+  assert.doesNotThrow(()=>new Function(scripts[0][1]));
   assert.doesNotMatch(page,/ACRCLOUD_ACCESS_TOKEN\s*=/);
   assert.doesNotMatch(page,/localStorage/);
 });
