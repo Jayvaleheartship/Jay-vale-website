@@ -5,6 +5,7 @@ on:
       - 'studio/audio-lab/index.html'
       - 'studio/audio-lab/drum-matcher.js'
       - 'studio/audio-lab/drum-audit.js'
+      - 'studio/audio-lab/full-song-project.js'
       - 'cloudflare/sound-library/**'
       - '.github/workflows/audio-lab-cloud-tests.yml'
   workflow_dispatch:
