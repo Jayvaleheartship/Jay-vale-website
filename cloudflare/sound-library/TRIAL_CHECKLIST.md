@@ -161,3 +161,10 @@ Cloud source: https://github.com/Jayvaleheartship/Jay-vale-website/tree/main/clo
 **Task 7:** Live browser demo ZIP import, single-stem handoff, 64-onset simulated drum reconstruction, A/B playback and 24-bit WAV+JSON downloads must succeed; CI tests 9/9 pass. Real user music and recorded-sample fidelity testing is deliberately Task 8.
 
 **Task 8:** Export and listen to a reconstructed WAV aligned with the supplied drum stem, and review measurable differences. A detector score is not proof of human provenance.
+
+## Offline sample-gap planner — 21 November 2026
+
+- [x] Added development-only `studio/audio-lab/sample-gap-planner.js` and `sample-gap-planner.test.cjs` (commit `15ef6af9c4107ee0dbd49005efab54911a2d51eb`). Planner classifies per-layer requests as metadata-matched, missing verified CC0 source, or unresolved; requires exact family/instrument/articulation/pitch/velocity zone, recording-origin evidence, SHA-256, CC0-1.0, original filename and file-level license evidence URL. No nearest-neighbor guesses or claims of acoustic matching.
+- [ ] **Testing status:** seven Node regression tests were committed, but GitHub returned **zero workflow runs** for the latest commit. Tests have NOT yet been independently executed/verified; this feature is provisional, not accepted. The runtime cannot fetch the private GitHub repository over HTTPS for local execution. The planner is not yet connected to actual authenticated R2/D1 metadata or private song analysis.
+- [ ] Next: execute tests in CI, fix failures, adapt actual catalogue metadata, map confirmed per-note events from the private stem audit, then produce evidence-backed gaps. No new samples acquired and independent stem coverage remains **0/10**.
+- [x] No main merge, Netlify build, production deployment, paid service, secret exposure or private audio commit.
