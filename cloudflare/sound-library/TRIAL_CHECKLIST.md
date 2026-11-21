@@ -178,3 +178,12 @@ Cloud source: https://github.com/Jayvaleheartship/Jay-vale-website/tree/main/clo
 - [ ] Transcribe/confirm instrument events and independent sample matches across all 10 stems; rebuild and verify all layers including stereo/FX. **Independent coverage: 0/10**; no final independent WAV or new ACRCloud detector result.
 - [ ] Execute pending sample-gap-planner tests/CI and wire to actual authorized catalogue metadata; do not mark tests passed based on commits alone.
 - [x] This update is documentation-only on the isolated development branch; no main merge, Netlify build, production deployment, paid operation, or public source-audio upload.
+
+## Autonomous continuation — 21 November 2026 (source verification and acquisition queue)
+
+- [x] Reopened this branch checklist and verified the original private ZIP in the local workspace. Recomputed SHA-256 `63973b514ad7b622d3daa25429442d35ec3416b2e70468aa9204781a271dc96a`, matching prior project audit; ZIP inventory is exactly 12 MP3 stems with 2 vocal stems excluded and 10 instrumental references. Independently hashed all 12 individual source files.
+- [x] Produced `Interlude_verified_acquisition_queue_20261121.json` with file-by-file source hashes, explicit reference-only provenance, and pending CC0 candidate packs. Uploaded it successfully to private Library `/Jay_Vale_Audio_Lab_Projects/Interlude_x_Detuned_Fragments/Working_References/`.
+- [x] Reverified publisher's CC0 claim for VCSL and VSCO 2 CE, including free direct-download options. License applies at collection level; individual file origin, hash and exact match still need verification.
+- [ ] Runtime attempted direct HTTPS fetch of VCSL source from `raw.githubusercontent.com`; DNS resolution failed. **No new sample binary was downloaded**; no independent recorded-bank rendering or detector test occurred. Existing authenticated 309-sample R2 bank not accessed without credentials.
+- [ ] Priority next: acquire individual CC0 binaries through a reachable trusted channel, store with per-file provenance, perform sound/event matching, then render 10 independent stems and instrumental WAV. Current completion **0/10**. Do not treat a source-retained mix as final.
+- [x] No private audio or credentials committed, no main merge, Netlify build, Cloudflare production write or spending.
