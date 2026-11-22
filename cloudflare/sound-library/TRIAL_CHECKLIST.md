@@ -187,3 +187,11 @@ Cloud source: https://github.com/Jayvaleheartship/Jay-vale-website/tree/main/clo
 - [ ] Runtime attempted direct HTTPS fetch of VCSL source from `raw.githubusercontent.com`; DNS resolution failed. **No new sample binary was downloaded**; no independent recorded-bank rendering or detector test occurred. Existing authenticated 309-sample R2 bank not accessed without credentials.
 - [ ] Priority next: acquire individual CC0 binaries through a reachable trusted channel, store with per-file provenance, perform sound/event matching, then render 10 independent stems and instrumental WAV. Current completion **0/10**. Do not treat a source-retained mix as final.
 - [x] No private audio or credentials committed, no main merge, Netlify build, Cloudflare production write or spending.
+
+## Automated build iteration — 22 November 2026
+
+- [x] Read current checklist and `cloudflare/sound-library/FULL_SONG_RECONSTRUCTION_PLAN.md` from development branch, and listed the private Library project folder, confirming the source ZIP, acquisition requirements, layer map, spectral reports and QC documents remain present. No original audio copied to GitHub.
+- [x] **Task 13 code hardening:** `studio/audio-lab/sample-gap-planner.js` now rejects duplicate layer IDs, deduplicates candidate samples by case-normalized SHA-256 and tolerates null catalogue rows without crashing. Added 3 regression tests (10 total in that test file). **Offline Node v22 test run: 10/10 passed, 0 failed** against the identical changed module/test content; commits `123d5e7b` and `08699549` on development branch.
+- [ ] **GitHub Actions CI not verified:** available connector exposes only pull-request-triggered commit run listing, not general branch workflow dispatch; no successful Actions run is claimed for these changes. Local tests do not substitute for CI.
+- [ ] Actual source sample downloads, per-file rights/recording verification, private R2 matching, independent render and detector comparisons still open. Instrumental reconstruction remains **0/10**.
+- [x] No production deploy, main merge, Netlify build, paid operation, secret exposure or public private-audio upload.
