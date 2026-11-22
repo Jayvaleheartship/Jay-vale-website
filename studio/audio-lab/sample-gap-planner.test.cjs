@@ -9,3 +9,7 @@ test('unverified origin and hash block',()=>{assert.equal(plan([layer],[{...sour
 test('uncertain layers never forced to nearest',()=>{const x=plan([{...layer,instrument:'unknown'}],[source]);assert.equal(x.unresolvedCount,1);assert.equal(x.verifiedMatchCount,0)});
 test('velocity zone must contain event',()=>assert.equal(plan([layer],[{...source,velocityMax:90}]).gaps.length,1));
 test('does not accept non CC0',()=>assert.equal(plan([layer],[{...source,licenseSpdx:'MIT'}]).gaps.length,1));
+
+test('duplicate layer identifiers rejected',()=>assert.throws(()=>plan([layer,{...layer}],[source]),/Duplicate layer id/));
+test('duplicate sample hashes collapse into one candidate',()=>assert.deepEqual(plan([layer],[source,{...source,sha256:'A'.repeat(64)}]).matched[0].candidateHashes,['a'.repeat(64)]));
+test('null catalogue rows ignored safely',()=>assert.equal(plan([layer],[null,source]).verifiedMatchCount,1));
