@@ -9,11 +9,17 @@ const root=resolve(dirname(fileURLToPath(import.meta.url)),'..','python');
 const modules=[
  'analyze_interlude.py','interlude_workflow.py','vocal_microanalysis.py',
  'reconstruct_recorded.py','acrcloud_batch.py','finalize_master.py',
- 'run_full_pipeline.py','mix_approved.py','fullband_stereo_audit.py','download_meta_cc0.py'
+ 'run_full_pipeline.py','mix_approved.py','fullband_stereo_audit.py',
+ 'human_vocal_research.py','download_meta_cc0.py'
 ];
 
-test('Interlude automation has all ten production modules and a reproducible source manifest',()=>{
+test('Interlude automation has all eleven production modules and a reproducible source manifest',()=>{
   for(const name of modules)assert.ok(existsSync(resolve(root,name)),name);
+  const vocal=JSON.parse(readFileSync(resolve(root,'vocal_reference_sources.json'),'utf8'));
+  assert.ok(vocal.sources.length>=5);
+  assert.ok(vocal.sources.some(x=>x.name==='LibriTTS'&&x.license==='CC BY 4.0'));
+  assert.ok(vocal.sources.some(x=>x.name==='Smule DAMP singing archives'&&x.status.startsWith('excluded')));
+  assert.match(vocal.policy,/no uncontrolled extraction/i);
   const registry=JSON.parse(readFileSync(resolve(root,'meta_cc0_sample_registry.json'),'utf8'));
   assert.equal(registry.origin,'Meta Open Sound');
   assert.equal(registry.license,'CC0-1.0');
@@ -41,7 +47,7 @@ test('all Interlude Python pipeline modules parse correctly',t=>{
   const r=spawnSync('python3',['-c',script,root,...modules],
     {encoding:'utf8',timeout:15000});
   assert.equal(r.status,0,(r.stderr||r.stdout||'').slice(0,800));
-  assert.match(r.stdout,/parsed 10 Interlude pipeline modules/);
+  assert.match(r.stdout,/parsed 11 Interlude pipeline modules/);
 });
 
 test('pipeline safeguards block silent source re-use, license bypass, unverifiable masters and paid scans',()=>{
