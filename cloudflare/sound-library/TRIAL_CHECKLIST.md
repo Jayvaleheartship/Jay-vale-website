@@ -1,6 +1,21 @@
 # Jay Vale Audio Lab — First-Trial Checklist
 
-Updated 18 November 2026 after Audio Lab v0.8 matching engine CI and live recorded-bank browser verification. For **every to-do task**: complete the work, verify the outcome, update this saved checklist immediately, display the revised task list, and let the user choose the next item. Never mark a task complete from code commits alone.
+Updated 27 November 2026 after AI Detection Lab read-only provider integration, security checks, and branch CI; earlier first-trial verification records are preserved below. For **every to-do task**: complete the work, verify the outcome, update this saved checklist immediately, display the revised task list, and let the user choose the next item. Never mark a task complete from code commits alone.
+
+## AI Detection Lab continuation — 27 November 2026
+
+- [x] **Task 11, development milestone:** Retrieved and inspected the original `feature/acrcloud-ai-detection` GitHub branch and draft PR #2. Production `main` remains unchanged.
+- [x] Verified ACRCloud's official File Scanning API allows **listing and retrieving existing files/results** without submitting another billable scan.
+- [x] Added `GET /v1/ai-detection/existing` to the authenticated Cloudflare Worker adapter. List returns only safe metadata for the first 30 existing files and indicates when more pages exist; no new uploads occur.
+- [x] Added the existing-file picker, read-only load, display of provider stem/segment probabilities, comparison, and JSON export in private Audio Lab UI.
+- [x] Added **safe, unique auto-discovery of AI-enabled File Scanning containers** using only the secret ACRCloud token. If more than one is eligible, the adapter requires a matching `ACRCLOUD_CONTAINER_NAME` or explicit `ACRCLOUD_CONTAINER_ID` + `ACRCLOUD_REGION`; never guesses.
+- [x] Container validation handles an explicit AI-enable flag or provider-documented engine=5; an explicit disabled flag always takes precedence.
+- [x] **Prevent unexpected charges:** new scans require explicit private server setting `ACRCLOUD_NEW_SCANS_ENABLED=true` and per-upload user confirmation. Default read-only mode still allows existing result retrieval.
+- [x] **Prevent accidental deletion:** ACRCloud DELETE requests require the separate private `ACRCLOUD_DELETE_ENABLED=true` setting; default disabled. The UI additionally restricts delete controls to current-session submissions.
+- [x] GitHub Actions run **46016230312**, commit `ff16130939002522e065f3be43fd4bccea1ab8e8`: **42 automated tests passed, 0 failed** (adapter and UI syntax included). Live provider API calls were mocked for this test run.
+- [ ] ACRCloud developer token not accessible to connected tools; Cloudflare secret not verified. The owner's regular-browser console scan is verified, but is **not** a live API end-to-end test.
+- [ ] Deploy updated Cloudflare Worker to private environment, verify provider container auto-discovery and retrieve the 99.22% Suno reference result from the previously uploaded Interlude. Compare against screenshot, preserving the exact returned model version/stem, then evaluate any new scans deliberately.
+- [ ] Do not merge draft PR or publish to production before live provider validation, security and account usage review. Experimental presigned streaming stays disabled.
 
 ## Infrastructure and setup completed
 
@@ -87,7 +102,7 @@ Updated 18 November 2026 after Audio Lab v0.8 matching engine CI and live record
 - [ ] **8. Run first real A/B trial — CRITICAL.** Use the existing 2 Drums.mp3 ZIP, compare loudness-matched original and reconstruction. Document human listening feedback.
 - [ ] **9. Objective evaluation — HIGH.** Spectral similarity, transient timing, tempo, loudness, artifact metrics; AI classifiers supplementary only.
 - [ ] **10. Bitwig / ACE Studio connections — LATER.** Local-only bridge for licensed Bitwig sounds and a practical exported-stem flow.
-- [ ] **11. AI Detection Lab — CODE COMPLETE, LIVE VERIFICATION PENDING.** Independent UI and secure ACRCloud API adapter implemented on feature/acrcloud-ai-detection, branch CI green. Requires ACRCloud credentials, enabled FS container, Cloudflare Worker deployment and real-track result parity test. A separate original model would require a properly benchmarked training project.
+- [ ] **11. AI Detection Lab — READ-ONLY PROVIDER INTEGRATION CODE VERIFIED; LIVE API STILL PENDING.** Existing-file listing, container auto-discovery, controlled uploads, protected deletion and original/vocal/accompaniment result display implemented in draft PR #2. 42/42 CI tests passed on 27 November. Needs private provider access token, Cloudflare Worker deployment and real-result parity against the console's 99.22% Suno reference; no new scanning charges until explicitly enabled.
 
 ## Verify before moving to the next item
 
