@@ -1,0 +1,67 @@
+{
+  "schema": "jay-vale-voice-reference-sources-v1",
+  "compiled_date": "2026-11-27",
+  "policy": "Only lawfully licensed vocal recordings with documented provenance; no uncontrolled extraction from commercial music or videos; no use to mislabel AI vocals as human performances.",
+  "sources": [
+    {
+      "name": "VocalSet",
+      "type": "human_singing",
+      "publisher": "Northwestern University / Zenodo",
+      "url": "https://zenodo.org/records/1442513",
+      "approx_hours": 10.1,
+      "singers": 20,
+      "description": "Monophonic recorded singers, vowels, scales, standard and extended singing techniques",
+      "license": "VERIFY_RECORD_AND_REUSAGE_TERMS",
+      "status": "candidate_not_downloaded_license_not_finally_verified",
+      "suitability": "Strong scientific reference for singing gestures and controlled vowels, but the corpus is mostly mono"
+    },
+    {
+      "name": "Vocadito",
+      "type": "human_singing",
+      "publisher": "ISMIR 2021 / research dataset",
+      "url": "https://archives.ismir.net/ismir2021/latebreaking/000044.pdf",
+      "clips": 40,
+      "license": "CC BY 4.0 per publication; confirm distribution source before downloading",
+      "status": "candidate_not_downloaded",
+      "suitability": "Short multilingual solo human singing performances with pitch, note and lyric annotations"
+    },
+    {
+      "name": "LibriTTS",
+      "type": "human_speech",
+      "publisher": "OpenSLR / LibriVox",
+      "url": "https://openslr.org/60/",
+      "approx_hours": 585,
+      "license": "CC BY 4.0",
+      "status": "license_verified_no_audio_downloaded",
+      "suitability": "Speech microtiming/phonetics and prosody; not a singing training standard"
+    },
+    {
+      "name": "LJ Speech",
+      "type": "human_speech",
+      "publisher": "Keith Ito / LibriVox",
+      "url": "https://keithito.com/LJ-Speech-Dataset/",
+      "clips": 13100,
+      "license": "Public domain",
+      "status": "license_verified_no_audio_downloaded",
+      "suitability": "Short single-speaker speech; not representative of male singing or stereo mixing"
+    },
+    {
+      "name": "Smule DAMP singing archives",
+      "type": "human_singing",
+      "publisher": "Smule / Zenodo",
+      "url": "https://zenodo.org/records/3596940",
+      "license": "Special Smule Research Data License Agreement",
+      "status": "excluded_until_agreement_reviewed",
+      "suitability": "Multiple human singers but use is not freely unrestricted"
+    },
+    {
+      "name": "GTSinger",
+      "type": "human_singing_and_speech",
+      "publisher": "GTSinger / ModelScope",
+      "url": "https://www.modelscope.cn/datasets/AI-ModelScope/GTSinger",
+      "license": "CC BY-NC-SA 4.0",
+      "status": "excluded_from_commercial_project",
+      "suitability": "Diverse techniques but license is noncommercial"
+    }
+  ]
+}
