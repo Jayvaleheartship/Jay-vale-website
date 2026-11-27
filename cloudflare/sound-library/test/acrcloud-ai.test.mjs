@@ -298,7 +298,7 @@ test('successful provider deletion does not expose credentials', async () => {
 test('provider error payload is not reflected to browser', async () => {
   await mockFetch(async()=>Response.json({access_token:'LEAK-ME'}, {status:401}),async()=>{
     const response=await pollAiDetection(env,sampleId);
-    assert.equal(response.status,502);
+    assert.equal(response.status,503);
     assert.equal(JSON.stringify(await response.json()).includes('LEAK-ME'),false);
   });
 });
