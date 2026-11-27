@@ -69,7 +69,10 @@ export function releaseBlockers(project,{stemResults=[],finalResults=[]}={}) {
       }
       for(const x of results){
         const flag=detectionFlag(x.ai_probability);
-        if(flag==='RED_FLAG')blockers.push('Red detector review flag: '+id+' ('+version+')');
+        // Expected AI reference stems can legitimately score high; flag them in the
+        // report, but only the rebuilt/recorded counterpart is a release gate.
+        if(flag==='RED_FLAG' && version==='rebuilt')
+          blockers.push('Red detector review flag: '+id+' ('+version+')');
         if(flag==='UNKNOWN')blockers.push('Unverified detector result: '+id+' ('+version+')');
       }
     }
