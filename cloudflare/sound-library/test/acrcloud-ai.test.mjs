@@ -72,6 +72,16 @@ test('new billable uploads default off while existing results stay readable',asy
   });
 });
 
+test('explicit ai_detection=0 overrides engine 5 for fail-closed scanning',async()=>{
+  await mockFetch(async()=>Response.json({data:{
+    id:12345,name:'Jimmy',region:'eu-west-1',engine:5,
+    policy:{ai_detection:0}}}),async()=>{
+    const status=await (await aiDetectionStatus(env)).json();
+    assert.equal(status.provider_ready,false);
+    assert.equal(status.new_scans_enabled,false);
+  });
+});
+
 test('uniquely discover an AI-enabled container using token only',async()=>{
   const tokenOnly={ACRCLOUD_ACCESS_TOKEN:env.ACRCLOUD_ACCESS_TOKEN};
   assert.equal(aiDetectionConfigured(tokenOnly),true);
@@ -282,7 +292,13 @@ test('incomplete provider results are not represented as a finished detection', 
   });
 });
 
-test('successful provider deletion does not expose credentials', async () => {
+test('provider deletion is forbidden by default even with a valid library token', async()=>{
+  const response=await deleteAiDetection(env,sampleId);
+  assert.equal(response.status,403);
+  assert.match((await response.json()).error,/disabled/);
+});
+
+test('successful provider deletion does not expose credentials when explicitly enabled', async () => {
   await mockFetch(async (url,options)=>{
     if(String(url).includes('api-v2.acrcloud.com'))
       return Response.json({data:{id:12345,region:'eu-west-1',engine:5}});
@@ -290,7 +306,7 @@ test('successful provider deletion does not expose credentials', async () => {
     assert.equal(options.method,'DELETE');
     return new Response(null,{status:204});
   },async()=>{
-    const response=await deleteAiDetection(env,sampleId);
+    const response=await deleteAiDetection({...env,ACRCLOUD_DELETE_ENABLED:'true'},sampleId);
     assert.deepEqual(await response.json(),{deleted:true,file_id:sampleId});
   });
 });
