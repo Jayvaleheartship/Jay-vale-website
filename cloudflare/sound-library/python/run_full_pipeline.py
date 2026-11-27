@@ -12,6 +12,7 @@ from interlude_workflow import init_project
 from analyze_interlude import main as analyze_zip,sh256
 from vocal_microanalysis import analyze_pair
 from reconstruct_recorded import run as reconstruct
+from mix_approved import mix_only_approved
 from acrcloud_batch import check_previously_scanned_interlude,scan_and_poll,ProviderError
 from finalize_master import export_master
 
@@ -99,10 +100,43 @@ def run(args):
    phase_block(summary,10,str(e))
  else:phase_block(summary,10,'ACRCloud API live credentials and all 24 stem-level original/rebuilt reports not yet available')
  phase_block(summary,11,'No complete source/provenance and per-stem detector review')
- phase_block(summary,12,'Independent 10-part instrumental render and approved new human vocal performances not complete')
- phase_block(summary,13,'No verified final WAV candidate has been created or submitted to ACRCloud')
- phase_block(summary,14,'No accepted master; no actual audio watermark applied; embedded BWF rights metadata cannot be verified')
- phase_block(summary,15,'No verified final WAV master exists, so no final download link can be generated')
+ candidate=None
+ if args.mix_approvals:
+  try:
+   candidate=work/'mix_candidate'/'Interlude_APPROVED_RECORDED_MIX_UNMASTERED.wav'
+   result=mix_only_approved(args.mix_approvals,work/'original_analysis/INTERLUDE_SOURCE_MANIFEST.json',candidate)
+   phase_success(summary,11,'All original-versus-recorded stem review approvals verified from actual sample/recording evidence',[args.mix_approvals])
+   phase_success(summary,12,'Mix candidate rendered from 10 independent instrument stems and 2 recorded vocal stems',[str(candidate)])
+  except Exception as e:
+   candidate=None
+   phase_block(summary,12,'Recorded-stem approval or mix render failed: '+str(e))
+ else:phase_block(summary,12,'Independent 10-part instrumental render and approved new human vocal performances not complete')
+ if candidate and args.scan_final_acrcloud:
+  try:
+   report=scan_and_poll(candidate)
+   providerdir=work/'project'/'provider';providerdir.mkdir(parents=True,exist_ok=True)
+   (providerdir/'FINAL_MIX_ACRCLOUD_REPORT.json').write_text(json.dumps(report,indent=2)+'\n')
+   orig=next((x for x in report.get('results',[]) if x.get('stem')=='original'),None)
+   if not orig or not isinstance(orig.get('ai_probability'),(int,float)):
+    phase_block(summary,13,'ACRCloud did not return verified original-mix probability')
+   elif orig['ai_probability']>15:
+    phase_block(summary,13,'User review threshold exceeded: '+str(orig['ai_probability'])+'% (do not misrepresent provenance)')
+   else:
+    phase_success(summary,13,'Actual final WAV scan recorded, below user-defined review flag, not proof of human origin',['project/provider/FINAL_MIX_ACRCLOUD_REPORT.json'])
+  except ProviderError as e:phase_block(summary,13,str(e))
+ else:phase_block(summary,13,'No verified final WAV candidate + explicitly authorized API scan')
+ if candidate and args.release_state and args.release_quality and summary['steps']['13']['status']=='EVIDENCE_READY':
+  try:
+   result=export_master(candidate,args.release_state,args.release_quality,
+        work/'release'/'Interlude_Jay_Vale_HEARTSHIP_24bit48k_FINAL.wav')
+   summary['actual_master_wav']=result['file']
+   phase_success(summary,14,'Release master metadata and independent watermark evidence verified',[result['file']])
+   phase_success(summary,15,'Actual mastered WAV created locally and hashed; provide download only from verified current environment',[result['file']])
+  except Exception as e:
+   phase_block(summary,14,'Master verification failure: '+str(e))
+ else:phase_block(summary,14,'No accepted master; no actually applied/verified audio watermark and rights metadata')
+ if summary['actual_master_wav'] is None:
+  phase_block(summary,15,'No verified final WAV master exists, so no final download link can be generated')
  summary['automation_coverage']={'source_ingestion':'run','spectral_stereo_microanalysis':'run',
  'vocal_reference_analysis':'run','licensed_sample_ranking':'runs_only_if_approved_bank_available',
  'instrumental_render':'runs_only_if_all_verified_sample_event_maps_exist',
@@ -130,6 +164,10 @@ if __name__=='__main__':
  p.add_argument('--human-lead',help='Actual recorded human lead WAV')
  p.add_argument('--human-backing',help='Actual recorded human backing WAV')
  p.add_argument('--fetch-existing-acrcloud',action='store_true',help='Read previous scans using private API env vars; no new scan charges')
+ p.add_argument('--mix-approvals',help='All 12 genuine recorded/approved stem files plus provider scores')
+ p.add_argument('--scan-final-acrcloud',action='store_true',help='Submits one verified finished mix only if billing setting is explicitly enabled')
+ p.add_argument('--release-state',help='Stage 00-14 independently verified project manifest')
+ p.add_argument('--release-quality',help='Signed user quality, genuine watermark and rights evidence')
  args=p.parse_args()
  result=run(args)
  print('Interlude:',result['stems'],'stems, blocked stage IDs:',result['blocked_stages'],
