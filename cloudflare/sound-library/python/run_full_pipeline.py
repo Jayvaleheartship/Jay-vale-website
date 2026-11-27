@@ -11,6 +11,7 @@ from pathlib import Path
 from interlude_workflow import init_project
 from analyze_interlude import main as analyze_zip,sh256
 from vocal_microanalysis import analyze_pair
+from human_vocal_research import run as research_human_vocal_references
 from fullband_stereo_audit import run as fullband_audit
 from reconstruct_recorded import run as reconstruct
 from mix_approved import mix_only_approved
@@ -69,6 +70,13 @@ def run(args):
  try:
   analyze_pair(originals/'0 Lead Vocals.mp3',originals/'1 Backing Vocals.mp3',voice_dir,
      args.human_lead,args.human_backing)
+  # Measured naturalness references are separate from performance provenance.
+  # Neither analysis nor dataset statistics turns an AI vocal into a recorded take.
+  comparisons=[('lead',originals/'0 Lead Vocals.mp3'),
+               ('backing',originals/'1 Backing Vocals.mp3')]
+  research_human_vocal_references(comparisons,
+      [('external_reference_'+str(i),p) for i,p in enumerate(args.voice_reference or [])],
+      voice_dir/'human_reference_research')
   if args.human_lead and args.human_backing:
    phase_block(summary,9,'Real vocal files analyzed but recording provenance, phrase/phoneme alignment and listener acceptance still require verification')
   else:phase_block(summary,9,'No new genuine lead/backing vocal performances supplied; reference analysis completed')
@@ -164,6 +172,7 @@ if __name__=='__main__':
  p.add_argument('--approved-events',help='All-ten-instrument independent-sample event map.json')
  p.add_argument('--human-lead',help='Actual recorded human lead WAV')
  p.add_argument('--human-backing',help='Actual recorded human backing WAV')
+ p.add_argument('--voice-reference',action='append',default=[],help='Optional authorized human singing/speech WAV for reference only; provenance must be verified separately')
  p.add_argument('--fetch-existing-acrcloud',action='store_true',help='Read previous scans using private API env vars; no new scan charges')
  p.add_argument('--mix-approvals',help='All 12 genuine recorded/approved stem files plus provider scores')
  p.add_argument('--scan-final-acrcloud',action='store_true',help='Submits one verified finished mix only if billing setting is explicitly enabled')
