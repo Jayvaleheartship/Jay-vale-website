@@ -20,13 +20,28 @@ function json(data, status = 200) {
 function fail(message, status = 400) { return json({error: message}, status); }
 
 export function aiDetectionConfigured(env) {
-  return Boolean(
-    env &&
+  return Boolean(env &&
     typeof env.ACRCLOUD_ACCESS_TOKEN === 'string' &&
     env.ACRCLOUD_ACCESS_TOKEN.length >= 16 &&
-    REGIONS.has(env.ACRCLOUD_REGION) &&
-    /^[1-9]\d{0,15}$/.test(String(env.ACRCLOUD_CONTAINER_ID ?? ''))
-  );
+    ((REGIONS.has(env.ACRCLOUD_REGION) &&
+      /^[1-9]\d{0,15}$/.test(String(env.ACRCLOUD_CONTAINER_ID ?? ''))) ||
+     (!env.ACRCLOUD_REGION && !env.ACRCLOUD_CONTAINER_ID)));
+}
+function explicitContainer(env) {
+  return REGIONS.has(env.ACRCLOUD_REGION) &&
+    /^[1-9]\d{0,15}$/.test(String(env.ACRCLOUD_CONTAINER_ID ?? ''));
+}
+function aiEnabled(c) {
+  // Both a top-level AI flag and an engine=5 are documented by ACRCloud.
+  const flag=c?.ai_detection ?? c?.policy?.ai_detection;
+  return flag===true || Number(flag)===1 || Number(c?.engine)===5;
+}
+function safeContainer(c) {
+  return {id:String(c.id),name:String(c.name||''),region:c.region,
+    engine:Number(c.engine),ai_detection:aiEnabled(c)};
+}
+function authorizedProviderHeaders(env) {
+  return {authorization:'Bearer '+env.ACRCLOUD_ACCESS_TOKEN,accept:'application/json'};
 }
 
 /**
@@ -39,37 +54,50 @@ export async function inspectAiContainer(env) {
     return {verified: false, enabled: false,
       message: 'Configure ACRCLOUD_ACCESS_TOKEN, ACRCLOUD_CONTAINER_ID and ACRCLOUD_REGION privately.'};
   }
+  const url=explicitContainer(env)
+    ? 'https://api-v2.acrcloud.com/api/fs-containers/'+env.ACRCLOUD_CONTAINER_ID
+    : 'https://api-v2.acrcloud.com/api/fs-containers?per_page=100';
   let response;
   try {
-    response = await fetch('https://api-v2.acrcloud.com/api/fs-containers/' +
-      env.ACRCLOUD_CONTAINER_ID, {
-        method: 'GET', redirect: 'error',
-        headers: {authorization: 'Bearer ' + env.ACRCLOUD_ACCESS_TOKEN,
-          accept: 'application/json'}
-      });
+    response=await fetch(url,{method:'GET',redirect:'error',
+      headers:authorizedProviderHeaders(env)});
   } catch {
-    return {verified: false, enabled: false, message: 'Could not contact ACRCloud Console API.'};
+    return {verified:false,enabled:false,message:'Could not contact ACRCloud Console API.'};
   }
   if (!response.ok) {
-    return {verified: false, enabled: false,
-      message: 'Could not validate ACRCloud container (provider status ' + response.status + ').'};
+    return {verified:false,enabled:false,
+      message:'Could not validate ACRCloud container (provider status '+response.status+').'};
   }
+  let payload;
+  try {payload=await response.json();}
+  catch {return {verified:false,enabled:false,message:'Unexpected ACRCloud container response.'};}
   let container;
-  try {container = (await response.json())?.data;}
-  catch {return {verified: false, enabled: false, message: 'Unexpected ACRCloud container response.'};}
-  if (!container || String(container.id) !== String(env.ACRCLOUD_CONTAINER_ID) ||
-      container.region !== env.ACRCLOUD_REGION) {
-    return {verified: false, enabled: false,
-      message: 'ACRCloud container ID or region does not match private configuration.'};
+  if (explicitContainer(env)) {
+    container=payload?.data;
+    if (!container || String(container.id)!==String(env.ACRCLOUD_CONTAINER_ID) ||
+        container.region!==env.ACRCLOUD_REGION) {
+      return {verified:false,enabled:false,
+        message:'ACRCloud container ID or region does not match private configuration.'};
+    }
+  } else {
+    // Never silently select a container from an incomplete or ambiguous list.
+    if (payload?.meta && Number(payload.meta.last_page)>1)
+      return {verified:false,enabled:false,
+        message:'Multiple container pages found. Set your container ID and region.'};
+    const all=Array.isArray(payload?.data)?payload.data:[];
+    let matches=all.filter(c=>REGIONS.has(c?.region)&&aiEnabled(c));
+    const preferred=String(env.ACRCLOUD_CONTAINER_NAME||'').trim();
+    if(preferred)matches=matches.filter(c=>String(c.name||'')===preferred);
+    if(matches.length!==1)
+      return {verified:false,enabled:false,
+        message:matches.length===0?'No unique AI-enabled container found. Configure a container name or ID.':
+          'Multiple AI-enabled containers found. Set ACRCLOUD_CONTAINER_NAME or a numeric container ID.'};
+    container=matches[0];
   }
-  // ACRCloud documents AI Detection as an enablement flag, independent
-  // of the normal File Scanning recognition engine (1–4).
-  const engine = Number(container.engine);
-  const aiFlag = container.ai_detection ?? container.policy?.ai_detection;
-  const enabled = aiFlag === true || Number(aiFlag) === 1;
-  return {verified: true, enabled, engine, region: container.region,
-    message: enabled ? 'ACRCloud AI Music Detection is enabled.'
-      : 'ACRCloud container exists, but AI Music Detection is not enabled.'};
+  const enabled=aiEnabled(container);
+  return {...safeContainer(container),verified:true,enabled,
+    message:enabled?'ACRCloud AI Music Detection is enabled.':
+      'ACRCloud container exists, but AI Music Detection is not enabled.'};
 }
 
 export async function aiDetectionStatus(env) {
@@ -81,6 +109,9 @@ export async function aiDetectionStatus(env) {
     provider_ready: check.enabled,
     engine: check.engine ?? null,
     region: check.region ?? null,
+    container_id: check.id ?? null,
+    container_name: check.name ?? null,
+    new_scans_enabled: check.enabled && env.ACRCLOUD_NEW_SCANS_ENABLED === 'true',
     upload_max_bytes: env.ACRCLOUD_ENABLE_EXPERIMENTAL_STREAM === 'true' ? MAX_STREAM_BYTES : MAX_AUDIO_BYTES,
     direct_upload_max_bytes: MAX_AUDIO_BYTES,
     provider_max_duration_seconds: 900,
@@ -89,23 +120,25 @@ export async function aiDetectionStatus(env) {
   });
 }
 
-function baseUrl(env) {
-  // Explicit region allowlist prevents using configuration to send files or
-  // bearer tokens to an arbitrary origin.
-  return 'https://api-' + env.ACRCLOUD_REGION + '.acrcloud.com/api/fs-containers/' +
-    env.ACRCLOUD_CONTAINER_ID;
+function baseUrl(region,containerId) {
+  // Both components are verified by the Console API, never client input.
+  return 'https://api-' + region + '.acrcloud.com/api/fs-containers/' + containerId;
 }
 
-async function providerCall(env, suffix, options = {}) {
+async function providerCall(env, suffix, options = {}, verifiedContainer = null) {
   if (!aiDetectionConfigured(env)) {
-    return {ok: false, response: fail('ACRCloud API is not configured', 503)};
+    return {ok:false,response:fail('ACRCloud API is not configured',503)};
   }
+  const active=verifiedContainer || await inspectAiContainer(env);
+  if (!active.verified || !active.enabled)
+    return {ok:false,response:fail(active.message,503)};
   let response;
   try {
     const headers = new Headers(options.headers || {});
     headers.set('authorization', 'Bearer ' + env.ACRCLOUD_ACCESS_TOKEN);
     headers.set('accept', 'application/json');
-    response = await fetch(baseUrl(env) + suffix, {...options, headers, redirect: 'error'});
+    response = await fetch(baseUrl(active.region,active.id) + suffix,
+      {...options, headers, redirect: 'error'});
   } catch {
     return {ok: false, response: fail('ACRCloud is unreachable or timed out', 502)};
   }
@@ -130,7 +163,9 @@ async function providerCall(env, suffix, options = {}) {
 }
 
 export async function submitAiDetection(request, env) {
-  if (!aiDetectionConfigured(env)) return fail('ACRCloud API is not configured', 503);
+  if (!aiDetectionConfigured(env)) return fail('ACRCloud API is not configured',503);
+  if (env.ACRCLOUD_NEW_SCANS_ENABLED !== 'true')
+    return fail('New paid scans are disabled. Existing results remain readable.',403);
   if (request.headers.get('x-confirm-provider-upload') !== 'yes') {
     return fail('Confirm the external provider upload before submission', 400);
   }
@@ -163,9 +198,8 @@ export async function submitAiDetection(request, env) {
   providerForm.set('data_type', 'audio');
   providerForm.set('file', file, filename);
   const upstream = await providerCall(env, '/files', {
-    method: 'POST',
-    body: providerForm
-  });
+    method:'POST',body:providerForm
+  },containerCheck);
   if (!upstream.ok) return upstream.response;
 
   const record = upstream.data?.data;
@@ -191,7 +225,9 @@ export async function submitLargeAiDetection(request, env) {
   // account. Keep the experimental path disabled instead of risking audio loss.
   if (env.ACRCLOUD_ENABLE_EXPERIMENTAL_STREAM !== 'true')
     return fail('Large-file streaming is not validated or enabled. Use a smaller original file.', 503);
-  if (!aiDetectionConfigured(env)) return fail('ACRCloud API is not configured', 503);
+  if (!aiDetectionConfigured(env)) return fail('ACRCloud API is not configured',503);
+  if (env.ACRCLOUD_NEW_SCANS_ENABLED !== 'true')
+    return fail('New paid scans are disabled. Existing results remain readable.',403);
   if (request.headers.get('x-confirm-provider-upload') !== 'yes')
     return fail('Confirm the external provider upload before submission');
   const declaredSize = Number(request.headers.get('x-audio-size'));
@@ -214,7 +250,7 @@ export async function submitLargeAiDetection(request, env) {
 
   const requestedType = AUDIO_TYPES[extension];
   const presigned = await providerCall(env, '/presigned-upload?filename=' +
-    encodeURIComponent(filename) + '&content_type=' + encodeURIComponent(requestedType));
+    encodeURIComponent(filename) + '&content_type=' + encodeURIComponent(requestedType),{},containerCheck);
   if (!presigned.ok) return presigned.response;
   const data = presigned.data?.data;
   if (!data || typeof data.presigned_url !== 'string' ||
@@ -254,7 +290,7 @@ export async function submitLargeAiDetection(request, env) {
     method:'POST',
     headers:{'content-type':'application/json'},
     body:JSON.stringify({data_type:'audio',key:data.key,filename})
-  });
+  },containerCheck);
   if (!submitted.ok) return submitted.response;
   const row = submitted.data?.data;
   const id = row?.file_id || row?.id;
@@ -262,6 +298,28 @@ export async function submitLargeAiDetection(request, env) {
     return fail('ACRCloud accepted the file but returned no usable scan ID', 502);
   return json({file_id:id,state:Number(row?.state ?? 0),
     status:'submitted',provider:'ACRCloud',upload_method:'presigned_stream'},202);
+}
+
+/**
+ * Read-only, zero-resubmission access to the user's previous ACRCloud scans.
+ * The list deliberately excludes unrelated provider metadata and does not
+ * report any new scans as completed.
+ */
+export async function listExistingAiDetections(env) {
+  const active=await inspectAiContainer(env);
+  if(!active.verified||!active.enabled) return fail(active.message,503);
+  const upstream=await providerCall(env,'/files?page=1&per_page=30&with_result=0',{method:'GET'},active);
+  if(!upstream.ok)return upstream.response;
+  const data=upstream.data?.data;
+  if(!Array.isArray(data))return fail('ACRCloud returned an unexpected file list',502);
+  const files=data.filter(x=>x&&typeof x.id==='string'&&
+    /^[0-9a-f-]{36}$/i.test(x.id)).map(x=>({
+      id:x.id,name:String(x.name||'Untitled recording').slice(0,240),
+      duration:x.duration??null,state:Number(x.state),
+      created_at:x.created_at||null
+    }));
+  return json({provider:'ACRCloud',container_name:active.name,files,
+    next_page_available:Number(upstream.data?.meta?.last_page||1)>1});
 }
 
 export async function pollAiDetection(env, id) {
