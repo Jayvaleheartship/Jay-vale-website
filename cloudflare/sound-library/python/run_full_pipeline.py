@@ -11,6 +11,7 @@ from pathlib import Path
 from interlude_workflow import init_project
 from analyze_interlude import main as analyze_zip,sh256
 from vocal_microanalysis import analyze_pair
+from fullband_stereo_audit import run as fullband_audit
 from reconstruct_recorded import run as reconstruct
 from mix_approved import mix_only_approved
 from acrcloud_batch import check_previously_scanned_interlude,scan_and_poll,ProviderError
