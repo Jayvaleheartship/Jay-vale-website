@@ -88,16 +88,25 @@ footer{padding-bottom:25px;font-size:12px;color:var(--muted)}
     </section>
   </div>
 
+  <section class="panel">
+    <h2>3 · Previous ACRCloud scans — no new scanning charge</h2>
+    <p class="muted">Load results ACRCloud has already generated in your File Scanning container, including the reconstructed Interlude. This reads existing records without uploading audio again.</p>
+    <div class="row"><button id="existing-refresh" disabled>Find existing scans</button>
+      <button id="existing-load" disabled>Load selected result</button></div>
+    <label>Scanned recording<select id="existing-files" disabled><option value="">Connect first</option></select></label>
+    <div id="existing-status" class="status" role="status">Connect to the private provider to retrieve previous results.</div>
+  </section>
+
   <section class="panel" id="result-panel" hidden>
-    <h2>3 · Provider results</h2>
+    <h2>4 · Provider results</h2>
     <p class="muted">The classifications and numerical scores below are returned directly by ACRCloud, not computed or modified by Jay Vale Audio Lab.</p>
     <div class="row" id="summary"></div>
     <div id="component-results"></div>
-    <div class="row" style="margin-top:16px"><button id="export">Export results JSON</button><button id="delete">Delete scan from provider</button></div>
+    <div class="row" style="margin-top:16px"><button id="export">Export results JSON</button><button id="delete" disabled title="Only scans created in this session can be deleted here">Delete newly uploaded scan</button></div>
   </section>
 
   <section class="panel">
-    <h2>4 · Side-by-side comparison</h2>
+    <h2>5 · Side-by-side comparison</h2>
     <p class="muted">Scan the original and reconstructed recordings separately to compare the returned model classifications. Results are kept in this tab only and disappear when you close it.</p>
     <div class="scroll"><table><thead><tr><th>Recording</th><th>Original-mix AI score</th><th>Prediction</th><th>Likely source</th><th>Model</th></tr></thead><tbody id="comparison"><tr><td colspan="5">No completed scans yet.</td></tr></tbody></table></div>
   </section>
@@ -113,7 +122,9 @@ footer{padding-bottom:25px;font-size:12px;color:var(--muted)}
 const ROOT='https://jay-vale-sound-library.helgacoupe.workers.dev';
 const PROOF_CONTEXT='jay-vale-audio-lab/v1/proof/';
 const $=id=>document.getElementById(id);
-let accessToken=null, expiry=0, providerReady=false, activeFileId=null, activeReport=null, activeName='', activeLabel='', busy=false,previewUrl=null;
+let accessToken=null, expiry=0, providerReady=false, newScansEnabled=false,
+  activeFileId=null, activeReport=null, activeName='', activeLabel='', busy=false,
+  canDeleteActive=false, previewUrl=null;
 const comparisons=[];
 function status(id,message,isError=false){const element=$(id);element.textContent=message;element.dataset.error=isError?'true':'false';}
 function connected(){return Boolean(accessToken&&Date.now()<expiry-15000);}
@@ -121,8 +132,12 @@ function actionState(){
   const file=$('audio').files[0];
   const tooLong=Number.isFinite($('preview').duration)&&$('preview').duration>900;
   $('disconnect').disabled=!accessToken;
-  $('scan').disabled=busy||!connected()||!providerReady||!file||!$('agree').checked||file.size>50*1024*1024||tooLong;
+  $('scan').disabled=busy||!connected()||!providerReady||!newScansEnabled||!file||!$('agree').checked||file.size>50*1024*1024||tooLong;
   $('check').disabled=busy||!connected()||!activeFileId;
+  $('existing-refresh').disabled=busy||!connected()||!providerReady;
+  $('existing-files').disabled=busy||!connected()||!providerReady;
+  $('existing-load').disabled=busy||!connected()||!providerReady||!$('existing-files').value;
+  $('delete').disabled=busy||!connected()||!activeFileId||!canDeleteActive;
 }
 function toB64URL(bytes){let s='';for(const b of bytes)s+=String.fromCharCode(b);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 async function call(path,options={},requiresAuth=true){
@@ -152,11 +167,15 @@ $('connect').onclick=async()=>{
     accessToken=auth.access_token;expiry=Date.now()+auth.expires_in*1000;
     const provider=await call('/v1/ai-detection/status');
     providerReady=provider.provider_ready===true;
-    status('connection',providerReady?'Connected. Verified AI detection container: '+provider.region+' / engine '+provider.engine+'.':('Connected to library. '+provider.message),!providerReady);
-  }catch(e){accessToken=null;expiry=0;providerReady=false;status('connection',e.message,true);}
+    newScansEnabled=provider.new_scans_enabled===true;
+    status('connection',providerReady
+      ? 'Connected. Verified '+(provider.container_name||'AI detector')+' ('+provider.region+'). '+(newScansEnabled?'New uploads permitted.':'Read-only mode: new paid scans disabled.')
+      : 'Connected to library. '+provider.message,!providerReady);
+    if(providerReady)status('existing-status','Ready to retrieve previous ACRCloud scans without reuploading.');
+  }catch(e){accessToken=null;expiry=0;providerReady=false;newScansEnabled=false;status('connection',e.message,true);}
   finally{key='';busy=false;$('connect').disabled=false;actionState();}
 };
-$('disconnect').onclick=()=>{accessToken=null;expiry=0;providerReady=false;status('connection','Disconnected. Session token discarded.');actionState();};
+$('disconnect').onclick=()=>{accessToken=null;expiry=0;providerReady=false;newScansEnabled=false;status('connection','Disconnected. Session token discarded.');$('existing-files').replaceChildren(new Option('Connect first',''));actionState();};
 $('audio').onchange=()=>{
   if(previewUrl)URL.revokeObjectURL(previewUrl);
   const file=$('audio').files[0]; $('preview').hidden=!file;
@@ -173,6 +192,37 @@ $('audio').onchange=()=>{
   actionState();
 };
 $('agree').onchange=actionState;
+$('existing-files').onchange=actionState;
+$('existing-refresh').onclick=async()=>{
+  if(busy||!connected()||!providerReady)return;
+  busy=true;actionState();
+  try{
+    const results=await call('/v1/ai-detection/existing');
+    const picker=$('existing-files');
+    picker.replaceChildren(new Option('Select a previous scan',''));
+    for(const item of results.files||[]){
+      picker.append(new Option(item.name+' · '+(item.state===1?'Ready':'State '+item.state),item.id));
+    }
+    status('existing-status',(results.files||[]).length+' previous scan(s) retrieved.'+
+      (results.next_page_available?' More older scans may exist.':'')+
+      ' Select a result to inspect its stored AI scores.');
+  }catch(e){status('existing-status',e.message,true);}
+  finally{busy=false;actionState();}
+};
+$('existing-load').onclick=async()=>{
+  if(busy||!connected()||!providerReady)return;
+  const picker=$('existing-files'),id=picker.value;
+  if(!/^[0-9a-f-]{36}$/i.test(id))return;
+  const name=picker.selectedOptions[0]?.textContent||'Previous scan';
+  busy=true;activeFileId=id;activeLabel='Previously scanned';activeName=name;
+  activeReport=null;canDeleteActive=false;actionState();
+  try{
+    const loaded=await inspect(id);
+    if(loaded)status('existing-status','Loaded prior scan '+name+'. No audio was uploaded and no new scan was requested.');
+  }catch(e){status('existing-status',e.message,true);}
+  finally{busy=false;actionState();}
+};
+
 function el(tag,text,className){const node=document.createElement(tag);if(text!==undefined)node.textContent=String(text);if(className)node.className=className;return node;}
 function pct(value){if(value===null||value===undefined||value==='')return 'Not provided';const v=Number(value);return Number.isFinite(v)?Math.max(0,Math.min(100,v)).toFixed(2)+'%':'Not provided';}
 function numberValue(value){return Number.isFinite(Number(value))?Number(value):0;}
@@ -265,6 +315,7 @@ $('scan').onclick=async()=>{
   if(!file||!$('agree').checked)return;
   busy=true;actionState();
   activeReport=null;activeFileId=null;activeName=file.name;activeLabel=$('label').value;
+  canDeleteActive=false;
   $('result-panel').hidden=true;
   try{
     status('scan-status','Uploading to your configured ACRCloud account…');
@@ -283,6 +334,7 @@ $('scan').onclick=async()=>{
     const submission=await call(path,options);
     if(!submission.file_id)throw Error('Provider did not return a scan ID.');
     activeFileId=submission.file_id;
+    canDeleteActive=true;
     status('scan-status','Upload accepted. Analyzing audio with ACRCloud…');
     for(let attempt=0;attempt<24;attempt++){
       if(attempt)await sleep(3500);
@@ -299,9 +351,9 @@ $('export').onclick=()=>{
   const url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download='jay-vale-ai-detection.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
 };
 $('delete').onclick=async()=>{
-  if(!activeFileId||!connected())return;
+  if(!activeFileId||!connected()||!canDeleteActive)return;
   $('delete').disabled=true;
-  try{await call('/v1/ai-detection/'+activeFileId,{method:'DELETE'});activeFileId=null;status('scan-status','Provider scan record deleted. Local comparison remains in this tab.');}
+  try{await call('/v1/ai-detection/'+activeFileId,{method:'DELETE'});activeFileId=null;canDeleteActive=false;status('scan-status','Provider scan record deleted. Local comparison remains in this tab.');}
   catch(e){status('scan-status',e.message,true);}
   finally{$('delete').disabled=false;actionState();}
 };
