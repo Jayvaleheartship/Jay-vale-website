@@ -1,6 +1,47 @@
 # Jay Vale Audio Lab — First-Trial Checklist
 
-Updated 18 November 2026 after Audio Lab v0.8 matching engine CI and live recorded-bank browser verification. For **every to-do task**: complete the work, verify the outcome, update this saved checklist immediately, display the revised task list, and let the user choose the next item. Never mark a task complete from code commits alone.
+Updated 27 November 2026 after AI Detection Lab read-only provider integration, security checks, and branch CI; earlier first-trial verification records are preserved below. For **every to-do task**: complete the work, verify the outcome, update this saved checklist immediately, display the revised task list, and let the user choose the next item. Never mark a task complete from code commits alone.
+
+## Interlude exclusive 12-stem live-file pilot — 27 November 2026
+
+- [x] Selected Interlude x Detuned Fragments (Mashup) as **the only real-song test fixture**. Recovered the user's original ZIP from private Library and verified ZIP SHA-256 `63973b514ad7b622d3daa25429442d35ec3416b2e70468aa9204781a271dc96a` plus all individual 12 stem hashes.
+- [x] Audited **12/12 synchronized 48 kHz stereo MP3** stems (2 vocals + 10 instrumental); every track decodes to exactly **193.104 s**. Kept the original files unchanged and private.
+- [x] Built an executable 16-stage Interlude orchestration in `python/run_full_pipeline.py`, private project status ledger, per-stem source manifest, SHA-256, source-ingest/analysis caching, onset/spectral events, 250 ms features, and a per-stem **20 ms** vocal reference analysis. No instrument replacement falsely marked complete.
+- [x] Added independent **native full-band 48 kHz** audit for all 12 stems: up to 24 kHz FFT, mid-side spatial features, mono fold-down gain, band energy and stereo phase coherence, individual JSON + 250 ms CSV. In the 4–8 kHz band, measured stereo→mono spectral loss Brass −7.43 dB; Strings −6.80 dB; Keyboard −5.35 dB; Synth −4.55 dB. This is an audio measurement, **not** AI probability or authorship evidence.
+- [x] Added approved-recorded-sample renderer for 10 instrumental roles, respecting stem timeline, 48k/24bit, legal license and exact SHA, event coverage and rejection of source-derived audio masquerading as recorded. Added 12-stem approved-only mixer, final-WAV detector integration and verified metadata/watermark release gates. All are **software gates**, not a claim the real Interlude is fully reconstructed.
+- [x] Added reference vocal microanalysis, human-recorded vocal requirements, private ACRCloud prior-scan retrieval and guarded optional model scans; no API token or billable scan was used.
+- [x] Registered **1,075 verified publisher SHA-256 sample entries** from Meta Open Sound (CC0 piano, nylon guitar, steel guitar). This is a verified **catalogue of expected recordings only**, not 1,075 downloaded/verified recording files. Actual audio download needs a permitted network/provider path.
+- [x] Actual offline source tests passed **4/4**, reconstruction safety tests **3/3**, Python module syntax passed; latest GitHub Actions integration suite should be read back after final branch commit (do not count mocks as live audio reconstruction).
+- [ ] Reconstructed **0/10** real independent instrument stems as of this audit; no 95%-fidelity validation achieved. Still need actual licensed recorded audio bank and full automatic pitch/event/audio-source matching with listener review.
+- [ ] Lead and backing vocals: no newly provided genuine performances. Reference analysis is complete but does not substitute for human takes.
+- [ ] Provider: only user's *prior screenshot* of an ACRCloud **99.22% Suno likely-source** Interlude reconstruction result available. No live ACRCloud per-original/rebuilt-stem API comparison or final mix scan verified.
+- [ ] Final independently recorded/reconstructed 12-stem WAV does **not** exist. Final metadata, cryptographic hash, separately verified audio watermark and final download are blocked, not claimed as completed.
+- [ ] User-authored lyrics, original Suno draft model/prompt and associated exact composition source have not been recovered from the stem ZIP, and must be tracked as missing provenance until confirmed.
+
+## Mandatory song workflow adopted — 27 November 2026
+
+- [x] Saved SONG_PIPELINE_STANDARD.md with the ordered 00–15 stages from Jimmy's lyrics/Suno draft through stem ingest, complete per-stem microanalysis, sample-library search/licensing, full instrumental reconstruction, A/B fidelity review, genuine human vocal takes, every-stem detection, quality review, lossless WAV rendering, final detection, provenance/metadata and verified download.
+- [x] Saved SONG_CHECKLIST_TEMPLATE.md with per-step evidence, blocked conditions, and the per-stem inventory. Special mouth sounds and unique vocal percussion may be requested from Jimmy as genuine recordings when required.
+- [x] Implemented npm run song:new -- "Song Title" from cloudflare/sound-library to create a separate private per-song folder and six initial records: CHECKLIST.md, project.json, STEM_REGISTER.csv, SAMPLE_REQUESTS.csv, DETECTION_LOG.csv, DELIVERY.md. Outputs go under .local/song-projects, which is gitignored so private lyrics and stems are not published.
+- [x] Added ordered stage verification and 15% AI probability review flag helper. Original Suno scores are baseline evidence, not a release gate; rebuilt/recorded stems and full master are reviewed against the user target; unknown scores never silently pass.
+- [x] Test suite run 46019485680 passed 47/47 tests after new workflow integration, including fixture workspace creation, duplicate protection, ordered-stage checks and strict final-delivery blockers. This verifies workflow code, not that a full real song has been reconstructed.
+- [ ] Run first complete song through all 16 stages. Needs a named track, original lyrics/draft files, complete stems, approved sample licenses, human voice recordings, instrument reconstruction, actual provider checks and real final WAV validation. No real project is claimed complete.
+- [ ] Integrate local song-project creation into any future deployed Audio Lab project-management UI. Current implementation is a tested local CLI/template only; it is not deployed.
+
+## AI Detection Lab continuation — 27 November 2026
+
+- [x] **Task 11, development milestone:** Retrieved and inspected the original `feature/acrcloud-ai-detection` GitHub branch and draft PR #2. Production `main` remains unchanged.
+- [x] Verified ACRCloud's official File Scanning API allows **listing and retrieving existing files/results** without submitting another billable scan.
+- [x] Added `GET /v1/ai-detection/existing` to the authenticated Cloudflare Worker adapter. List returns only safe metadata for the first 30 existing files and indicates when more pages exist; no new uploads occur.
+- [x] Added the existing-file picker, read-only load, display of provider stem/segment probabilities, comparison, and JSON export in private Audio Lab UI.
+- [x] Added **safe, unique auto-discovery of AI-enabled File Scanning containers** using only the secret ACRCloud token. If more than one is eligible, the adapter requires a matching `ACRCLOUD_CONTAINER_NAME` or explicit `ACRCLOUD_CONTAINER_ID` + `ACRCLOUD_REGION`; never guesses.
+- [x] Container validation handles an explicit AI-enable flag or provider-documented engine=5; an explicit disabled flag always takes precedence.
+- [x] **Prevent unexpected charges:** new scans require explicit private server setting `ACRCLOUD_NEW_SCANS_ENABLED=true` and per-upload user confirmation. Default read-only mode still allows existing result retrieval.
+- [x] **Prevent accidental deletion:** ACRCloud DELETE requests require the separate private `ACRCLOUD_DELETE_ENABLED=true` setting; default disabled. The UI additionally restricts delete controls to current-session submissions.
+- [x] GitHub Actions run **46016230312**, commit `ff16130939002522e065f3be43fd4bccea1ab8e8`: **42 automated tests passed, 0 failed** (adapter and UI syntax included). Live provider API calls were mocked for this test run.
+- [ ] ACRCloud developer token not accessible to connected tools; Cloudflare secret not verified. The owner's regular-browser console scan is verified, but is **not** a live API end-to-end test.
+- [ ] Deploy updated Cloudflare Worker to private environment, verify provider container auto-discovery and retrieve the 99.22% Suno reference result from the previously uploaded Interlude. Compare against screenshot, preserving the exact returned model version/stem, then evaluate any new scans deliberately.
+- [ ] Do not merge draft PR or publish to production before live provider validation, security and account usage review. Experimental presigned streaming stays disabled.
 
 ## Infrastructure and setup completed
 
@@ -42,6 +83,39 @@ Updated 18 November 2026 after Audio Lab v0.8 matching engine CI and live record
 - [x] GitHub Actions CI 19/19 tests passed; private Cloudflare library still reports 309 indexed R2/D1 samples, no missing files.
 - [ ] Real-user-song matching accuracy is NOT verified by a self-generated bank calibration loop. Measure false accepts/false rejects, timing and listening quality with `2 Drums.mp3` in Tasks 5, 8 and 9.
 
+## ACRCloud account screenshot and result-display correction — 20 November 2026
+
+- [x] Owner's ACRCloud screenshot verifies an enabled, completed AI Music Detection scan on reconstructed Jay Vale Interlude MP3 (193 seconds). ACRCloud console reports `stem=Original`, prediction `AI Generated Music`, likely source `Suno`, AI probability `99.22%`. This is a user-observed live console result, **not** an authenticated API test.
+- [x] Confirmed current ACRCloud metadata schema has outer `ai_detection[]` entries labeled `original`, `vocals` or `accompaniment`, plus optional nested `segments[]`. Reworked the UI to show each provider stem and detailed segments without inferring unreturned vocal/accompaniment scores.
+- [x] Original-versus-reconstruction comparison now uses only the actual `stem=original` score and does not substitute a different stem or compute an invented mean.
+- [ ] ACRCloud Console access token and numeric File Scanning container ID remain unknown. They must be obtained through the authenticated console and entered as private Cloudflare Worker settings. Never post tokens in chat or commit them.
+- [ ] Run real API request and compare with console's 99.22% reference result. Live browser deployment and cross-check remain unverified.
+
+## AI detection engineering and test verification — 20 November 2026
+
+- [x] Cross-checked against ACRCloud public File Scanning and AI Music Detection documentation. Activation uses container `policy.ai_detection=1`, not a hypothetical engine 5.
+- [x] Updated the UI to display documented AI-detection time windows (`start`, `end`, `prediction`, `likely_source`, `ai_probability`, and source probabilities); separate uploads label original master, vocals, and instrumental. It does not fabricate a whole-track probability when a file has multiple windows.
+- [x] Added a protected Console API container/region/AI flag check before scans; invalid or unavailable configuration blocks provider uploads.
+- [x] Corrected accidental missing-score-as-zero output and duplicate scan comparison rows; video-like audio duration and input size checked before submission.
+- [x] Developed an experimental presigned large-file streaming route with SSRF guards, but kept it **disabled** by default because the provider endpoint is not independently verified. Current public-oriented UI accepts up to 50 MiB direct audio files only.
+- [x] Final committed code through `abf34be7c218f603a300790e49593e53a51c0721` verified by GitHub Actions workflow `44720596097` with **success**, including Node tests and static JavaScript syntax; earlier failed runs were diagnosed and corrected.
+- [x] Registered dedicated ACRCloud private-browser setup profile `prof_80125b10ac744859`; no saved ACRCloud sign-in has been verified.
+- [ ] Complete ACRCloud sign-in/activation, verify trial entitlement and provision container with AI detection.
+- [ ] Set three private server-side Cloudflare secrets, deploy Worker and run real ACRCloud A/B tests.
+- [ ] Cross-check real provider result parity, credits, retention, deletion and rate limiting; production release remains blocked.
+
+## AI detection provider integration — 20 November 2026 (development branch)
+
+- [x] Implemented server-side ACRCloud File Scanning adapter and private AI Detection Lab UI on feature/acrcloud-ai-detection.
+- [x] Preserves the real provider's model scores, source probabilities, stem-specific and segment-specific predictions without recalibration.
+- [x] HMAC read-session authentication reused; provider token remains private in Cloudflare Worker secrets; external upload needs explicit user confirmation.
+- [x] Comparative original/reconstructed/vocal/instrumental scans, JSON export and provider-result deletion implemented.
+- [x] GitHub Actions workflow run 44709341508 **passed** for branch commit 6cf032bd35fdb0bb4fe13997ea25bb3ad833f242. This confirms Node CI tests, not live ACRCloud accuracy or functionality.
+- [ ] **Not deployed**: current work is on a dedicated GitHub feature branch to avoid spending Netlify deployment credits unnecessarily.
+- [ ] Configure provider credentials and AI detection-enabled File Scanning container privately. No ACRCloud API access or live provider result verified yet.
+- [ ] Deploy Worker and finish a user-owned real-track scan, then cross-check the exact model output against ACRCloud; test deletion and provider billing.
+- [ ] Rate limits and scan-specific authorization before any multi-user release. See AI_DETECTION.md.
+
 ## First-trial tasks (ordered)
 
 - [x] **1. Fix and verify sample importer — COMPLETE.** Live Worker v0.5 verified 173/173 source entries processed; 134 distinct WAV recordings in D1, 39 duplicate source entries. R2 integrity audit confirmed 134/134 corresponding objects and exact sizes, 0 missing files, 0 size mismatches and 0 unindexed objects, with last scheduled batch reporting 0 errors. Verified at `2026-11-17T20:30:33.623Z` (UTC).
@@ -54,6 +128,7 @@ Updated 18 November 2026 after Audio Lab v0.8 matching engine CI and live record
 - [ ] **8. Run first real A/B trial — CRITICAL.** Use the existing 2 Drums.mp3 ZIP, compare loudness-matched original and reconstruction. Document human listening feedback.
 - [ ] **9. Objective evaluation — HIGH.** Spectral similarity, transient timing, tempo, loudness, artifact metrics; AI classifiers supplementary only.
 - [ ] **10. Bitwig / ACE Studio connections — LATER.** Local-only bridge for licensed Bitwig sounds and a practical exported-stem flow.
+- [ ] **11. AI Detection Lab — READ-ONLY PROVIDER INTEGRATION CODE VERIFIED; LIVE API STILL PENDING.** Existing-file listing, container auto-discovery, controlled uploads, protected deletion and original/vocal/accompaniment result display implemented in draft PR #2. 42/42 CI tests passed on 27 November. Needs private provider access token, Cloudflare Worker deployment and real-result parity against the console's 99.22% Suno reference; no new scanning charges until explicitly enabled.
 
 ## Verify before moving to the next item
 
