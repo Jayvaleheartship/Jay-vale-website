@@ -22,7 +22,7 @@ test('Interlude automation has all eight production modules and a reproducible s
   for(const group of registry.collections){
     assert.equal(Object.keys(group.sha256).length,group.sample_count);
     assert.ok(Object.entries(group.sha256).every(([p,h])=>
-      /^ogg\\/[A-Za-z0-9_.-]+\\.ogg$/.test(p)&&/^[0-9a-f]{64}$/.test(h)));
+      p.startsWith('ogg/') && p.endsWith('.ogg') && !p.includes('..') && /^[0-9a-f]{64}$/.test(h)));
   }
 });
 
@@ -37,7 +37,7 @@ test('all Interlude Python pipeline modules parse correctly',t=>{
     '    content=(root/name).read_text()',
     '    ast.parse(content,filename=name)',
     'print("parsed",len(names),"Interlude pipeline modules")'
-  ].join('\\n');
+  ].join(String.fromCharCode(10));
   const r=spawnSync('python3',['-c',script,root,...modules],
     {encoding:'utf8',timeout:15000});
   assert.equal(r.status,0,(r.stderr||r.stdout||'').slice(0,800));
