@@ -19,6 +19,12 @@ python3 python/run_full_pipeline.py \
 
 The default run automatically completes **only** eligible evidence-gathering work: ZIP validation, SHA256 hashing, technical 12-stem decoding, spectral/onset/stereo microframes, reference vocal microanalysis, sample gap queues, a track-specific 16-stage checklist and a final honest blocker report. Repeated runs check source hashes to avoid repeating passed analyses.
 
+## Native full-band 48 kHz audit
+
+In addition to the initial 16 kHz analysis proxy, the orchestration now runs `python/fullband_stereo_audit.py` against the **original 48 kHz stereo stems**. It emits `fullband_48khz/FULLBAND_ALL_12_STEMS.json` and a per-stem JSON plus 250 ms frame CSV, including seven spectral frequency bands up to 24 kHz, mid/side, stereo phase correlation, and mono-fold spectral energy change. This is characterization, **not source reconstruction, humanization, or an AI-detection score**. Real original-file input hashes are checked before reusing cached results.
+
+Tested on the actual Interlude 12-stem ZIP on 27 November 2026. The 4–8 kHz mono-fold measurement found brass −7.43 dB, strings −6.80 dB, keyboard −5.35 dB, synth −4.55 dB, confirming the need to preserve spatial behavior in reconstruction. Negative values must not be interpreted as an authenticity metric.
+
 ## Independent instrument matching and sample library
 
 From the licensed Meta Open Sound CC0 registry (1,075 cryptographically indexed OGG recordings: piano, nylon and steel guitar):
