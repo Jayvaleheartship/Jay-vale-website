@@ -1,5 +1,5 @@
 import {verifyCloudBridge,readCloudBridgeHealth} from './bridge-selftest.js';
-import {aiDetectionStatus,submitAiDetection,submitLargeAiDetection,pollAiDetection,deleteAiDetection} from './acrcloud-ai.js';
+import {aiDetectionStatus,submitAiDetection,submitLargeAiDetection,listExistingAiDetections,pollAiDetection,deleteAiDetection} from './acrcloud-ai.js';
 import {newChallenge,openReadSession,verifyReadSession,pruneLabChallenges} from './session-auth.js';
 import {auditStorage,auditedHealth} from './storage-audit.js';
 import {seedCC0} from './cc0-seeder.js';
@@ -196,6 +196,8 @@ export default {
    // Explicitly authorized AI Music Detection: no provider credentials in the browser.
    if(path==='/v1/ai-detection/status'&&req.method==='GET')
      return wrap(await readable(req,env)?await aiDetectionStatus(env):error('Unauthorized',401),req,env);
+   if(path==='/v1/ai-detection/existing'&&req.method==='GET')
+     return wrap(await readable(req,env)?await listExistingAiDetections(env):error('Unauthorized',401),req,env);
    if(path==='/v1/ai-detection'&&req.method==='POST')
      return wrap(await readable(req,env)?await submitAiDetection(req,env):error('Unauthorized',401),req,env);
    if(path==='/v1/ai-detection/stream'&&req.method==='POST')
