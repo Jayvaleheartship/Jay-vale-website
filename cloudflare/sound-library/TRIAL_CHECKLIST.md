@@ -2,6 +2,16 @@
 
 Updated 27 November 2026 after AI Detection Lab read-only provider integration, security checks, and branch CI; earlier first-trial verification records are preserved below. For **every to-do task**: complete the work, verify the outcome, update this saved checklist immediately, display the revised task list, and let the user choose the next item. Never mark a task complete from code commits alone.
 
+## Mandatory song workflow adopted — 27 November 2026
+
+- [x] Saved SONG_PIPELINE_STANDARD.md with the ordered 00–15 stages from Jimmy's lyrics/Suno draft through stem ingest, complete per-stem microanalysis, sample-library search/licensing, full instrumental reconstruction, A/B fidelity review, genuine human vocal takes, every-stem detection, quality review, lossless WAV rendering, final detection, provenance/metadata and verified download.
+- [x] Saved SONG_CHECKLIST_TEMPLATE.md with per-step evidence, blocked conditions, and the per-stem inventory. Special mouth sounds and unique vocal percussion may be requested from Jimmy as genuine recordings when required.
+- [x] Implemented npm run song:new -- "Song Title" from cloudflare/sound-library to create a separate private per-song folder and six initial records: CHECKLIST.md, project.json, STEM_REGISTER.csv, SAMPLE_REQUESTS.csv, DETECTION_LOG.csv, DELIVERY.md. Outputs go under .local/song-projects, which is gitignored so private lyrics and stems are not published.
+- [x] Added ordered stage verification and 15% AI probability review flag helper. Original Suno scores are baseline evidence, not a release gate; rebuilt/recorded stems and full master are reviewed against the user target; unknown scores never silently pass.
+- [x] Test suite run 46019485680 passed 47/47 tests after new workflow integration, including fixture workspace creation, duplicate protection, ordered-stage checks and strict final-delivery blockers. This verifies workflow code, not that a full real song has been reconstructed.
+- [ ] Run first complete song through all 16 stages. Needs a named track, original lyrics/draft files, complete stems, approved sample licenses, human voice recordings, instrument reconstruction, actual provider checks and real final WAV validation. No real project is claimed complete.
+- [ ] Integrate local song-project creation into any future deployed Audio Lab project-management UI. Current implementation is a tested local CLI/template only; it is not deployed.
+
 ## AI Detection Lab continuation — 27 November 2026
 
 - [x] **Task 11, development milestone:** Retrieved and inspected the original `feature/acrcloud-ai-detection` GitHub branch and draft PR #2. Production `main` remains unchanged.
