@@ -1,0 +1,5 @@
+# Offline interlude analysis/reconstruction; installed only in private trusted runtime
+numpy>=1.24,<3
+scipy>=1.11,<2
+soundfile>=0.12,<1
+# ffmpeg and ffprobe CLI required in PATH (not Python packages)
