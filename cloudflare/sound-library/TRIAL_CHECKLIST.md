@@ -2,6 +2,22 @@
 
 Updated 27 November 2026 after AI Detection Lab read-only provider integration, security checks, and branch CI; earlier first-trial verification records are preserved below. For **every to-do task**: complete the work, verify the outcome, update this saved checklist immediately, display the revised task list, and let the user choose the next item. Never mark a task complete from code commits alone.
 
+## Interlude exclusive 12-stem live-file pilot — 27 November 2026
+
+- [x] Selected Interlude x Detuned Fragments (Mashup) as **the only real-song test fixture**. Recovered the user's original ZIP from private Library and verified ZIP SHA-256 `63973b514ad7b622d3daa25429442d35ec3416b2e70468aa9204781a271dc96a` plus all individual 12 stem hashes.
+- [x] Audited **12/12 synchronized 48 kHz stereo MP3** stems (2 vocals + 10 instrumental); every track decodes to exactly **193.104 s**. Kept the original files unchanged and private.
+- [x] Built an executable 16-stage Interlude orchestration in `python/run_full_pipeline.py`, private project status ledger, per-stem source manifest, SHA-256, source-ingest/analysis caching, onset/spectral events, 250 ms features, and a per-stem **20 ms** vocal reference analysis. No instrument replacement falsely marked complete.
+- [x] Added independent **native full-band 48 kHz** audit for all 12 stems: up to 24 kHz FFT, mid-side spatial features, mono fold-down gain, band energy and stereo phase coherence, individual JSON + 250 ms CSV. In the 4–8 kHz band, measured stereo→mono spectral loss Brass −7.43 dB; Strings −6.80 dB; Keyboard −5.35 dB; Synth −4.55 dB. This is an audio measurement, **not** AI probability or authorship evidence.
+- [x] Added approved-recorded-sample renderer for 10 instrumental roles, respecting stem timeline, 48k/24bit, legal license and exact SHA, event coverage and rejection of source-derived audio masquerading as recorded. Added 12-stem approved-only mixer, final-WAV detector integration and verified metadata/watermark release gates. All are **software gates**, not a claim the real Interlude is fully reconstructed.
+- [x] Added reference vocal microanalysis, human-recorded vocal requirements, private ACRCloud prior-scan retrieval and guarded optional model scans; no API token or billable scan was used.
+- [x] Registered **1,075 verified publisher SHA-256 sample entries** from Meta Open Sound (CC0 piano, nylon guitar, steel guitar). This is a verified **catalogue of expected recordings only**, not 1,075 downloaded/verified recording files. Actual audio download needs a permitted network/provider path.
+- [x] Actual offline source tests passed **4/4**, reconstruction safety tests **3/3**, Python module syntax passed; latest GitHub Actions integration suite should be read back after final branch commit (do not count mocks as live audio reconstruction).
+- [ ] Reconstructed **0/10** real independent instrument stems as of this audit; no 95%-fidelity validation achieved. Still need actual licensed recorded audio bank and full automatic pitch/event/audio-source matching with listener review.
+- [ ] Lead and backing vocals: no newly provided genuine performances. Reference analysis is complete but does not substitute for human takes.
+- [ ] Provider: only user's *prior screenshot* of an ACRCloud **99.22% Suno likely-source** Interlude reconstruction result available. No live ACRCloud per-original/rebuilt-stem API comparison or final mix scan verified.
+- [ ] Final independently recorded/reconstructed 12-stem WAV does **not** exist. Final metadata, cryptographic hash, separately verified audio watermark and final download are blocked, not claimed as completed.
+- [ ] User-authored lyrics, original Suno draft model/prompt and associated exact composition source have not been recovered from the stem ZIP, and must be tracked as missing provenance until confirmed.
+
 ## Mandatory song workflow adopted — 27 November 2026
 
 - [x] Saved SONG_PIPELINE_STANDARD.md with the ordered 00–15 stages from Jimmy's lyrics/Suno draft through stem ingest, complete per-stem microanalysis, sample-library search/licensing, full instrumental reconstruction, A/B fidelity review, genuine human vocal takes, every-stem detection, quality review, lossless WAV rendering, final detection, provenance/metadata and verified download.
