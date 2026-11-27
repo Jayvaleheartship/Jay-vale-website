@@ -20,8 +20,9 @@ For the private Cloudflare Worker `jay-vale-sound-library`, configure **only the
 - **Safe default:** `ACRCLOUD_NEW_SCANS_ENABLED` is **unset**; this blocks new paid scans but permits read-only retrieval of existing results.
 - **Enable only after provider parity verification:** `ACRCLOUD_NEW_SCANS_ENABLED=true` enables user-confirmed new uploads.
 - **Keep disabled:** `ACRCLOUD_ENABLE_EXPERIMENTAL_STREAM` is **unset**; experimental large-file streaming is not included in the production-ready path.
+- **Optional deletion setting:** `ACRCLOUD_DELETE_ENABLED=true` permits scan deletion; leave it unset by default. The browser only offers deletion for a scan submitted in its current session.
 
-The server validates the named/selected ACRCloud container with the official Console API. If there are multiple eligible containers, it refuses to choose silently: set an exact name or numeric ID and region.
+The server validates the named/selected ACRCloud container with the official Console API. It accepts either an explicit AI flag set to 1, or an engine=5 designation when no explicit AI flag is present. An explicit disabled flag takes precedence. If there are multiple eligible containers, it refuses to choose silently: set an exact name or numeric ID and region.
 
 From a trusted local terminal in `cloudflare/sound-library`, set the required Cloudflare secret with:
 
@@ -37,13 +38,13 @@ For a public or multi-user service, verify ACRCloud's license/redistribution ter
 
 ## API endpoints
 
-All routes require an authorized short-lived bearer session:
+All routes require an authorized short-lived bearer session. The provider token never reaches the browser:
 
 - GET /v1/ai-detection/status — provider configured status.
 - GET /v1/ai-detection/existing — first 30 previously submitted files (read-only, no new scan).
 - POST /v1/ai-detection — confirmed multipart audio upload, plus x-confirm-provider-upload: yes.
 - GET /v1/ai-detection/:uuid — provider state and unchanged results.ai_detection entries.
-- DELETE /v1/ai-detection/:uuid — delete the provider's stored result.
+- DELETE /v1/ai-detection/:uuid — disabled by default; requires `ACRCLOUD_DELETE_ENABLED=true`.
 
 The Worker supports validated direct MP3, WAV, M4A, FLAC and OGG uploads up to 50 MiB. Experimental presigned streaming is disabled by default until the endpoint contract is verified with ACRCloud. ACRCloud documents a 900-second duration limit. The Worker verifies the AI detection flag and region through ACRCloud's Console API before accepting paid scans. It uses an allowlisted ACRCloud regional hostname and never forwards provider tokens or raw error payloads to the browser.
 
@@ -70,7 +71,7 @@ The comparison stays in browser memory only. No persistent browser storage is us
 
 - [x] Protected backend adapter, explicit upload consent and unchanged provider result mapping implemented.
 - [x] UI supports scanning, result visualization, comparison, JSON export and provider deletion.
-- [ ] GitHub Actions tests pass for the latest 27 November 2026 source changes (verify CI after final commit).
+- [ ] Final GitHub Actions run is green after the latest 27 November 2026 changes (check the most recent branch SHA).
 - [x] User verified ACRCloud Console AI Music Detection working; readout for one reconstructed Interlude was 99.22% Suno, original stem.
 - [ ] Private ACRCloud API token is still unconfigured in Cloudflare; container auto-discovery and previous-scan retrieval await that configuration.
 - [ ] Cloudflare Worker containing detection routes deployed.
