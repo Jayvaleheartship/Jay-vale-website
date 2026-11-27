@@ -2,14 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {
-  aiDetectionConfigured, aiDetectionStatus, submitAiDetection,submitLargeAiDetection,
+  aiDetectionConfigured, aiDetectionStatus, inspectAiContainer,
+  submitAiDetection,submitLargeAiDetection,listExistingAiDetections,
   pollAiDetection, deleteAiDetection
 } from '../src/acrcloud-ai.js';
 
 const env = Object.freeze({
   ACRCLOUD_REGION: 'eu-west-1',
   ACRCLOUD_CONTAINER_ID: '12345',
-  ACRCLOUD_ACCESS_TOKEN: 'this-is-a-fake-test-token-not-real'
+  ACRCLOUD_ACCESS_TOKEN: 'this-is-a-fake-test-token-not-real',
+  ACRCLOUD_NEW_SCANS_ENABLED: 'true'
 });
 const sampleId = 'f60c40d8-f35e-488e-bca4-105d85b080dc';
 function req(name = 'test.mp3', contents = 'ID3example', consent = 'yes') {
@@ -48,6 +50,70 @@ test('only accepted ACRCloud region and server-side secrets enable detection', a
 test('missing provider configuration fails closed without an upstream request', async () => {
   const response = await submitAiDetection(req(), {});
   assert.equal(response.status, 503);
+});
+
+test('new billable uploads default off while existing results stay readable',async()=>{
+  const disabled={...env,ACRCLOUD_NEW_SCANS_ENABLED:undefined};
+  const response=await submitAiDetection(req(),disabled);
+  assert.equal(response.status,403);
+  assert.match((await response.json()).error,/disabled/);
+  await mockFetch(async(url)=>{
+    if(String(url).includes('api-v2.acrcloud.com'))
+      return Response.json({data:{id:12345,name:'Jimmy',region:'eu-west-1',
+        engine:5}});
+    return Response.json({data:[{id:sampleId,name:'Previously scanned.mp3',
+      state:1,duration:193,created_at:'2026-11-20',secret:'remove'}]});
+  },async()=>{
+    const response=await listExistingAiDetections(disabled);
+    assert.equal(response.status,200);
+    const listed=await response.json();
+    assert.equal(listed.files[0].name,'Previously scanned.mp3');
+    assert.equal(Object.hasOwn(listed.files[0],'secret'),false);
+  });
+});
+
+test('uniquely discover an AI-enabled container using token only',async()=>{
+  const tokenOnly={ACRCLOUD_ACCESS_TOKEN:env.ACRCLOUD_ACCESS_TOKEN};
+  assert.equal(aiDetectionConfigured(tokenOnly),true);
+  await mockFetch(async url=>{
+    assert.match(String(url),/\/api\/fs-containers\?per_page=100$/);
+    return Response.json({data:[
+      {id:12345,name:'Jimmy',region:'eu-west-1',engine:5},
+      {id:22222,name:'Other',region:'eu-west-1',engine:1,policy:{ai_detection:0}}
+    ],meta:{last_page:1}});
+  },async()=>{
+    const r=await inspectAiContainer(tokenOnly);
+    assert.equal(r.enabled,true);
+    assert.equal(r.id,'12345');
+    assert.equal(r.name,'Jimmy');
+  });
+});
+
+test('discovery safely refuses ambiguous multiple enabled containers',async()=>{
+  await mockFetch(async()=>Response.json({data:[
+    {id:1,name:'one',region:'eu-west-1',engine:5},
+    {id:2,name:'two',region:'eu-west-1',engine:5}
+  ],meta:{last_page:1}}),async()=>{
+    const r=await inspectAiContainer({ACRCLOUD_ACCESS_TOKEN:env.ACRCLOUD_ACCESS_TOKEN});
+    assert.equal(r.enabled,false);
+    assert.match(r.message,/Multiple/);
+  });
+});
+
+test('provider result for existing original stem is preserved exactly',async()=>{
+  const observed={stem:'original',start:0,end:193,ai_probability:99.22,
+    prediction:'ai_generated',likely_source:'Suno',source_probabilities:[]};
+  await mockFetch(async url=>{
+    if(String(url).includes('api-v2.acrcloud.com'))
+      return Response.json({data:{id:12345,name:'Jimmy',region:'eu-west-1',
+        policy:{ai_detection:1},engine:1}});
+    return Response.json({data:{id:sampleId,state:1,
+      results:{ai_detection:[observed]}}});
+  },async()=>{
+    const report=await (await pollAiDetection(env,sampleId)).json();
+    assert.equal(report.model_results[0].ai_probability,99.22);
+    assert.deepEqual(report.model_results,[observed]);
+  });
 });
 
 test('upload is blocked without explicit external-provider consent', async () => {
@@ -113,7 +179,8 @@ test('streaming upload remains disabled without verified provider contract',asyn
     method:'POST',body:new File(['audio'],'track.wav'),
     headers:{'x-confirm-provider-upload':'yes','x-audio-size':'5','x-audio-filename':'track.wav'}
   });
-  const response = await submitLargeAiDetection(request,env);
+  const response = await submitLargeAiDetection(request,
+    {...env,ACRCLOUD_ENABLE_EXPERIMENTAL_STREAM:undefined});
   assert.equal(response.status,503);
 });
 
@@ -193,7 +260,9 @@ test('poll preserves exact provider model output including stem, segments and so
     {stem:'vocals',ai_probability:42.77,prediction:'human',likely_source:'Human',segments:[]},
     {stem:'accompaniment',ai_probability:99.09,prediction:'ai_generated'}
   ];
-  await mockFetch(async () => Response.json({data:[{id:sampleId,state:1,duration:15,results:{ai_detection:detector}}]}),async()=>{
+  await mockFetch(async url=>String(url).includes('api-v2.acrcloud.com')
+    ? Response.json({data:{id:12345,region:'eu-west-1',policy:{ai_detection:1},engine:1}})
+    : Response.json({data:[{id:sampleId,state:1,duration:15,results:{ai_detection:detector}}]}),async()=>{
     const response = await pollAiDetection(env,sampleId);
     assert.equal(response.status,200);
     const payload=await response.json();
@@ -203,7 +272,9 @@ test('poll preserves exact provider model output including stem, segments and so
 });
 
 test('incomplete provider results are not represented as a finished detection', async () => {
-  await mockFetch(async()=>Response.json({data:[{id:sampleId,state:0,results:{}}]}),async()=>{
+  await mockFetch(async url=>String(url).includes('api-v2.acrcloud.com')
+    ? Response.json({data:{id:12345,region:'eu-west-1',engine:5}})
+    : Response.json({data:[{id:sampleId,state:0,results:{}}]}),async()=>{
     const response=await pollAiDetection(env,sampleId);
     const result=await response.json();
     assert.equal(result.status,'processing');
@@ -213,6 +284,8 @@ test('incomplete provider results are not represented as a finished detection', 
 
 test('successful provider deletion does not expose credentials', async () => {
   await mockFetch(async (url,options)=>{
+    if(String(url).includes('api-v2.acrcloud.com'))
+      return Response.json({data:{id:12345,region:'eu-west-1',engine:5}});
     assert.ok(url.endsWith('/files/'+sampleId));
     assert.equal(options.method,'DELETE');
     return new Response(null,{status:204});
@@ -247,4 +320,5 @@ test('UI documents provenance and does not embed any ACRCloud access token', asy
   const worker=await readFile(new URL('../src/index.js',import.meta.url),'utf8');
   assert.match(worker,/await aiDetectionStatus\(env\)/);
   assert.match(worker,/submitLargeAiDetection\(req,env\)/);
+  assert.match(worker,/listExistingAiDetections\(env\)/);
 });
