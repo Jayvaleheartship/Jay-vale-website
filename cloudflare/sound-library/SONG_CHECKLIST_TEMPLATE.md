@@ -3,7 +3,7 @@
 Project ID: `{{PROJECT_SLUG}}`  
 Opened: **{{CREATED_DATE}}**  
 Project status: **NOT STARTED / HOLD**  
-Policy: [SONG_PIPELINE_STANDARD.md](../../SONG_PIPELINE_STANDARD.md)  
+Policy: cloudflare/sound-library/SONG_PIPELINE_STANDARD.md  
 **One project, one track, all stems; no skipped stages.** Mark a checkbox complete only after evidence/QA has been verified.
 
 ## Fixed production order
