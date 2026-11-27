@@ -122,7 +122,7 @@ footer{padding-bottom:25px;font-size:12px;color:var(--muted)}
 const ROOT='https://jay-vale-sound-library.helgacoupe.workers.dev';
 const PROOF_CONTEXT='jay-vale-audio-lab/v1/proof/';
 const $=id=>document.getElementById(id);
-let accessToken=null, expiry=0, providerReady=false, newScansEnabled=false,
+let accessToken=null, expiry=0, providerReady=false, newScansEnabled=false, deletionEnabled=false,
   activeFileId=null, activeReport=null, activeName='', activeLabel='', busy=false,
   canDeleteActive=false, previewUrl=null;
 const comparisons=[];
@@ -137,7 +137,7 @@ function actionState(){
   $('existing-refresh').disabled=busy||!connected()||!providerReady;
   $('existing-files').disabled=busy||!connected()||!providerReady;
   $('existing-load').disabled=busy||!connected()||!providerReady||!$('existing-files').value;
-  $('delete').disabled=busy||!connected()||!activeFileId||!canDeleteActive;
+  $('delete').disabled=busy||!connected()||!deletionEnabled||!activeFileId||!canDeleteActive;
 }
 function toB64URL(bytes){let s='';for(const b of bytes)s+=String.fromCharCode(b);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 async function call(path,options={},requiresAuth=true){
@@ -168,14 +168,15 @@ $('connect').onclick=async()=>{
     const provider=await call('/v1/ai-detection/status');
     providerReady=provider.provider_ready===true;
     newScansEnabled=provider.new_scans_enabled===true;
+    deletionEnabled=provider.deletion_enabled===true;
     status('connection',providerReady
       ? 'Connected. Verified '+(provider.container_name||'AI detector')+' ('+provider.region+'). '+(newScansEnabled?'New uploads permitted.':'Read-only mode: new paid scans disabled.')
       : 'Connected to library. '+provider.message,!providerReady);
     if(providerReady)status('existing-status','Ready to retrieve previous ACRCloud scans without reuploading.');
-  }catch(e){accessToken=null;expiry=0;providerReady=false;newScansEnabled=false;status('connection',e.message,true);}
+  }catch(e){accessToken=null;expiry=0;providerReady=false;newScansEnabled=false;deletionEnabled=false;status('connection',e.message,true);}
   finally{key='';busy=false;$('connect').disabled=false;actionState();}
 };
-$('disconnect').onclick=()=>{accessToken=null;expiry=0;providerReady=false;newScansEnabled=false;status('connection','Disconnected. Session token discarded.');$('existing-files').replaceChildren(new Option('Connect first',''));actionState();};
+$('disconnect').onclick=()=>{accessToken=null;expiry=0;providerReady=false;newScansEnabled=false;deletionEnabled=false;status('connection','Disconnected. Session token discarded.');$('existing-files').replaceChildren(new Option('Connect first',''));actionState();};
 $('audio').onchange=()=>{
   if(previewUrl)URL.revokeObjectURL(previewUrl);
   const file=$('audio').files[0]; $('preview').hidden=!file;
