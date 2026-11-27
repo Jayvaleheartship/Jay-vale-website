@@ -63,6 +63,26 @@ python3 python/reconstruct_recorded.py \
 
 The engine refuses missing stems, unlicensed/missing samples, mismatched source hashes, source-derived reference recordings, incomplete event coverage, unintended clipping or timeline overruns. Any rendered output is an **unapproved candidate** until sound fidelity and listening checks are independently passed.
 
+## License-aware human-vocal research (read-only)
+
+This separate optional stage **measures** vocal characteristics. It does not edit audio, classify it as human, train on unlicensed commercial music/videos, or attempt to defeat ACRCloud. The source registry is `python/vocal_reference_sources.json`, including candidate singing datasets, verified speech-license labels and datasets withheld pending rights checks.
+
+Example using private user-supplied control recordings:
+
+```bash
+python3 python/human_vocal_research.py \
+  --target "lead=/private/0 Lead Vocals.mp3" \
+  --target "backing=/private/1 Backing Vocals.mp3" \
+  --reference "test_speech=/private/JAY VALE TEST SPEECH.wav" \
+  --reference "phone_control=/private/Jay_Vale_Phone_Vocal_Control.wav" \
+  --out ".local/song-projects/interlude-x-detuned-fragments/vocal_reference_study"
+python3 -m unittest -v python/test_human_vocal_research.py
+```
+
+The analysis extracts 50-ms window/20-ms-hop pitch candidates, periodicity, energy, spectral balance and stereo/mid-side measurements. A 27 Nov real-file pilot generated four per-frame reports (no audio edits); the two user-provided reference controls are not independently confirmed to be human-performed. Speech is not a valid matched replacement for a human singing corpus. See the private Library report under Interlude project.
+
+**Important:** Digital audio samples constitute the sound itself. Editing 'data but not sound' only changes non-audio metadata, which cannot turn a generated recording into a genuine human take. A small change to the audio waveform may be inaudible, but does not prove provenance, produce a human performance or guarantee an AI-detector result.
+
 ## Lead and backing vocals
 
 ```bash
