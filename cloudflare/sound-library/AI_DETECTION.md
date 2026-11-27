@@ -8,25 +8,39 @@ Use ACRCloud's authorized File Scanning AI Music Detection API through a private
 
 The UI lives at studio/audio-lab/ai-detection.html and is separate from reconstruction. Uploaded audio is not modified or imported into the sample library. Provider output remains unchanged.
 
-## Private setup
+## Private setup — 27 November 2026
 
-In Cloudflare Worker jay-vale-sound-library, configure these values as server-side secrets, never in GitHub or browser:
+The owner has logged in to ACRCloud's regular console and shown a completed **AI Music Detection** scan for the reconstructed 193-second Interlude, returning **99.22%**, likely source **Suno**, stem **Original**. This confirms the service works in the account's console; **it does not verify API credentials or the new Cloudflare integration**.
 
-- ACRCLOUD_ACCESS_TOKEN: token with ACRCloud File Scanning API access.
-- ACRCLOUD_CONTAINER_ID: an AI Music Detection-enabled ACRCloud File Scanning container (check policy.ai_detection=1; the standard engine number is independent).
-- ACRCLOUD_REGION: eu-west-1, us-west-2, or ap-southeast-1, matching that container.
+For the private Cloudflare Worker `jay-vale-sound-library`, configure **only the provider token at first**:
 
-For example use npx wrangler secret put followed by each of those names from the cloudflare/sound-library directory. Enter secrets only in a trusted private terminal. Never paste them in chat.
+- **Required secret:** `ACRCLOUD_ACCESS_TOKEN` — generate in ACRCloud Console → Developer Settings.
+- **Optional setting:** `ACRCLOUD_CONTAINER_NAME=Jimmy` — selects the single matching AI-enabled container during auto-discovery.
+- **Optional settings:** `ACRCLOUD_CONTAINER_ID` and `ACRCLOUD_REGION` — explicitly select a container (region: eu-west-1, us-west-2, or ap-southeast-1). Configure both or neither.
+- **Safe default:** `ACRCLOUD_NEW_SCANS_ENABLED` is **unset**; this blocks new paid scans but permits read-only retrieval of existing results.
+- **Enable only after provider parity verification:** `ACRCLOUD_NEW_SCANS_ENABLED=true` enables user-confirmed new uploads.
+- **Keep disabled:** `ACRCLOUD_ENABLE_EXPERIMENTAL_STREAM` is **unset**; experimental large-file streaming is not included in the production-ready path.
 
-The page uses the existing HMAC-protected READ_TOKEN to create a 15-minute session. Never enter ADMIN_TOKEN into a browser page. After provisioning, explicitly deploy the Cloudflare Worker: publishing static files alone does not activate the new API endpoints.
+The server validates the named/selected ACRCloud container with the official Console API. If there are multiple eligible containers, it refuses to choose silently: set an exact name or numeric ID and region.
 
-An existing ACRCloud registration email was found in the linked mailbox, but account activation and an enabled AI detection container are not confirmed. The user must finish the private sign-in profile; never place activation links or credentials in project files.\n\nFor any customer-facing offering, verify the ACRCloud contract allows redistribution or integration; this integration is intended for the owner's authenticated internal research. Paid scans can incur costs.
+From a trusted local terminal in `cloudflare/sound-library`, set the required Cloudflare secret with:
+
+    npx wrangler secret put ACRCLOUD_ACCESS_TOKEN
+
+Never paste or commit token values. Do not configure secrets through GitHub source, this chat, or public HTML. The browser's existing HMAC-proven READ_TOKEN permits 15-minute scoped access to private library endpoints; do not enter ADMIN_TOKEN into the browser.
+
+Publishing GitHub static files does **not** deploy new Cloudflare Worker routes. Deploy the Worker explicitly only after validating its configuration and provider contract. ACRCloud account charges and trial entitlements must be checked in the provider console before enabling new submissions.
+
+The private TinyFish account profile is still not documented as signed in, but it is unnecessary for the API integration once a properly authorized access token is configured.
+
+For a public or multi-user service, verify ACRCloud's license/redistribution terms and add dedicated scan-scoped authorization, rate limits, and billing alerts.
 
 ## API endpoints
 
 All routes require an authorized short-lived bearer session:
 
 - GET /v1/ai-detection/status — provider configured status.
+- GET /v1/ai-detection/existing — first 30 previously submitted files (read-only, no new scan).
 - POST /v1/ai-detection — confirmed multipart audio upload, plus x-confirm-provider-upload: yes.
 - GET /v1/ai-detection/:uuid — provider state and unchanged results.ai_detection entries.
 - DELETE /v1/ai-detection/:uuid — delete the provider's stored result.
@@ -36,11 +50,11 @@ The Worker supports validated direct MP3, WAV, M4A, FLAC and OGG uploads up to 5
 ## Workflow
 
 1. Open AI Detection Lab from the Audio Lab page and connect using READ_TOKEN.
-2. Choose audio and its comparison label: original, rebuilt, vocals, instrumental, other.
-3. Explicitly approve external provider submission; submit.
-4. Inspect time-window scores from ACRCloud; the selected audio label identifies mix/vocals/accompaniment when analyzed as separate uploads.
-5. Repeat with another variant and compare provider scores without recalibration.
-6. Export JSON, and optionally delete the provider result.
+2. **First select Find existing scans.** Choose the previously uploaded Interlude and load its saved provider result without uploading any new audio or incurring a new scan.
+3. View the provider's original/vocals/accompaniment classification and optional nested time segments. Download JSON to preserve the full returned record.
+4. Compare any earlier original/reconstructed variants already saved by ACRCloud.
+5. New uploads remain disabled unless the owner explicitly enables scans server-side. If enabled, select an audio file, confirm its external submission, and scan.
+6. Only scans created in the current application session may be deleted through this UI. Earlier console scans cannot be deleted accidentally here.
 
 The comparison stays in browser memory only. No persistent browser storage is used.
 
@@ -56,8 +70,9 @@ The comparison stays in browser memory only. No persistent browser storage is us
 
 - [x] Protected backend adapter, explicit upload consent and unchanged provider result mapping implemented.
 - [x] UI supports scanning, result visualization, comparison, JSON export and provider deletion.
-- [ ] GitHub Actions tests pass after latest source changes.
-- [ ] Real ACRCloud credentials and AI-enabled container configured privately.
+- [ ] GitHub Actions tests pass for the latest 27 November 2026 source changes (verify CI after final commit).
+- [x] User verified ACRCloud Console AI Music Detection working; readout for one reconstructed Interlude was 99.22% Suno, original stem.
+- [ ] Private ACRCloud API token is still unconfigured in Cloudflare; container auto-discovery and previous-scan retrieval await that configuration.
 - [ ] Cloudflare Worker containing detection routes deployed.
 - [ ] Real uploaded track scanned successfully in the browser.
 - [ ] Result cross-checked against ACRCloud's console for the same model version.
