@@ -2,6 +2,17 @@
 
 Updated 27 November 2026 after AI Detection Lab read-only provider integration, security checks, and branch CI; earlier first-trial verification records are preserved below. For **every to-do task**: complete the work, verify the outcome, update this saved checklist immediately, display the revised task list, and let the user choose the next item. Never mark a task complete from code commits alone.
 
+## Interlude human-vocal reference study — 27 November 2026
+
+- [x] Conducted license-aware dataset review for VocalSet (controlled professional singing, license requires exact record verification), Vocadito (40 solo vocals, publication describes CC BY 4.0), LibriTTS (CC BY 4.0 speech), LJ Speech (public-domain speech); held Smule DAMP pending its special research agreement and excluded commercial use of noncommercial-licensed GTSinger.
+- [x] Reused the **actual 0 Lead Vocals.mp3 and 1 Backing Vocals.mp3** Interlude source stems and two previously supplied Jay Vale control voice files. Extracted SHA-256 provenance for all four; the human-recorded provenance of the controls remains **unverified**.
+- [x] Ran new read-only 16 kHz stereo voice analysis in fixed 50 ms frames/20 ms hops: RMS, pitch candidates, periodicity, spectral centroid/roll-off/flatness/flux, high/low spectral energy, L/R correlation and side-to-mid ratio. No reference or source WAV was edited.
+- [x] Measured median stereo correlation: lead 0.977, backing 0.735, test-speech control 0.997 and phone control 1.000. These are capture/mix observations and not evidence of a real/AI voice identity. Speech and singing are not directly matched distributions.
+- [x] Added python/human_vocal_research.py, python/vocal_reference_sources.json and python/test_human_vocal_research.py; wired research into python/run_full_pipeline.py as a source-only study. Four local tests passed, and all reports were saved privately in /Jay_Vale_Audio_Lab_Projects/Interlude_x_Detuned_Fragments/Interlude_Human_Vocal_Research_2026-11-27.zip (SHA-256 a448a9c8a8ee9720d3e7f51ab6f57ce708d80b9b49f298210e462e12bcefd0ec).
+- [ ] Actual human singing benchmark clips not yet acquired and fingerprint/license-verified in the local reference bank; no external dataset trained or learned model exists yet.
+- [ ] New genuine lead/backing performances for the actual Interlude phrases are not available. Metadata or inaudible signal changes cannot transform an AI source into a human recording or prove authorship. No ACRCloud score reduction was attempted.
+- [ ] Current research is **read-only acoustic QA**; future style improvements must be audibly evaluated, properly licensed and truthfully attributed.
+
 ## Interlude exclusive 12-stem live-file pilot — 27 November 2026
 
 - [x] Selected Interlude x Detuned Fragments (Mashup) as **the only real-song test fixture**. Recovered the user's original ZIP from private Library and verified ZIP SHA-256 `63973b514ad7b622d3daa25429442d35ec3416b2e70468aa9204781a271dc96a` plus all individual 12 stem hashes.
