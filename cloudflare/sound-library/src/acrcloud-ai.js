@@ -34,7 +34,10 @@ function explicitContainer(env) {
 function aiEnabled(c) {
   // Both a top-level AI flag and an engine=5 are documented by ACRCloud.
   const flag=c?.ai_detection ?? c?.policy?.ai_detection;
-  return flag===true || Number(flag)===1 || Number(c?.engine)===5;
+  // An explicit off flag must override an older engine classification.
+  if(flag!==undefined&&flag!==null)
+    return flag===true || Number(flag)===1;
+  return Number(c?.engine)===5;
 }
 function safeContainer(c) {
   return {id:String(c.id),name:String(c.name||''),region:c.region,
@@ -112,6 +115,7 @@ export async function aiDetectionStatus(env) {
     container_id: check.id ?? null,
     container_name: check.name ?? null,
     new_scans_enabled: check.enabled && env.ACRCLOUD_NEW_SCANS_ENABLED === 'true',
+    deletion_enabled: env.ACRCLOUD_DELETE_ENABLED === 'true',
     upload_max_bytes: env.ACRCLOUD_ENABLE_EXPERIMENTAL_STREAM === 'true' ? MAX_STREAM_BYTES : MAX_AUDIO_BYTES,
     direct_upload_max_bytes: MAX_AUDIO_BYTES,
     provider_max_duration_seconds: 900,
@@ -349,6 +353,10 @@ export async function pollAiDetection(env, id) {
 }
 
 export async function deleteAiDetection(env, id) {
+  // READ_TOKEN ordinarily grants read-only sample access. Provider deletion
+  // therefore requires a separate explicit server-side enablement flag.
+  if (env.ACRCLOUD_DELETE_ENABLED !== 'true')
+    return fail('Deletion of provider scan records is disabled by default',403);
   if (!/^[0-9a-f-]{36}$/i.test(id)) return fail('Invalid scan identifier', 400);
   const upstream = await providerCall(env, '/files/' + id, {method: 'DELETE'});
   if (!upstream.ok) return upstream.response;
